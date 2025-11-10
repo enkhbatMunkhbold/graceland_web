@@ -12,7 +12,7 @@ class User(db.Model):
   _password_hash = db.Column(db.String(255), nullable=False)
   created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-  member = db.relationship('Member', backref='user', useList=False, cascade='all, delete')
+  member = db.relationship('Member', backref='user', uselist=False, cascade='all, delete')
 
   def set_password(self, password):
     if len(password) < 8:
@@ -49,3 +49,22 @@ class GroupMember(db.Model):
   group_id = db.Column(db.Integer, db.ForeignKey('groups.id'), unique=True, nullable=False)
   role = db.Column(db.String(60), nullable=False)
   join_date = db.Column(db.Date, default=lambda: datetime.now(timezone.utc))
+
+  def __repr__(self):
+    return f'<GroupMember {self.id}: {self.role}>'
+
+class Group(db.Model):
+  __tablename__ = 'groups'
+
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String(255), nullable=True)
+  description = db.Column(db.Text)
+  group_type = db.Column(db.String(50), default='other')
+  parent_group_id = db.Column(db.Integer, db.ForeignKey('groups.id'), nullable=True)
+  leader_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+  meeting_day = db.Column(db.String(30))
+  meeting_time = db.Column(db.Time)
+  location = db.Column(db.String(255))
+
+  def __repr__(self):
+    return f'<Group {self.name}>'
