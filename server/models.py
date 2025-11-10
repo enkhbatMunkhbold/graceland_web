@@ -68,3 +68,26 @@ class Group(db.Model):
 
   def __repr__(self):
     return f'<Group {self.name}>'
+  
+class Event(db.Model):
+  __tablename__ = 'events'
+
+  id = db.Column(db.Integer, primary_key=True)
+  title = db.Column(db.String(255), nullable=False)
+  description = db.Column(db.Text)
+  start_datetime = db.Column(db.DateTime, nullable=False)
+  end_datetime = db.Column(db.DateTime)
+  location = db.Column(db.Text)
+  max_attendees = db.Column(db.Integer)
+
+  registrations = db.relationship('EventRegistration', backref='event', cascade='all, delete-orphan')
+
+class EventRegistration(db.Model):
+  __tablename__ = 'event_registrations'
+
+  id = db.Column(db.Integer, primary_key=True)
+  event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False)
+  user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+  registration_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+  guests_count = db.Column(db.Integer, default=0)
+  status = db.Column(db.String(20), default='confirmed')
