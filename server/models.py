@@ -1,6 +1,5 @@
-from marshmallow import validates, post_load, fields, ValidationError
-from marshmallow_sqlalchemy import auto_field
-from config import db, ma, bcrypt
+from marshmallow import ValidationError
+from config import db, bcrypt
 from datetime import datetime, timezone
 
 class User(db.Model):
