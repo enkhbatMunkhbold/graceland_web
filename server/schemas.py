@@ -1,6 +1,6 @@
 # schemas.py
 from config import ma
-from models import (User, Member, Group, GroupMember, Event, EventRegistration,
+from models import (User, Member, Group, GroupMember, Event,        EventRegistration,
                    Sermon, Donation, PrayerRequest, Page, Announcement, 
                    Media, ContactMessage, NavigationMenu, NavigationItem)
 from marshmallow import fields, validate, validates, validates_schema, ValidationError

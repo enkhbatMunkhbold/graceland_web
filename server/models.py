@@ -25,6 +25,110 @@ class User(db.Model):
   
   def __repr__(self):
     return f'<User {self.username} >'
+
+# ============================================
+# MINISTRIES
+# ============================================
+class Ministry(db.Model):
+  __tablename__ = 'ministries'
+  
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String(255), nullable=False)
+  description = db.Column(db.Text)
+  
+  # Ministry type/category
+  ministry_type = db.Column(db.String(50))  # children, youth, worship, missions, etc.
+  
+  # Contact information
+  contact_email = db.Column(db.String(255))
+  contact_phone = db.Column(db.String(20))
+  
+  # Meeting/Service information
+  meeting_schedule = db.Column(db.String(255))  # e.g., "Sundays 9:00 AM"
+  meeting_location = db.Column(db.String(255))
+  
+  # Status
+  is_active = db.Column(db.Boolean, default=True)
+  
+  # Featured/priority
+  is_featured = db.Column(db.Boolean, default=False)
+  display_order = db.Column(db.Integer, default=0)
+  
+  # Media
+  image_url = db.Column(db.String(500))
+  
+  # Timestamps
+  created_at = db.Column(db.DateTime, default=datetime.utcnow)
+  updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+  
+  # Relationships
+  leaders = db.relationship('MinistryLeader', backref='ministry', cascade='all, delete-orphan')
+  members = db.relationship('MinistryMember', backref='ministry', cascade='all, delete-orphan')
+  
+  def __repr__(self):
+      return f'<Ministry {self.name}>'
+
+class MinistryLeader(db.Model):
+  __tablename__ = 'ministry_leaders'
+  
+  id = db.Column(db.Integer, primary_key=True)
+  ministry_id = db.Column(db.Integer, db.ForeignKey('ministries.id'), nullable=False)
+  user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+  
+  # Leadership role
+  role = db.Column(db.String(50), default='leader')  # leader, co_leader, director, coordinator
+  
+  # Dates
+  start_date = db.Column(db.Date, default=datetime.utcnow)
+  end_date = db.Column(db.Date, nullable=True)
+  
+  # Status
+  is_active = db.Column(db.Boolean, default=True)
+  
+  # Timestamps
+  created_at = db.Column(db.DateTime, default=datetime.utcnow)
+  
+  # Relationships
+  user = db.relationship('User')
+  
+  # Unique constraint - one user can only have one leadership role per ministry
+  __table_args__ = (db.UniqueConstraint('ministry_id', 'user_id', name='unique_ministry_leader'),)
+  
+  def __repr__(self):
+      return f'<MinistryLeader ministry={self.ministry_id} user={self.user_id}>'
+
+class MinistryMember(db.Model):
+  __tablename__ = 'ministry_members'
+  
+  id = db.Column(db.Integer, primary_key=True)
+  ministry_id = db.Column(db.Integer, db.ForeignKey('ministries.id'), nullable=False)
+  user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+  
+  # Member details
+  role = db.Column(db.String(100))  # volunteer, team_member, participant, etc.
+  notes = db.Column(db.Text)
+  
+  # Dates
+  join_date = db.Column(db.Date, default=datetime.utcnow)
+  
+  # Status
+  is_active = db.Column(db.Boolean, default=True)
+  
+  # Timestamps
+  created_at = db.Column(db.DateTime, default=datetime.utcnow)
+  
+  # Relationships
+  user = db.relationship('User')
+  
+  # Unique constraint - one user can only be a member once per ministry
+  __table_args__ = (db.UniqueConstraint('ministry_id', 'user_id', name='unique_ministry_member'),)
+  
+  def __repr__(self):
+      return f'<MinistryMember ministry={self.ministry_id} user={self.user_id}>'
+
+# ============================================
+# GROUPS
+# ============================================
   
 class Member(db.Model):
   __tablename__ = 'members'
