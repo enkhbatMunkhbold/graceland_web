@@ -118,7 +118,7 @@ class Donation(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
   amount = db.Column(db.Numeric(10, 2), nullable=False)
-  date = db.Column(db.DateTime, default=datetime.utcnow)
+  date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
   payment_method = db.Column(db.String(50))
   designation = db.Column(db.String(100))
 
@@ -133,7 +133,7 @@ class PrayerRequest(db.Model):
   request_text = db.Column(db.Text, nullable=False)
   is_public = db.Column(db.Boolean, default=False)
   status = db.Column(db.String(20), default='pending')
-  date_submitted = db.Column(db.DateTime, default=datetime.utcnow)
+  date_submitted = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
   def __repr__(self):
     return f'<PrayerRequest {self.request_text}>'
@@ -157,7 +157,7 @@ class Announcement(db.Model):
   title = db.Column(db.String(255), nullable=False)
   content = db.Column(db.Text)
   author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-  publish_date = db.Column(db.DateTime, default=datetime.utcnow)
+  publish_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
   expire_date = db.Column(db.DateTime)
   
   author = db.relationship('User')
@@ -173,7 +173,7 @@ class Media(db.Model):
   file_path = db.Column(db.String(500), nullable=False)
   file_type = db.Column(db.String(50))
   uploaded_by = db.Column(db.Integer, db.ForeignKey('users.id'))
-  upload_date = db.Column(db.DateTime, default=datetime.utcnow)
+  upload_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
   
   uploader = db.relationship('User')
 
@@ -190,7 +190,7 @@ class ContactMessage(db.Model):
   email = db.Column(db.String(255), nullable=False)
   subject = db.Column(db.String(255))
   message = db.Column(db.Text, nullable=False)
-  date = db.Column(db.DateTime, default=datetime.utcnow)
+  date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
   status = db.Column(db.String(20), default='new')
 
   def __repr__(self):

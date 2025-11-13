@@ -1,5 +1,5 @@
 # schemas.py
-from app import ma
+from config import ma
 from models import (User, Member, Group, GroupMember, Event, EventRegistration,
                    Sermon, Donation, PrayerRequest, Page, Announcement, 
                    Media, ContactMessage, NavigationMenu, NavigationItem)
@@ -43,7 +43,7 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = User
         load_instance = True
-        exclude = ('password_hash',)
+        exclude = ('_password_hash',)
     
     member = fields.Nested(MemberSchema, dump_only=True)
     email = fields.Email(required=True)
