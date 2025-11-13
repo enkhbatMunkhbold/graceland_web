@@ -38,7 +38,6 @@ class MemberSchema(ma.SQLAlchemyAutoSchema):
         if value and value > datetime.now().date():
             raise ValidationError('Join date cannot be in the future')
 
-
 class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = User
@@ -53,15 +52,15 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         if obj.member:
             return f"{obj.member.first_name} {obj.member.last_name}"
         return None
+        
+class UserPasswordChangeSchema(ma.Schema):
+    old_password = fields.String(required=True, load_only=True)
+    new_password = fields.String(required=True, load_only=True, validate=validate.Length(min=8))
     
-    @validates('email')
-    def validate_email(self, value):
-        """Check if email already exists"""
-        existing = User.query.filter_by(email=value).first()
-        # If updating, exclude current user from check
-        if existing and (not self.instance or existing.id != self.instance.id):
-            raise ValidationError('Email already registered')
-
+    @validates('new_password')
+    def validate_password(self, value):
+        if not any(char.isdigit() for char in value):
+            raise ValidationError('Password must contain at least one digit')
 
 class UserCreateSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
@@ -71,6 +70,12 @@ class UserCreateSchema(ma.SQLAlchemyAutoSchema):
     
     email = fields.Email(required=True)
     password = fields.String(required=True, load_only=True, validate=validate.Length(min=8, max=100))
+
+    @validates('email')
+    def validate_email(self, value):
+        existing = User.query.filter_by(email=value).first()
+        if existing:
+            raise ValidationError('Email already registered')
     
     @validates('password')
     def validate_password(self, value):
@@ -81,7 +86,6 @@ class UserCreateSchema(ma.SQLAlchemyAutoSchema):
             raise ValidationError('Password must contain at least one uppercase letter')
         if not any(char.islower() for char in value):
             raise ValidationError('Password must contain at least one lowercase letter')
-
 
 # ============================================
 # GROUP SCHEMAS WITH VALIDATION
@@ -112,7 +116,6 @@ class GroupMemberSchema(ma.SQLAlchemyAutoSchema):
             
             if existing and (not self.instance or existing.id != self.instance.id):
                 raise ValidationError({'user_id': ['User is already a member of this group']})
-
 
 class GroupSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
