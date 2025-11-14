@@ -181,7 +181,6 @@ class GroupSchema(ma.SQLAlchemyAutoSchema):
             if not leader:
                 raise ValidationError('Leader does not exist')
 
-
 # ============================================
 # EVENT SCHEMAS WITH VALIDATION
 # ============================================
