@@ -2,6 +2,7 @@ from config import app, db, api
 from flask import session, request
 from flask_restful import Resource
 from flask_migrate import Migrate
+from sqlalchemy.exc import IntegrityError
 from marshmallow.exceptions import ValidationError
 import models  # Import models to register them with SQLAlchemy
 import schemas
@@ -78,19 +79,51 @@ class SignUp(Resource):
             if models.User.query.filter_by(email=data['email']).first():
                 return {'error': 'Email already exists'}, 400
             
-            new_user = schemas.user_create_schema.load(data)
+            new_user = models.User(username=data['username'], email=data['email'])
+            new_user.set_password(data['password'])
+
             db.session.add(new_user)
             db.session.commit()
+
             session['user_id'] = new_user.id
             return schemas.user_schema.dump(new_user), 201
         
-        except Exception as e:
-            return {'error': f"An error occured during registration: {str(e)}"}, 500
-        
         except ValidationError as ve:
+            db.session.rollback()
             return {'error': str(ve)}, 400
         
+        except Exception as e:
+            db.session.rollback()
+            return {'error': f"An error occured during registration: {str(e)}"}, 500          
+        
 api.add_resource(SignUp, '/sign_up')
+
+class Users(Resource):
+    def get(self):
+        users = models.User.query.all()
+        return schemas.users_schema.dump(users), 200
+    
+    def post(self): 
+        try:
+            data = request.get_json()
+
+            new_user = models.User(username=data['username'], email=data['email'])
+            new_user.set_password(data['password'])
+
+            db.session.add(new_user)
+            db.session.commit()
+            return schemas.user_schema.dump(new_user), 201
+        except ValidationError as ve:
+            db.session.rollback()
+            return {'error': ve.messages}, 400
+        except IntegrityError:
+            db.session.rollback()
+            return {'error': 'User already exists'}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+        
+api.add_resource(Users, '/users')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
