@@ -169,6 +169,71 @@ class UserByID(Resource):
 
 api.add_resource(UserByID, '/users/<int:user_id>')
 
+class Members(Resource):
+    def get(self):
+        members = models.Member.query.all()
+        return schemas.members_schema.dump(members), 200
+    
+    def post(self):
+        try:
+            data = request.get_json()
+            new_member = schemas.member_schema.load(data)
+            db.session.add(new_member)
+            db.session.commit()
+            return schemas.member_schema.dump(new_member), 201
+        except ValidationError as ve:
+            db.session.rollback()
+            return {'error': ve.messages}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+        
+api.add_resource(Members, '/members')
+
+class MemberByID(Resource):
+    def get(self, member_id):
+        member = db.session.get(models.Member, member_id)
+        if not member:
+            return {'error': 'Member not found'}, 404
+        return schemas.member_schema.dump(member), 200
+    
+    def patch(self, member_id):
+        member = db.session.get(models.Member, member_id)
+        if not member:
+            return {'error': 'Member not found'}, 404
+        
+        try:
+            data = request.get_json()
+            if not data:
+                return {'error': 'No data provided'}, 400
+            for key, value in data.items():
+                if hasattr(member, key):
+                    setattr(member, key, value)
+            db.session.commit()
+            return schemas.member_schema.dump(member), 200
+        
+        except ValidationError as ve:
+            db.session.rollback()
+            return {'error': ve.messages}, 400        
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+        
+    def delete(self, member_id):
+        member = db.session.get(models.Member, member_id)
+        if not member:
+            return {'error': 'Member not found'}, 404
+        
+        try:
+            db.session.delete(member)
+            db.session.commit()
+            return {'message': 'Member deleted successfully'}
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+        
+api.add_resource(MemberByID, '/members/<int:member_id')
+
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
 
