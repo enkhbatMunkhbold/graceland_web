@@ -125,6 +125,50 @@ class Users(Resource):
         
 api.add_resource(Users, '/users')
 
+class UserByID(Resource):
+    def get(self, user_id):        
+        user = db.session.get(models.User, user_id)
+        if not user:
+            return {'error': 'User not found'}, 404
+        return schemas.user_schema.dump(user), 200
+    
+    def patch(self, user_id):
+        user = db.session.get(models.User, user_id)
+        if not user:
+            return {'error': 'User not found'}, 404
+        
+        try: 
+            data = request.get_json()
+            if not data:
+                return {'error': 'No data provided'}, 400
+            updated_user = schemas.user_schema.load(data, instance=user, partial=True)
+            db.session.commit()
+
+            return schemas.user_schema.dump(updated_user), 200
+        
+        except ValidationError as ve:
+            return {'error': ve.messages}, 400
+        
+        except Exception as e:
+            db.session.rollback()
+            return {'error': f'Internal server error: {str(e)}'}, 500
+        
+    def delete(self, user_id):
+        user = db.session.get(models.User, user_id)
+
+        if not user:
+            return {'error': 'User not found'}, 404
+        
+        try:
+            db.session.delete(user)
+            db.session.commit()
+            return {'message': 'User deleted successfully'}, 200
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500       
+
+api.add_resource(UserByID, '/users/<int:user_id>')
+
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
 
