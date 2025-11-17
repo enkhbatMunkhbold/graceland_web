@@ -1,6 +1,6 @@
 # schemas.py
 from config import ma
-from models import (User, Member, Group, GroupMember, Event,        EventRegistration,
+from models import (User, Member, Ministry, MinistryLeader, MinistryMember, Group, GroupMember, Event,        EventRegistration,
                    Sermon, Donation, PrayerRequest, Page, Announcement, 
                    Media, ContactMessage, NavigationMenu, NavigationItem)
 from marshmallow import fields, validate, validates, validates_schema, ValidationError
@@ -85,7 +85,89 @@ class UserCreateSchema(ma.SQLAlchemyAutoSchema):
         if not any(char.isupper() for char in value):
             raise ValidationError('Password must contain at least one uppercase letter')
         if not any(char.islower() for char in value):
-            raise ValidationError('Password must contain at least one lowercase letter')
+            raise ValidationError('Password must contain at least one lowercase letter')        
+
+# ============================================
+# MINISTRY SCHEMAS WITH VALIDATION
+# ============================================
+
+class MinistryLeaderSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = MinistryLeader
+        load_instance = True
+        include_fk = True
+    
+    user = fields.Nested('UserSchema', only=('id', 'username', 'email', 'full_name'), dump_only=True)
+    
+    role = fields.String(validate=validate.OneOf(['leader', 'co_leader', 'director', 'coordinator']))
+    start_date = fields.Date()
+    end_date = fields.Date()
+    
+    @validates_schema
+    def validate_dates(self, data, **kwargs):
+        """Validate end date is after start date"""
+        if 'start_date' in data and 'end_date' in data:
+            if data['end_date'] and data['start_date'] >= data['end_date']:
+                raise ValidationError({'end_date': ['End date must be after start date']})
+
+
+class MinistryMemberSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = MinistryMember
+        load_instance = True
+        include_fk = True
+    
+    user = fields.Nested('UserSchema', only=('id', 'username', 'email', 'full_name'), dump_only=True)
+    
+    role = fields.String(validate=validate.Length(max=100))
+    notes = fields.String(validate=validate.Length(max=1000))
+    
+    @validates('join_date')
+    def validate_join_date(self, value):
+        """Join date cannot be in the future"""
+        if value and value > datetime.now().date():
+            raise ValidationError('Join date cannot be in the future')
+
+class MinistrySchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Ministry
+        load_instance = True
+    
+    leaders = fields.Nested(MinistryLeaderSchema, many=True, dump_only=True)
+    members = fields.Nested(MinistryMemberSchema, many=True, dump_only=True)
+    
+    # Validation
+    name = fields.String(required=True, validate=validate.Length(min=1, max=255))
+    description = fields.String(validate=validate.Length(max=5000))
+    ministry_type = fields.String(validate=validate.OneOf([
+        'children', 'youth', 'worship', 'missions', 'outreach', 
+        'prayer', 'media', 'hospitality', 'education', 'other'
+    ]))
+    contact_email = fields.Email()
+    contact_phone = fields.String(validate=validate.Length(max=20))
+    meeting_schedule = fields.String(validate=validate.Length(max=255))
+    meeting_location = fields.String(validate=validate.Length(max=255))
+    image_url = fields.Url(schemes={'http', 'https'})
+    
+    # Computed fields
+    leader_count = fields.Method("get_leader_count")
+    member_count = fields.Method("get_member_count")
+    
+    def get_leader_count(self, obj):
+        return len(obj.leaders)
+    
+    def get_member_count(self, obj):
+        return len(obj.members)
+    
+    @validates('contact_phone')
+    def validate_phone(self, value):
+        """Validate phone number format"""
+        if value:
+            cleaned = value.replace('-', '').replace('(', '').replace(')', '').replace(' ', '')
+            if not cleaned.isdigit():
+                raise ValidationError('Phone number must contain only digits and common separators')
+            if len(cleaned) < 10:
+                raise ValidationError('Phone number must be at least 10 digits')
 
 # ============================================
 # GROUP SCHEMAS WITH VALIDATION
@@ -214,7 +296,6 @@ class EventRegistrationSchema(ma.SQLAlchemyAutoSchema):
                 if current_registrations >= event.max_attendees:
                     raise ValidationError({'event_id': ['Event is full']})
 
-
 class EventSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Event
@@ -253,7 +334,6 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
             if data['end_datetime'] and data['start_datetime'] >= data['end_datetime']:
                 raise ValidationError({'end_datetime': ['End time must be after start time']})
 
-
 # ============================================
 # SERMON SCHEMA WITH VALIDATION
 # ============================================
@@ -286,7 +366,6 @@ class SermonSchema(ma.SQLAlchemyAutoSchema):
             if not any(char.isdigit() for char in value):
                 raise ValidationError('Scripture reference should include chapter/verse numbers')
 
-
 # ============================================
 # DONATION SCHEMA WITH VALIDATION
 # ============================================
@@ -309,7 +388,6 @@ class DonationSchema(ma.SQLAlchemyAutoSchema):
         """Validate donation amount is reasonable"""
         if value > 1000000:  # $1 million limit
             raise ValidationError('Donation amount exceeds maximum allowed')
-
 
 # ============================================
 # PRAYER REQUEST SCHEMA WITH VALIDATION
@@ -335,7 +413,6 @@ class PrayerRequestSchema(ma.SQLAlchemyAutoSchema):
         for word in inappropriate_words:
             if word in value_lower:
                 raise ValidationError('Prayer request contains inappropriate content')
-
 
 # ============================================
 # PAGE SCHEMA WITH VALIDATION
@@ -363,7 +440,6 @@ class PageSchema(ma.SQLAlchemyAutoSchema):
         if existing and (not self.instance or existing.id != self.instance.id):
             raise ValidationError('Slug already exists')
 
-
 # ============================================
 # ANNOUNCEMENT SCHEMA WITH VALIDATION
 # ============================================
@@ -386,7 +462,6 @@ class AnnouncementSchema(ma.SQLAlchemyAutoSchema):
         if 'publish_date' in data and 'expire_date' in data:
             if data['expire_date'] and data['publish_date'] >= data['expire_date']:
                 raise ValidationError({'expire_date': ['Expiration date must be after publish date']})
-
 
 # ============================================
 # MEDIA SCHEMA WITH VALIDATION
@@ -426,7 +501,6 @@ class MediaSchema(ma.SQLAlchemyAutoSchema):
         if re.search(r'[<>:"/\\|?*]', value):
             raise ValidationError('Filename contains invalid characters')
 
-
 # ============================================
 # CONTACT MESSAGE SCHEMA WITH VALIDATION
 # ============================================
@@ -441,7 +515,6 @@ class ContactMessageSchema(ma.SQLAlchemyAutoSchema):
     subject = fields.String(validate=validate.Length(max=255))
     message = fields.String(required=True, validate=validate.Length(min=10, max=2000))
     status = fields.String(validate=validate.OneOf(['new', 'read', 'responded']))
-
 
 # ============================================
 # NAVIGATION SCHEMAS WITH VALIDATION
@@ -467,7 +540,6 @@ class NavigationItemSchema(ma.SQLAlchemyAutoSchema):
             if not (value.startswith('/') or re.match(r'^https?://', value)):
                 raise ValidationError('URL must start with / or be a full URL (http:// or https://)')
 
-
 class NavigationMenuSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = NavigationMenu
@@ -478,7 +550,6 @@ class NavigationMenuSchema(ma.SQLAlchemyAutoSchema):
     name = fields.String(required=True, validate=validate.Length(min=1, max=100))
     location = fields.String(validate=validate.OneOf(['header', 'footer', 'sidebar']))
 
-
 # ============================================
 # INITIALIZE SCHEMAS
 # ============================================
@@ -488,6 +559,15 @@ user_create_schema = UserCreateSchema()
 
 member_schema = MemberSchema()
 members_schema = MemberSchema(many=True)
+
+ministry_schema = MinistrySchema()
+ministries_schema = MinistrySchema(many=True)
+
+ministry_leader_schema = MinistryLeaderSchema()
+ministry_leaders_schema = MinistryLeaderSchema(many=True)
+
+ministry_member_schema = MinistryMemberSchema()
+ministry_members_schema = MinistryMemberSchema(many=True)
 
 group_schema = GroupSchema()
 groups_schema = GroupSchema(many=True)

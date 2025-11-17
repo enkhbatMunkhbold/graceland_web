@@ -200,8 +200,7 @@ class MemberByID(Resource):
     def patch(self, member_id):
         member = db.session.get(models.Member, member_id)
         if not member:
-            return {'error': 'Member not found'}, 404
-        
+            return {'error': 'Member not found'}, 404        
         try:
             data = request.get_json()
             if not data:
@@ -233,6 +232,68 @@ class MemberByID(Resource):
             return {'error': str(e)}, 500
         
 api.add_resource(MemberByID, '/members/<int:member_id')
+
+class Ministries(Resource):
+    def get(self):
+        ministries = models.Ministry.query.all()
+        return schemas.ministries_schema.dump(ministries), 200
+    
+    def post(self):
+        try:
+            data = request.get_json()
+            new_ministry = schemas.ministries_schema.load(data)
+            db.session.add(new_ministry)
+            db.commit()
+            return schemas.ministry_schema.dump(new_ministry), 201
+        
+        except ValidationError as ve:
+            db.session.rollback()
+            return{'error': ve.messages}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+
+api.add_resource(Ministries, '/ministries')
+
+class MinistryByID(Resource):
+    def get(self, ministry_id):
+        ministry = db.session.get(models.Ministry, ministry_id)
+        if not ministry:
+            return {'error': 'Ministry not found'}, 404        
+        return schemas.ministry_schema.dump(ministry), 200
+    
+    def patch(self, ministry_id):
+        ministry = db.session.get(models.Ministry, ministry_id)
+        if not ministry:
+            return {'error': 'Ministry not found'}, 404        
+        try:
+            data = request.get_json()
+            if not data:
+                return {'error': 'No data provided'}, 404
+            for key, value in data.items():
+                if hasattr(ministry, key):
+                    setattr(ministry, key, value)
+                db.session.commit()
+                return schemas.ministry_schema.dump(ministry), 200
+        except ValidationError as ve:
+            return {'error': ve.messages}, 400
+        except Exception as e:
+            return {'error': str(e)}, 500
+        
+    def delete(self, ministry_id):
+        ministry = db.session.get(models.Ministry, ministry_id)
+        if not ministry:
+            return {'error': 'Ministry not found'}, 404
+        try:
+            db.session.delete(ministry)
+            db.session.commit()
+            return {'message': 'Ministry deleted successfully'}
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+
+api.add_resource(MinistryByID, '/ministries/<int:id>')
+
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
