@@ -226,7 +226,7 @@ class MemberByID(Resource):
         try:
             db.session.delete(member)
             db.session.commit()
-            return {'message': 'Member deleted successfully'}
+            return {'message': 'Member deleted successfully'}, 200
         except Exception as e:
             db.session.rollback()
             return {'error': str(e)}, 500
@@ -271,7 +271,7 @@ class MinistryByID(Resource):
             if not data:
                 return {'error': 'No data provided'}, 404
             for key, value in data.items():
-                if hasattr(ministry, key):
+                if hasattr(ministry, key) and key not in ['id', 'created_at']:
                     setattr(ministry, key, value)
                 db.session.commit()
                 return schemas.ministry_schema.dump(ministry), 200
@@ -287,13 +287,108 @@ class MinistryByID(Resource):
         try:
             db.session.delete(ministry)
             db.session.commit()
-            return {'message': 'Ministry deleted successfully'}
+            return {'message': 'Ministry deleted successfully'}, 200
         except Exception as e:
             db.session.rollback()
             return {'error': str(e)}, 500
 
 api.add_resource(MinistryByID, '/ministries/<int:id>')
 
+class MinistryLeaders(Resource):
+    def get(self, ministry_id):
+        ministry = db.session.get(models.Ministry, ministry_id)
+        if not ministry:
+            return {'error': 'Ministry not found'}, 404
+        
+        # Optional: filter by active status
+        is_active = request.args.get('is_active')
+        query = models.MinistryLeader.query.filter_by(ministry_id=ministry_id)
+        if is_active is not None:
+            query = query.filter_by(is_active=is_active.lower() == 'true')
+        leaders = query.all()
+        return schemas.ministry_leaders_schema.dump(leaders), 200
+    
+    def post(self, ministry_id):
+        ministry = db.session.get(models.Ministry, ministry_id)
+        if not ministry:
+            return {'error': 'Ministry not found'}, 404
+        
+        try:
+            data = request.get_json()
+            data['ministry_id'] = ministry_id
+            user = db.session.get(models.User, data.get('user_id'))
+            if not user:
+                return {'error': 'User not found'}, 404            
+            new_leader = schemas.ministry_leader_schema.load(data)
+            db.session.add(new_leader)
+            db.session.commit()
+            return schemas.ministry_leader_schema.dump(new_leader), 201
+        
+        except ValidationError as ve:
+            db.session.rollback()
+            return {'error': ve.messages}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+
+api.add_resource(MinistryLeaders, '/ministry_leaders')
+
+class MinistryLeaderByID(Resource):
+    def get(self, ministry_id, leader_id):
+        ministry_leader = db.session.get(models.MinistryLeader, leader_id)
+        if not ministry_leader or ministry_leader.ministry_id != ministry_id:
+            return {'error': 'Ministry leader not found'}, 404
+        return schemas.ministry_leader_schema.dump(ministry_leader), 200
+    
+    def patch(self, ministry_id, leader_id):
+        ministry_leader = db.session.get(models.MinistryLeader, leader_id)
+        if not ministry_leader or ministry_leader.ministry_id != ministry_id:
+            return {'error': 'Ministry leader not found'}, 404
+        
+        try:
+            data = request.get()
+            for key, value in data.items():
+                if hasattr(ministry_leader, key) and key not in ['id', 'ministry_id', 'created_id']:
+                    setattr(ministry_leader, key, value)
+            db.session.commit()
+            return schemas.ministry_leader_schema.dump(ministry_leader), 200
+        
+        except ValidationError as ve:
+            db.session.rollback()
+            return {'error': ve.messages}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+
+    def delete(self, ministry_id, leader_id):
+        ministry_leader = db.session.get(models.MinistryLeader, leader_id)        
+        try:
+            if not ministry_leader or ministry_leader.ministry_id != ministry_id:
+              return {'error': 'Ministry leader not found'}, 404
+            
+            db.session.delete(ministry_leader)
+            db.session.commit()
+            return {'message': 'Ministry leader successfully deleted'}, 200
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+
+api.add_resource(MinistryLeaderByID, '/ministry_leader/<int:id>')          
+                    
+class MinistryMembers(Resource):
+    def get(self, ministry_id):
+        ministry = db.session.get(models.Ministry, ministry_id)
+        if not ministry:
+            return {'error': 'Ministry not found'}, 404
+
+        is_active = request.args.get(request['is_active'])    
+        query = models.MinistryMember.filter_by(ministry_id=ministry_id)
+
+        if is_active is not None:
+            query = query.filter_by(is_active=is_active.lower() == True)
+
+        members = query.all()
+        return schemas.ministry_members_schema.dump(members), 200   
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
