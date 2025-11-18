@@ -331,7 +331,7 @@ class MinistryLeaders(Resource):
             db.session.rollback()
             return {'error': str(e)}, 500
 
-api.add_resource(MinistryLeaders, '/ministry_leaders')
+api.add_resource(MinistryLeaders, '/ministries/<int:ministry_id>/leaders')
 
 class MinistryLeaderByID(Resource):
     def get(self, ministry_id, leader_id):
@@ -373,7 +373,7 @@ class MinistryLeaderByID(Resource):
             db.session.rollback()
             return {'error': str(e)}, 500
 
-api.add_resource(MinistryLeaderByID, '/ministry_leader/<int:id>')          
+api.add_resource(MinistryLeaderByID, '/ministry/<int:ministry_id/leaders>/<int:leader_id>')          
                     
 class MinistryMembers(Resource):
     def get(self, ministry_id):
@@ -388,7 +388,37 @@ class MinistryMembers(Resource):
             query = query.filter_by(is_active=is_active.lower() == True)
 
         members = query.all()
-        return schemas.ministry_members_schema.dump(members), 200   
+        return schemas.ministry_members_schema.dump(members), 200
+
+    def post(self, ministry_id):
+        ministry = db.session.get(models.Ministry, ministry_id)
+        if not ministry:
+            return {'error': 'Ministry not found'}, 404
+
+        try:
+            data = request.get_json()
+            data['ministry_id'] = ministry_id
+
+            user = db.session.get(models.User, data.get('user_id'))
+            if not user:
+                return {'error': 'User not found'}, 404
+
+            new_member = schemas.ministry_member_schema.load(data)
+            db.session.add(new_member)
+            db.session.commit()
+            return schemas.ministry_member_schema.dump(new_member)
+
+        except ValidationError as ve:
+            db.session.rollback()
+            return {'error': ve.messages}, 400
+        except IntegrityError:
+            db.session.rollback()
+            return {'error': 'Member is already a member of this ministry'}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+
+api.add_resource(MinistryMembers, '/ministries/<int:ministry_id>/members')   
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
