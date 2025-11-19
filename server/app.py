@@ -576,7 +576,7 @@ class EventByID(Resource):
             db.session.rollback()
             return {'error': str(e)}, 500
         
-api.add_resource(EventByID, '/events/<int:id>')
+api.add_resource(EventByID, '/events/<int:event_id>')
 
 class EventRegistrations(Resource):
     def get(self, event_id):
@@ -607,7 +607,28 @@ class EventRegistrations(Resource):
             db.session.rollback()
             return {'error': str(e)}, 500
         
-api.add_resource(EventRegistrations, '/events/<int:id>/registrations')
+api.add_resource(EventRegistrations, '/events/<int:event_id>/registrations')
+
+class EventRegistrationByID(Resource):
+    def get(self, event_id, registration_id):
+        registration = db.session.get(models.EventRegistration, registration_id)
+        if not registration or registration.event_id != event_id:
+            return {'error': 'Registration not found'}, 404
+        return schemas.event_registration_schema.dump(registration), 200
+    
+    def delete(self, event_id, registration_id):
+        try:
+          registration = db.session.get(models.EventRegistration, registration_id)
+          if not registration or registration.event_id != event_id:
+              return {'error': 'Registration not found'}, 404
+          db.session.delete(registration)
+          db.session.commit()
+          return {'message': 'Registration successfully deleted'}, 200
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+        
+api.add_resource(EventRegistrationByID, '/events/<int:event_id>/registrations/<int:registration_id')            
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
