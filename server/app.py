@@ -420,6 +420,195 @@ class MinistryMembers(Resource):
 
 api.add_resource(MinistryMembers, '/ministries/<int:ministry_id>/members')   
 
+class Groups(Resource):
+    def get(self):
+        groups = models.Group.query.all()
+        return schemas.groups_schema.dump(groups), 200
+    
+    def post(self):
+        try:
+          data = request.get_json()
+          new_group = schemas.group_schema.load(data)
+          db.session.add(new_group)
+          db.session.commit()
+          return schemas.group_schema.dump(new_group), 200
+        except ValidationError as ve:
+            db.session.rollback()
+            return {'error': ve.messages}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+        
+api.add_resource(Groups, '/groups')
+
+class GroupByID(Resource):
+    def get(self, group_id):
+        group = db.session.get(models.Group, group_id)
+        if not group:
+            return {'error': 'Group not found'}, 404
+        return schemas.group_schema.dump(group), 200
+    
+    def patch(self, group_id):
+        group = db.session.get(models.Group, group_id)
+        if not group:
+            return {'error': 'Group not found'}, 404
+        try:
+            data = request.get_json()
+            for key, value in data.items():
+                if hasattr(group, key):
+                    setattr(group, key, value)
+            db.session.commit()
+            return schemas.group_schema.dump(group), 200
+        
+        except ValidationError as ve:
+            db.session.rollback()
+            return {'error': ve.messages}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+        
+    def delete(self, group_id):
+        group = db.session.get(models.Group, group_id)
+        if not group:
+            return {'error': 'Group not found'}, 404
+        try:
+          db.session.delete(group)
+          db.session.commit()
+          return schemas.group_schema.dump(group), 200
+        
+        except ValidationError as ve:
+            db.session.rollback()
+            return {'error': ve.messages}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+        
+api.add_resource(GroupByID, '/groups/<int:group_id>')
+            
+class GroupMembers(Resource):
+    def get(self, group_id):
+        group = db.session.get(models.Group, group_id)  
+        if not group:
+            return {'error': 'Group not found'}, 404
+        members = models.GroupMember.query.filter_by(group_id=group_id).all()
+        return schemas.group_members_schema.dump(members), 200
+    
+    def post(self, group_id):
+        group = db.session.get(models.Group, group_id)
+        if not group:
+            return {'error': 'Group not found'}, 404
+        
+        try:
+            data = request.get_json()
+            data['group_id'] = group_id
+            new_member = schemas.group_member_schema.load(data)
+            db.session.add(new_member)
+            db.session.commit()
+            return schemas.group_member_schema.dump(new_member), 201
+        except ValidationError as ve:
+            db.session.rollback()
+            return {'error': ve.messages}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 400
+        
+api.add_resource(GroupMembers, '/groups/<int:group_id>/members')
+
+class Events(Resource):
+    def get(self):
+        events = models.Event.query.order_by(models.Event.start_datetime.desc()).all()
+        return schemas.events_schema.dump(events), 200
+            
+    def post(self):
+        try:
+            data = request.get_json()
+            new_event = schemas.event_schema.load(data)
+            db.session.add(new_event)
+            db.session.commit()
+            return schemas.event_schema.dump(new_event), 200
+        except ValidationError as ve:
+            db.session.rollback()
+            return {'error': ve.messages}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+        
+api.add_resource(Events, '/events')
+
+class EventByID(Resource):
+    def get(self, event_id):
+        event = db.session.get(models.Event, event_id)
+        if not event:
+            return {'error': 'Event not found'}, 404
+        return schemas.event_schema.dump(event)
+    
+    def patch(self, event_id):
+        event = db.session.get(models.Event, event_id)
+        if not event:
+            return {'error': 'Event not found'}, 404
+        
+        try:
+            data = request.get_json()
+            if not data:
+                return {'error': 'Data not provided'}, 400
+            for key, value in data.items():
+                if hasattr(event, key):
+                    setattr(event, key, value)
+
+            db.session.commit()
+            return schemas.event_schema.dump(event), 200
+        except ValidationError as ve:
+            db.session.rollback()
+            return {'error', ve.messages}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {'error', str(e)}, 500
+        
+    def delete(self, event_id):
+        event = db.session.get(models.Event, event_id)
+        if not event:
+            return {'error': 'Event not found'}, 404
+        try:
+          db.session.delete(event)
+          db.session.commit()
+          return {'message': 'Event successfully deleted'}, 200
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+        
+api.add_resource(EventByID, '/events/<int:id>')
+
+class EventRegistrations(Resource):
+    def get(self, event_id):
+        event = db.session.get(models.Event, event_id)
+        if not event:
+            return {'error': 'Event not found'}, 404
+        
+        registrations = models.EventRegistration.query.filter_by(event_id=event_id).all()
+        return schemas.event_registrations_schema.dump(registrations), 200
+    
+    def post(self, event_id):
+        event = db.session.get(models.Event, event_id)
+        if not event:
+            return {'error': 'Event not found'}, 404
+        
+        try:
+            data = request.get_json()
+            if not data:
+                return {'error': 'Data not provided'}, 404
+            new_registration = schemas.event_registration_schema.load(data)
+            db.session.add(new_registration)
+            db.session.commit()
+            return schemas.event_registration_schema.dump(new_registration)
+        except ValidationError as ve:
+            db.session.rollback()
+            return {'error': ve.messages}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+        
+api.add_resource(EventRegistrations, '/events/<int:id>/registrations')
+
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
 
