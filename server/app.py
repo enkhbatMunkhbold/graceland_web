@@ -667,10 +667,12 @@ class SermonByID(Resource):
         
         try: 
             data = request.get_json()
-            new_sermon = schemas.sermon_schema.load(data)
-            db.session.add(new_sermon)
+            for key, value in data.items():
+                if hasattr(sermon, key):
+                    setattr(sermon, key, value)
             db.session.commit()
-            return schemas.sermon_schema.dump(new_sermon)
+            return schemas.sermon_schema.dump(sermon), 200
+        
         except ValidationError as ve:
             db.session.rollback()
             return {'error': ve.messages}, 400
@@ -692,6 +694,74 @@ class SermonByID(Resource):
             return {'error': str(e)}, 500
         
 api.add_resource(SermonByID, '/sermons/<int:sermon_id>')
+
+class Donation(Resource):
+    def get(self):
+        donations = models.Donation.query.all()
+        return schemas.donations_schema.dump(donations)
+    
+    def post(self):
+        try:
+          data = request.get_json()
+          new_donation = schemas.donation_schema.load(data)
+          db.session.add(new_donation)
+          db.session.commit()
+          return schemas.donation_schema.dump(new_donation)
+        except ValidationError as ve:
+            db.session.rollback()
+            return {'error': ve.messages}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+        
+api.add_resource(Donation, '/donations')
+
+class DonationByID(Resource):
+    def get(self, donation_id):
+        donation = db.session.get(models.Donation, donation_id)
+        if not donation:
+            return {'error': 'Donation not found'}, 404
+        
+        db.session.add(donation)
+        db.session.commit()
+        return schemas.donation_schema.dump(donation)
+    
+    def patch(self, donation_id):
+        donation = db.session.get(models.Donation, donation_id)
+        if not donation:
+            return {'error': 'Donation not found'}, 404
+        
+        try:
+          data = request.get_json()
+          for key, value in data.items():
+              if hasattr(donation, key):
+                  setattr(donation, key, value)
+          db.session.commit()
+          return schemas.donation_schema.dump(donation)
+        
+        except ValidationError as ve:
+            db.session.rollback()
+            return {'error': ve.messages}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+        
+    def delete(self, donation_id):
+        donation = db.session.get(models.Donation, donation_id)
+        if not donation:
+            return {'error': 'Donation not found'}, 404
+        
+        try:
+          db.session.delete(donation)
+          db.session.commit()
+          return {'message': 'Donation successfully deleted'}, 200
+        
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+        
+api.add_resource(DonationByID, '/donations/<int:donation_id')
+
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
