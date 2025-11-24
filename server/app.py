@@ -231,7 +231,7 @@ class MemberByID(Resource):
             db.session.rollback()
             return {'error': str(e)}, 500
         
-api.add_resource(MemberByID, '/members/<int:member_id')
+api.add_resource(MemberByID, '/members/<int:member_id>')
 
 class Ministries(Resource):
     def get(self):
@@ -373,7 +373,7 @@ class MinistryLeaderByID(Resource):
             db.session.rollback()
             return {'error': str(e)}, 500
 
-api.add_resource(MinistryLeaderByID, '/ministry/<int:ministry_id/leaders>/<int:leader_id>')          
+api.add_resource(MinistryLeaderByID, '/ministry/<int:ministry_id>/leaders>/<int:leader_id>')          
                     
 class MinistryMembers(Resource):
     def get(self, ministry_id):
@@ -628,7 +628,7 @@ class EventRegistrationByID(Resource):
             db.session.rollback()
             return {'error': str(e)}, 500
         
-api.add_resource(EventRegistrationByID, '/events/<int:event_id>/registrations/<int:registration_id') 
+api.add_resource(EventRegistrationByID, '/events/<int:event_id>/registrations/<int:registration_id>') 
 
 class Sermons(Resource):
     def get(self):
@@ -760,7 +760,7 @@ class DonationByID(Resource):
             db.session.rollback()
             return {'error': str(e)}, 500
         
-api.add_resource(DonationByID, '/donations/<int:donation_id')
+api.add_resource(DonationByID, '/donations/<int:donation_id>')
 
 
 if __name__ == '__main__':
