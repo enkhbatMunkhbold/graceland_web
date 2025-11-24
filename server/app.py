@@ -628,7 +628,70 @@ class EventRegistrationByID(Resource):
             db.session.rollback()
             return {'error': str(e)}, 500
         
-api.add_resource(EventRegistrationByID, '/events/<int:event_id>/registrations/<int:registration_id')            
+api.add_resource(EventRegistrationByID, '/events/<int:event_id>/registrations/<int:registration_id') 
+
+class Sermons(Resource):
+    def get(self):
+        sermons = models.Sermon.query.order_by(models.Sermon.date.desc()).all()
+        return schemas.sermons_schema.dump(sermons)
+    
+    def post(self):
+        try:
+            data = request.get_json()
+            new_sermon = schemas.sermon_schema.load(data)
+            db.session.add(new_sermon)
+            db.session.commit()
+            return schemas.sermon_schema.dump(new_sermon), 201
+        except ValidationError as ve:
+            db.session.rollback()
+            return {'error': ve.messages}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+        
+api.add_resource(Sermons, '/sermons')
+
+class SermonByID(Resource):
+    def get(self, sermon_id):
+        sermon = db.session.get(models.Sermon, sermon_id)
+        if not sermon:
+            return {'error': 'Sermon not found'}, 200
+        db.session.add(sermon)
+        db.session.commit()
+        return schemas.sermon_schema.dump(sermon)
+    
+    def patch(self, sermon_id):
+        sermon = db.session.get(models.Sermon, sermon_id)
+        if not sermon:
+            return {'error': 'Sermon not found'}, 404
+        
+        try: 
+            data = request.get_json()
+            new_sermon = schemas.sermon_schema.load(data)
+            db.session.add(new_sermon)
+            db.session.commit()
+            return schemas.sermon_schema.dump(new_sermon)
+        except ValidationError as ve:
+            db.session.rollback()
+            return {'error': ve.messages}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+        
+    def delete(self, sermon_id):
+        sermon = db.session.get(models.Sermon, sermon_id)
+        if not sermon:
+            return {'error': 'Sermon not found'}, 404
+        
+        try:
+            db.session.delete(sermon)
+            db.session.commit()
+            return {'message': 'Sermon successfully deleted'}, 200
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+        
+api.add_resource(SermonByID, '/sermons/<int:sermon_id>')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
