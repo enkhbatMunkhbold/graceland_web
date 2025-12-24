@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Book } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../services/api';

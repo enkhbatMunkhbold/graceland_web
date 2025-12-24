@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 
 const LanguageContext = createContext();
 
@@ -49,7 +49,7 @@ export const translations = {
     sermons: 'Номлол',
     groups: 'Бүлгүүд',
     contact: 'Холбоо барих',
-    give: 'Өгөх',
+    give: 'Өргөх',
     login: 'Нэвтрэх',
     welcome: 'Манай сүмд тавтай морилно уу',
     welcomeSubtext: 'Бидэнтэй хамт мөргөл, нөхөрлөлд оролцоорой',

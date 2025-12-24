@@ -1,102 +1,110 @@
-import React, { createContext, useContext, useState } from 'react';
+const API_BASE_URL = 'http://localhost:5555';
 
-const LanguageContext = createContext();
-
-export const translations = {
-  en: {
-    home: 'Home',
-    about: 'About',
-    ministries: 'Ministries',
-    events: 'Events',
-    sermons: 'Sermons',
-    groups: 'Groups',
-    contact: 'Contact',
-    give: 'Give',
-    login: 'Login',
-    welcome: 'Welcome to Our Church',
-    welcomeSubtext: 'Join us in worship and fellowship',
-    upcomingEvents: 'Upcoming Events',
-    latestSermons: 'Latest Sermons',
-    ourMinistries: 'Our Ministries',
-    viewAll: 'View All',
-    register: 'Register',
-    watchNow: 'Watch Now',
-    learnMore: 'Learn More',
-    serviceTimes: 'Service Times',
-    sundayMorning: 'Sunday Morning Worship',
-    sundayEvening: 'Sunday Evening Service',
-    wednesdayPrayer: 'Wednesday Prayer Meeting',
-    getInTouch: 'Get In Touch',
-    address: 'Address',
-    phoneNumber: 'Phone',
-    emailAddress: 'Email',
-    sendMessage: 'Send Message',
-    yourName: 'Your Name',
-    yourEmail: 'Your Email',
-    subject: 'Subject',
-    message: 'Message',
-    noEvents: 'No upcoming events',
-    location: 'Location',
-    noMinistries: 'No ministries available',
-    quickLinks: 'Quick Links',
-    copyright: '© 2024 Our Church. All rights reserved.',
+export const api = {
+  // Events
+  getEvents: async () => {
+    const response = await fetch(`${API_BASE_URL}/events`);
+    if (!response.ok) throw new Error('Failed to fetch events');
+    return response.json();
   },
-  mn: {
-    home: 'Нүүр',
-    about: 'Бидний тухай',
-    ministries: 'Үйлчлэлүүд',
-    events: 'Арга хэмжээ',
-    sermons: 'Номлол',
-    groups: 'Бүлгүүд',
-    contact: 'Холбоо барих',
-    give: 'Өгөх',
-    login: 'Нэвтрэх',
-    welcome: 'Манай сүмд тавтай морилно уу',
-    welcomeSubtext: 'Бидэнтэй хамт мөргөл, нөхөрлөлд оролцоорой',
-    upcomingEvents: 'Удахгүй болох арга хэмжээ',
-    latestSermons: 'Сүүлийн номлолууд',
-    ourMinistries: 'Манай үйлчлэлүүд',
-    viewAll: 'Бүгдийг үзэх',
-    register: 'Бүртгүүлэх',
-    watchNow: 'Үзэх',
-    learnMore: 'Дэлгэрэнгүй',
-    serviceTimes: 'Үйлчлэлийн цаг',
-    sundayMorning: 'Ням гаригийн өглөөний мөргөл',
-    sundayEvening: 'Ням гаригийн оройн үйлчлэл',
-    wednesdayPrayer: 'Лхагва гаригийн залбирлын цаг',
-    getInTouch: 'Холбогдох',
-    address: 'Хаяг',
-    phoneNumber: 'Утас',
-    emailAddress: 'Имэйл',
-    sendMessage: 'Мессеж илгээх',
-    yourName: 'Таны нэр',
-    yourEmail: 'Таны имэйл',
-    subject: 'Сэдэв',
-    message: 'Мессеж',
-    noEvents: 'Удахгүй болох арга хэмжээ байхгүй',
-    location: 'Байршил',
-    noMinistries: 'Үйлчлэл байхгүй байна',
-    quickLinks: 'Холбоосууд',
-    copyright: '© 2024 Манай сүм. Бүх эрх хуулиар хамгаалагдсан.',
+
+  getEventById: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/events/${id}`);
+    if (!response.ok) throw new Error('Failed to fetch event');
+    return response.json();
+  },
+
+  registerForEvent: async (eventId, data) => {
+    const response = await fetch(`${API_BASE_URL}/events/${eventId}/registrations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to register for event');
+    return response.json();
+  },
+
+  // Sermons
+  getSermons: async () => {
+    const response = await fetch(`${API_BASE_URL}/sermons`);
+    if (!response.ok) throw new Error('Failed to fetch sermons');
+    return response.json();
+  },
+
+  getSermonById: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/sermons/${id}`);
+    if (!response.ok) throw new Error('Failed to fetch sermon');
+    return response.json();
+  },
+
+  // Ministries
+  getMinistries: async () => {
+    const response = await fetch(`${API_BASE_URL}/ministries`);
+    if (!response.ok) throw new Error('Failed to fetch ministries');
+    return response.json();
+  },
+
+  getMinistryById: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/ministries/${id}`);
+    if (!response.ok) throw new Error('Failed to fetch ministry');
+    return response.json();
+  },
+
+  // Groups
+  getGroups: async () => {
+    const response = await fetch(`${API_BASE_URL}/groups`);
+    if (!response.ok) throw new Error('Failed to fetch groups');
+    return response.json();
+  },
+
+  // Contact
+  submitContact: async (data) => {
+    const response = await fetch(`${API_BASE_URL}/contact_messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to send message');
+    return response.json();
+  },
+
+  // Auth
+  login: async (username, password) => {
+    const response = await fetch(`${API_BASE_URL}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+      credentials: 'include'
+    });
+    if (!response.ok) throw new Error('Login failed');
+    return response.json();
+  },
+
+  signup: async (username, email, password) => {
+    const response = await fetch(`${API_BASE_URL}/sign_up`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, email, password }),
+      credentials: 'include'
+    });
+    if (!response.ok) throw new Error('Signup failed');
+    return response.json();
+  },
+
+  checkSession: async () => {
+    const response = await fetch(`${API_BASE_URL}/check_session`, {
+      credentials: 'include'
+    });
+    if (!response.ok) return null;
+    return response.json();
+  },
+
+  logout: async () => {
+    const response = await fetch(`${API_BASE_URL}/logout`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+    if (!response.ok) throw new Error('Logout failed');
+    return response.json();
   }
 };
-
-export function LanguageProvider({ children }) {
-  const [language, setLanguage] = useState('en');
-
-  const toggleLanguage = () => {
-    setLanguage(prev => prev === 'en' ? 'mn' : 'en');
-  };
-
-  const t = (key) => translations[language][key] || key;
-
-  return (
-    <LanguageContext.Provider value={{ language, toggleLanguage, t }}>
-      {children}
-    </LanguageContext.Provider>
-  );
-}
-
-export function useLanguage() {
-  return useContext(LanguageContext);
-}
