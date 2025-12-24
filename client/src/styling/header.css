@@ -95,6 +95,13 @@
   height: 1.25rem;
 }
 
+.flag-icon {
+  width: 1.5rem;
+  height: 1.125rem;
+  display: block;
+  border-radius: 0.125rem;
+}
+
 .language-text {
   font-size: 0.875rem;
   font-weight: 500;

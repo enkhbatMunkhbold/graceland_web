@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Book, Menu, X, Globe } from 'lucide-react';
+import { Book, Menu, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { MN, US } from 'country-flag-icons/react/3x2';
 import '../styling/header.css';
 
 function Header() {
@@ -49,7 +50,11 @@ function Header() {
               onClick={toggleLanguage}
               className="language-toggle"
             >
-              <Globe className="language-icon" />
+              {language === 'en' ? (
+                <MN className="flag-icon" />
+              ) : (
+                <US className="flag-icon" />
+              )}
               <span className="language-text">{language === 'en' ? 'MN' : 'EN'}</span>
             </button>
             
