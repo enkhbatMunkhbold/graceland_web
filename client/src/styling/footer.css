@@ -1,7 +1,8 @@
 .footer {
-  background-color: #111827;
+  background-color: transparent;
   color: white;
   padding: 3rem 0;
+  position: relative;
 }
 
 .footer-container {
@@ -56,13 +57,16 @@
 }
 
 .footer-description {
-  color: #9ca3af;
+  color: #ffffff;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .footer-heading {
   font-size: 1.125rem;
   font-weight: 600;
   margin-bottom: 1rem;
+  color: #ffffff;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .footer-links,
@@ -76,23 +80,27 @@
 }
 
 .footer-link {
-  color: #9ca3af;
+  color: #ffffff;
   text-decoration: none;
   transition: color 0.2s;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .footer-link:hover {
-  color: white;
+  color: #bfdbfe;
+  text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.9), 0 0 15px rgba(0, 0, 0, 0.6);
 }
 
 .footer-services {
-  color: #9ca3af;
+  color: #ffffff;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .footer-bottom {
-  border-top: 1px solid #374151;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
   padding-top: 2rem;
   text-align: center;
-  color: #9ca3af;
+  color: #ffffff;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.5);
 }
 

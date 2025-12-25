@@ -27,7 +27,7 @@ function Header() {
               <Book className="logo-icon-svg" />
             </div>
             <span className="logo-text">
-              {language === 'en' ? 'Graceland Bible Church' : 'Ивээлт Нутаг Цуглаан'}
+              {t('churchName')}
             </span>
           </div>
 

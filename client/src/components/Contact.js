@@ -44,7 +44,7 @@ function Contact() {
               <MapPin className="info-icon" />
               <div>
                 <h3 className="info-title">{t('address')}</h3>
-                <p className="info-text">123 Church Street<br />Ulaanbaatar, Mongolia</p>
+                <p className="info-text">1955 Geary Rd.<br />Walnut Creek,<br />CA 94597</p>
               </div>
             </div>
             
@@ -60,7 +60,7 @@ function Contact() {
               <Mail className="info-icon" />
               <div>
                 <h3 className="info-title">{t('emailAddress')}</h3>
-                <p className="info-text">info@ourchurch.mn</p>
+                <p className="info-text">graceland@bible.church</p>
               </div>
             </div>
           </div>

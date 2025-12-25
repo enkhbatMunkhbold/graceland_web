@@ -1,9 +1,5 @@
 .home-section {
   position: relative;
-  background-image: url('../assets/mongolian-graceland.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   background-color: transparent;
   color: white;
   padding: 6rem 0;
@@ -33,6 +29,20 @@
   }
 }
 
+.church-name {
+  text-transform: uppercase;
+}
+
+.welcome-message {
+  font-size: 1.75rem;
+}
+
+@media (min-width: 768px) {
+  .welcome-message {
+    font-size: 2.25rem;
+  }
+}
+
 .home-subtitle {
   font-size: 1.25rem;
   margin-bottom: 2rem;
@@ -44,6 +54,20 @@
 @media (min-width: 768px) {
   .home-subtitle {
     font-size: 1.5rem;
+  }
+}
+
+.home-description {
+  font-size: 1.125rem;
+  margin-bottom: 2rem;
+  color: #ffffff;
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 0, 0, 0.5);
+  font-weight: 400;
+}
+
+@media (min-width: 768px) {
+  .home-description {
+    font-size: 1.25rem;
   }
 }
 

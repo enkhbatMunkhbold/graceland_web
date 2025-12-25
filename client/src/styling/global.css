@@ -31,3 +31,12 @@ button {
 html {
   scroll-behavior: smooth;
 }
+
+.App {
+  background-image: url('../assets/mongolian-graceland.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  min-height: 100vh;
+}

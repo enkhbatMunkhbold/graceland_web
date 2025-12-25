@@ -1,17 +1,26 @@
-import React from 'react';
 import { Clock } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import '../styling/home.css';
 
 function Home() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   return (
     <section id="home" className="home-section">
       <div className="home-container">
         <div className="home-content">
-          <h1 className="home-title">{t('welcome')}</h1>
-          <p className="home-subtitle">{t('welcomeSubtext')}</p>
+          {language === 'mn' ? (
+            <>
+              <h1 className="home-title church-name">{t('churchName')}</h1>
+              <p className="home-subtitle welcome-message">{t('welcome')}</p>
+            </>
+          ) : (
+            <>
+              <h1 className="home-title welcome-message">{t('welcome')}</h1>
+              <p className="home-subtitle church-name">{t('churchName')}</p>
+            </>
+          )}
+          <p className="home-description">{t('welcomeSubtext')}</p>
           
           {/* Service Times */}
           <div className="service-times">

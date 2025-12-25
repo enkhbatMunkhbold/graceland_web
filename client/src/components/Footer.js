@@ -1,4 +1,3 @@
-import React from 'react';
 import { Book } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import '../styling/footer.css';
