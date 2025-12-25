@@ -18,17 +18,17 @@ function Home() {
             <div className="service-card">
               <Clock className="service-icon" />
               <h3 className="service-title">{t('sundayMorning')}</h3>
-              <p className="service-time">9:00 AM</p>
+              <p className="service-time">3:00 PM</p>
             </div>
             <div className="service-card">
               <Clock className="service-icon" />
               <h3 className="service-title">{t('sundayEvening')}</h3>
-              <p className="service-time">6:00 PM</p>
+              <p className="service-time">7:00 PM</p>
             </div>
             <div className="service-card">
               <Clock className="service-icon" />
               <h3 className="service-title">{t('wednesdayPrayer')}</h3>
-              <p className="service-time">7:00 PM</p>
+              <p className="service-time">9:30 PM</p>
             </div>
           </div>
         </div>

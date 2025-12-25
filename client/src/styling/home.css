@@ -1,6 +1,10 @@
 .home-section {
   position: relative;
-  background: linear-gradient(to right, #2563eb, #1e40af);
+  background-image: url('../assets/mongolian-graceland.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: transparent;
   color: white;
   padding: 6rem 0;
 }
@@ -19,6 +23,8 @@
   font-size: 2.25rem;
   font-weight: 700;
   margin-bottom: 1.5rem;
+  color: #ffffff;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.5);
 }
 
 @media (min-width: 768px) {
@@ -30,7 +36,9 @@
 .home-subtitle {
   font-size: 1.25rem;
   margin-bottom: 2rem;
-  color: #bfdbfe;
+  color: #ffffff;
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 0, 0, 0.5);
+  font-weight: 500;
 }
 
 @media (min-width: 768px) {
@@ -56,23 +64,31 @@
 }
 
 .service-card {
-  background-color: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(4px);
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
   padding: 1.5rem;
   border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 .service-icon {
   width: 2rem;
   height: 2rem;
   margin: 0 auto 0.75rem;
+  color: #ffffff;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
 }
 
 .service-title {
   font-weight: 600;
   margin-bottom: 0.5rem;
+  color: #ffffff;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .service-time {
-  color: #bfdbfe;
+  color: #ffffff;
+  font-weight: 500;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.5);
 }
