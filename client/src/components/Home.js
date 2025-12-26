@@ -12,12 +12,12 @@ function Home() {
           {language === 'mn' ? (
             <>
               <h1 className="home-title church-name">{t('churchName')}</h1>
-              <p className="home-subtitle welcome-message">{t('welcome')}</p>
+              <h1 className="home-title welcome-message">{t('welcome')}</h1>
             </>
           ) : (
             <>
               <h1 className="home-title welcome-message">{t('welcome')}</h1>
-              <p className="home-subtitle church-name">{t('churchName')}</p>
+              <h1 className="home-title church-name">{t('churchName')}</h1>
             </>
           )}
           <p className="home-description">{t('welcomeSubtext')}</p>

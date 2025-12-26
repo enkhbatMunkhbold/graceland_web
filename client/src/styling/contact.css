@@ -1,12 +1,26 @@
 .contact-section {
   padding: 4rem 0;
-  background-color: white;
+  background-color: rgba(251, 146, 60, 0.6);
+  color: white;
 }
 
 .contact-container {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 1rem;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.section-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: white;
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 0, 0, 0.5);
 }
 
 .contact-grid {
@@ -43,10 +57,13 @@
 .info-title {
   font-weight: 600;
   margin-bottom: 0.25rem;
+  color: white;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .info-text {
-  color: #6b7280;
+  color: white;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .contact-form {

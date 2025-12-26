@@ -3,6 +3,9 @@
   background-color: transparent;
   color: white;
   padding: 6rem 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
 }
 
 .home-container {
@@ -18,9 +21,17 @@
 .home-title {
   font-size: 2.25rem;
   font-weight: 700;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
   color: #ffffff;
   text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.home-title + .home-title {
+  margin-top: 0;
+}
+
+.home-content .home-title:last-of-type {
+  margin-bottom: 1.5rem;
 }
 
 @media (min-width: 768px) {
@@ -34,12 +45,15 @@
 }
 
 .welcome-message {
-  font-size: 1.75rem;
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.5);
 }
 
 @media (min-width: 768px) {
   .welcome-message {
-    font-size: 2.25rem;
+    font-size: 3.75rem;
   }
 }
 

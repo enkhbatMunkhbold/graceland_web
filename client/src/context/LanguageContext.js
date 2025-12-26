@@ -14,7 +14,7 @@ export const translations = {
     give: 'Give',
     login: 'Login',
     churchName: 'Graceland Bible Church',
-    welcome: 'Welcome to !',
+    welcome: 'Welcome to',
     welcomeSubtext: 'Join us in worship and fellowship!',
     upcomingEvents: 'Upcoming Events',
     latestSermons: 'Latest Sermons',

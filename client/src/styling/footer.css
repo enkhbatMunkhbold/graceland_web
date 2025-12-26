@@ -1,5 +1,5 @@
 .footer {
-  background-color: transparent;
+  background-color: rgba(75, 85, 99, 0.6);
   color: white;
   padding: 3rem 0;
   position: relative;
@@ -24,9 +24,6 @@
   }
 }
 
-.footer-column {
-  /* Spacing handled by grid */
-}
 
 .footer-logo {
   display: flex;

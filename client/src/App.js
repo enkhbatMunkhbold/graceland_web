@@ -1,6 +1,7 @@
 import { LanguageProvider } from './context/LanguageContext';
 import Header from './components/Header';
 import Home from './components/Home';
+import About from './components/About';
 import Events from './components/Events';
 import Ministries from './components/Ministries';
 import Sermons from './components/Sermons';
@@ -14,6 +15,7 @@ function App() {
       <div className="App">
         <Header />
         <Home />
+        <About />
         <Events />
         <Ministries />
         <Sermons />

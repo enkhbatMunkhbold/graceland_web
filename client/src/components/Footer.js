@@ -14,7 +14,7 @@ function Footer() {
               <div className="footer-logo-icon">
                 <Book className="footer-icon" />
               </div>
-              <span className="footer-logo-text">Our Church</span>
+              <span className="footer-logo-text">{t('churchName')}</span>
             </div>
             <p className="footer-description">
               {t('welcomeSubtext')}
