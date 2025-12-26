@@ -40,7 +40,7 @@ export const translations = {
     location: 'Location',
     noMinistries: 'No ministries available',
     quickLinks: 'Quick Links',
-    copyright: '© 2024 Our Church. All rights reserved.',
+    copyright: '© 2024 GBC. All rights reserved.',
   },
   mn: {
     home: 'Нүүр',
