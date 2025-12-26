@@ -27,7 +27,11 @@ function Sermons() {
     return (
       <section id="sermons" className="sermons-section">
         <div className="sermons-container">
-          <h2 className="section-title">{t('latestSermons')}</h2>
+          <h2 className="section-title">
+            {t('latestSermons').split(' ').map((word, index) => (
+              <span key={index} className="word">{word}</span>
+            ))}
+          </h2>
           <div className="loading">Loading...</div>
         </div>
       </section>
@@ -38,7 +42,11 @@ function Sermons() {
     return (
       <section id="sermons" className="sermons-section">
         <div className="sermons-container">
-          <h2 className="section-title">{t('latestSermons')}</h2>
+          <h2 className="section-title">
+            {t('latestSermons').split(' ').map((word, index) => (
+              <span key={index} className="word">{word}</span>
+            ))}
+          </h2>
           <div className="error">Error: {error}</div>
         </div>
       </section>
@@ -49,7 +57,11 @@ function Sermons() {
     <section id="sermons" className="sermons-section">
       <div className="sermons-container">
         <div className="section-header">
-          <h2 className="section-title">{t('latestSermons')}</h2>
+          <h2 className="section-title">
+            {t('latestSermons').split(' ').map((word, index) => (
+              <span key={index} className="word">{word}</span>
+            ))}
+          </h2>
         </div>
 
         <div className="sermons-grid">

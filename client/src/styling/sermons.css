@@ -5,14 +5,29 @@
 }
 
 .sermons-container {
-  max-width: 1280px;
+  max-width: 700px;
   margin: 0 auto;
   padding: 0 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+@media (max-width: 768px) {
+  .sermons-container {
+    flex-direction: column;
+  }
+  
+  .section-header,
+  .sermons-grid {
+    width: 100%;
+  }
 }
 
 .section-header {
   text-align: left;
-  margin-bottom: 3rem;
+  flex: 0 0 30%;
+  width: 30%;
 }
 
 .section-title {
@@ -21,6 +36,13 @@
   margin-bottom: 1rem;
   color: white;
   text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.section-title .word {
+  display: block;
 }
 
 .loading,
@@ -38,6 +60,8 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
+  flex: 0 0 70%;
+  width: 70%;
 }
 
 @media (min-width: 768px) {

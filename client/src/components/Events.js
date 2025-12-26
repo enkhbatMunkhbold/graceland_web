@@ -27,7 +27,11 @@ function Events() {
     return (
       <section id="events" className="events-section">
         <div className="events-container">
-          <h2 className="section-title">{t('upcomingEvents')}</h2>
+          <h2 className="section-title">
+            {t('upcomingEvents').split(' ').map((word, index) => (
+              <span key={index} className="word">{word}</span>
+            ))}
+          </h2>
           <div className="loading">Loading...</div>
         </div>
       </section>
@@ -38,7 +42,11 @@ function Events() {
     return (
       <section id="events" className="events-section">
         <div className="events-container">
-          <h2 className="section-title">{t('upcomingEvents')}</h2>
+          <h2 className="section-title">
+            {t('upcomingEvents').split(' ').map((word, index) => (
+              <span key={index} className="word">{word}</span>
+            ))}
+          </h2>
           <div className="error">Error: {error}</div>
         </div>
       </section>
@@ -49,7 +57,11 @@ function Events() {
     <section id="events" className="events-section">
       <div className="events-container">
         <div className="section-header">
-          <h2 className="section-title">{t('upcomingEvents')}</h2>
+          <h2 className="section-title">
+            {t('upcomingEvents').split(' ').map((word, index) => (
+              <span key={index} className="word">{word}</span>
+            ))}
+          </h2>
         </div>
 
         {events.length === 0 ? (

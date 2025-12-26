@@ -9,7 +9,11 @@ function About() {
     <section id="about" className="about-section">
       <div className="about-container">
         <div className="section-header">
-          <h2 className="section-title">{t('about')}</h2>
+          <h2 className="section-title">
+            {t('about').split(' ').map((word, index) => (
+              <span key={index} className="word">{word}</span>
+            ))}
+          </h2>
         </div>
         <div className="about-content">
           <p className="about-text">

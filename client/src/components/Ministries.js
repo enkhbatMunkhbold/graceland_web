@@ -29,7 +29,11 @@ function Ministries() {
     return (
       <section id="ministries" className="ministries-section">
         <div className="ministries-container">
-          <h2 className="section-title">{t('ourMinistries')}</h2>
+          <h2 className="section-title">
+            {t('ourMinistries').split(' ').map((word, index) => (
+              <span key={index} className="word">{word}</span>
+            ))}
+          </h2>
           <div className="loading">Loading...</div>
         </div>
       </section>
@@ -40,7 +44,11 @@ function Ministries() {
     return (
       <section id="ministries" className="ministries-section">
         <div className="ministries-container">
-          <h2 className="section-title">{t('ourMinistries')}</h2>
+          <h2 className="section-title">
+            {t('ourMinistries').split(' ').map((word, index) => (
+              <span key={index} className="word">{word}</span>
+            ))}
+          </h2>
           <div className="error">Error: {error}</div>
         </div>
       </section>
@@ -51,7 +59,11 @@ function Ministries() {
     <section id="ministries" className="ministries-section">
       <div className="ministries-container">
         <div className="section-header">
-          <h2 className="section-title">{t('ourMinistries')}</h2>
+          <h2 className="section-title">
+            {t('ourMinistries').split(' ').map((word, index) => (
+              <span key={index} className="word">{word}</span>
+            ))}
+          </h2>
         </div>
 
         {ministries.length === 0 ? (
