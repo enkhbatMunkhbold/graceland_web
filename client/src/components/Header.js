@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Book, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { MN, US } from 'country-flag-icons/react/3x2';
+import logoImage from '../assets/logo_with_name.png';
 import '../styling/header.css';
 
 function Header() {
@@ -24,11 +25,8 @@ function Header() {
           {/* Logo */}
           <div className="logo">
             <div className="logo-icon">
-              <Book className="logo-icon-svg" />
+              <img src={logoImage} alt={t('churchName')} className="logo-image" />
             </div>
-            <span className="logo-text">
-              {t('churchName')}
-            </span>
           </div>
 
           {/* Desktop Navigation */}

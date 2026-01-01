@@ -11,13 +11,23 @@ function Home() {
         <div className="home-content">
           {language === 'mn' ? (
             <>
-              <h1 className="home-title church-name">{t('churchName')}</h1>
-              <h1 className="home-title welcome-message">{t('welcome')}</h1>
+              <div className="welcome-to">{t('welcome')}</div>
+              <h1 className="home-title church-name">
+                {t('churchName').split(' ').map((word, index) => (
+                  <span key={index} className="church-name-word">{word}</span>
+                ))}
+              </h1>
+              <div className="church-name-line"></div>
             </>
           ) : (
             <>
-              <h1 className="home-title welcome-message">{t('welcome')}</h1>
-              <h1 className="home-title church-name">{t('churchName')}</h1>
+              <div className="welcome-to">{t('welcome')}</div>
+              <h1 className="home-title church-name">
+                {t('churchName').split(' ').map((word, index) => (
+                  <span key={index} className="church-name-word">{word}</span>
+                ))}
+              </h1>
+              <div className="church-name-line"></div>
             </>
           )}
           <p className="home-description">{t('welcomeSubtext')}</p>
