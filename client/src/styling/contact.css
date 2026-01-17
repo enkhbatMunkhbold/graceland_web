@@ -94,6 +94,14 @@
   line-height: 1.5;
 }
 
+.info-item:first-child .info-text {
+  text-transform: none;
+}
+
+.info-item:last-child .info-text {
+  text-transform: none;
+}
+
 .contact-form {
   display: flex;
   flex-direction: column;
