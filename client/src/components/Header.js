@@ -15,7 +15,8 @@ function Header() {
     { label: t('ministries'), href: '#ministries' },
     { label: t('events'), href: '#events' },
     { label: t('sermons'), href: '#sermons' },
-    { label: t('contact'), href: '#contact' },
+    { label: t('give'), href: '#give' },
+    { label: t('contact'), href: '#contact' },    
   ];
 
   return (
@@ -57,7 +58,7 @@ function Header() {
             </button>
             
             <button className="give-button">
-              {t('give')}
+              {t('login')}
             </button>
 
             {/* Mobile menu button */}
@@ -85,7 +86,7 @@ function Header() {
                 </a>
               ))}
               <button className="give-button-mobile">
-                {t('give')}
+                {t('login')}
               </button>
             </nav>
           </div>

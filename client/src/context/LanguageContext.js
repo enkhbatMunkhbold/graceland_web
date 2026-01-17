@@ -66,7 +66,7 @@ export const translations = {
     sundayMorning: 'Ням гаригийн цуглаан',
     sundayEvening: 'Лхагва гаригийн залуучуудын цуглаан',
     wednesdayPrayer: 'Баасан гаригийн оройн залбирал',
-    getInTouch: 'Холбогдох',
+    getInTouch: 'Бидэнтэй холбогдох',
     address: 'Хаяг',
     phoneNumber: 'Утас',
     emailAddress: 'Имэйл',
