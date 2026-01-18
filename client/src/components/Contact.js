@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MapPin, Phone, Mail } from 'lucide-react';
+import { MapPin, Mail } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../services/api';
 import '../styling/contact.css';
@@ -45,14 +45,6 @@ function Contact() {
               <div>
                 <h3 className="info-title">{t('address')}</h3>
                 <p className="info-text">1955 Geary Rd.<br />Walnut Creek,<br />CA 94597</p>
-              </div>
-            </div>
-            
-            <div className="info-item">
-              <Phone className="info-icon" />
-              <div>
-                <h3 className="info-title">{t('phoneNumber')}</h3>
-                <p className="info-text">+976 1234 5678</p>
               </div>
             </div>
             
