@@ -5,12 +5,19 @@
 }
 
 .sermons-container {
-  max-width: 700px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 0 1rem;
   display: flex;
   align-items: flex-start;
   gap: 2rem;
+  position: relative;
+}
+
+@media (max-width: 1000px) {
+  .sermons-grid {
+    left: calc(1rem + 290.4px + 3rem + 2rem);
+  }
 }
 
 @media (max-width: 768px) {
@@ -18,9 +25,15 @@
     flex-direction: column;
   }
   
-  .section-header,
-  .sermons-grid {
+  .section-header {
     width: 100%;
+  }
+  
+  .sermons-grid {
+    position: static;
+    left: auto;
+    width: 100%;
+    max-width: 100%;
   }
 }
 
@@ -35,6 +48,7 @@
   font-size: 3rem;
   font-weight: 1000;
   margin-bottom: 0.5rem;
+  margin-right: 3rem;
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -71,11 +85,14 @@
 }
 
 .sermons-grid {
+  position: absolute;
+  /* left: calc(50vw - 113.6px); */
+  margin-left: 500px;
+  width: calc(1000px * 0.7);
+  max-width: calc(50vw + 113.6px - 2rem);
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
-  flex: 0 0 70%;
-  width: 70%;
 }
 
 @media (min-width: 768px) {
