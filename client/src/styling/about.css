@@ -2,7 +2,7 @@
   padding: 4rem 0;
   background-color: rgba(220, 210, 170, 0.75);
   color: white;
-  height: 15rem;
+  height: 20rem;
 }
 
 .about-container {
@@ -13,6 +13,11 @@
   align-items: flex-start;
   gap: 2rem;
   position: relative;
+}
+
+.section-header {
+  display: flex;
+  align-items: flex-start;
 }
 
 @media (max-width: 1000px) {
@@ -74,7 +79,10 @@
   margin-left: 500px;
   /* left: calc(50vw - 113.6px); */
   width: calc(1000px * 0.7);
-  max-width: calc(50vw + 113.6px - 2rem);  
+  max-width: calc(50vw + 113.6px - 2rem);
+  top: 0;
+  display: flex;
+  align-items: flex-start;
 }
 
 .about-text {

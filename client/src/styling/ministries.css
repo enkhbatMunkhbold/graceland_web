@@ -2,7 +2,7 @@
   padding: 4rem 0;
   background-color: rgba(34, 197, 94, 0.6);
   color: white;
-  height: 15rem;
+  height: 20rem;
 }
 
 .ministries-container {
@@ -13,6 +13,11 @@
   align-items: flex-start;
   gap: 2rem;
   position: relative;
+}
+
+.section-header {
+  display: flex;
+  align-items: flex-start;
 }
 
 @media (max-width: 1000px) {
@@ -95,6 +100,8 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
+  top: 0;
+  align-items: flex-start;
 }
 
 .no-ministries {
@@ -103,6 +110,9 @@
   /* left: calc(50vw - 113.6px); */
   width: calc(1000px * 0.7);
   max-width: calc(50vw + 113.6px - 2rem);
+  top: 0;
+  display: flex;
+  align-items: flex-start;
 }
 
 @media (min-width: 768px) {

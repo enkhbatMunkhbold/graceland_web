@@ -75,7 +75,7 @@ export const translations = {
     yourEmail: 'Таны имэйл',
     subject: 'Сэдэв',
     message: 'Мессеж',
-    noEvents: 'Удахгүй болох арга хэмжээ байхгүй байна.',
+    noEvents: 'Одоогоор арга хэмжээ байхгүй байна.',
     location: 'Байршил',
     noMinistries: 'Одоогоор үйлчлэл байхгүй байна.',
     quickLinks: 'Холбоосууд',
