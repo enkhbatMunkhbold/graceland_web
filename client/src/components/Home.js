@@ -56,6 +56,20 @@ function Home() {
           </div>
         </div>
       </div>
+      {/* <div className='about'>
+        <h2 className="title">
+          {t('about').split(' ').map((word, index) => (
+            <span key={index} className="word">{word}</span>
+          ))}
+        </h2>        
+        <div className="content">
+          <p className="text">
+            {t('about') === 'About' 
+              ? 'We are a community of believers dedicated to serving God and spreading His word. Join us in worship and fellowship as we grow together in faith.'
+              : 'Бид Бурханы үгийг түгээх, Бурханд үйлчлэхэд зориулсан итгэлтнүүдийн нийгэмлэг юм. Итгэлдээ хамтдаа өсөж, үйлчлэл, нөхөрлөлд оролцоорой.'}
+          </p>
+        </div>
+      </div>               */}
     </section>
   );
 }

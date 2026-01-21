@@ -1,13 +1,12 @@
-import React from 'react';
-import { useLanguage } from '../context/LanguageContext';
+// import { useLanguage } from '../context/LanguageContext';
 import '../styling/about.css';
 
 function About() {
-  const { t } = useLanguage();
+  // const { t } = useLanguage();
 
   return (
     <section id="about" className="about-section">
-      <div className="about-container">
+      {/* <div className="about-container">
         <div className="section-header">
           <h2 className="section-title">
             {t('about').split(' ').map((word, index) => (
@@ -22,7 +21,7 @@ function About() {
               : 'Бид Бурханы үгийг түгээх, Бурханд үйлчлэхэд зориулсан итгэлтнүүдийн нийгэмлэг юм. Итгэлдээ хамтдаа өсөж, үйлчлэл, нөхөрлөлд оролцоорой.'}
           </p>
         </div>
-      </div>
+      </div> */}
     </section>
   );
 }

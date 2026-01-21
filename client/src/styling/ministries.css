@@ -53,9 +53,9 @@
 
 .section-title {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  font-size: 3rem;
+  font-size: 7rem;
   font-weight: 800;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   margin-right: 3rem;
   color: #ffffff;
   display: flex;
@@ -63,7 +63,7 @@
   align-items: flex-start;
   line-height: 0.6;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
   text-align: left;
 }
 
@@ -79,12 +79,12 @@
 .loading,
 .error {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  font-size: 1rem;
+  font-size: 1.2rem;
   font-weight: 800;
   text-transform: uppercase;
   color: #ffffff;
-  letter-spacing: 0.15em;
-  line-height: 1.5;
+  letter-spacing: 0.1em;
+  line-height: 1;
   text-align: center;
 }
 
@@ -94,7 +94,8 @@
 
 .ministries-grid {
   position: absolute;
-  left: calc(50vw - 113.6px);
+  /* left: calc(50vw - 113.6px); */
+  margin-left: 500px;
   width: calc(1000px * 0.7);
   max-width: calc(50vw + 113.6px - 2rem);
   display: grid;
@@ -200,7 +201,7 @@
   font-weight: 800;
   /* text-transform: uppercase; */
   color: #ffffff;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.1em;
   line-height: 1.5;
   text-align: left;
 }
