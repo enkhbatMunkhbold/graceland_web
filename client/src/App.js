@@ -1,4 +1,7 @@
+import { useContext } from 'react';
 import { LanguageProvider } from './context/LanguageContext';
+import UserContext, { UserProvider} from './context/UserContext';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Home from './components/Home';
 import About from './components/About';
@@ -9,19 +12,47 @@ import Contact from './components/Contact';
 import Footer from './components/Footer';
 import './styling/global.css';
 
+function AppContent() {
+  const { user, isLoading } = useContext(UserContext)
+
+  if(isLoading) {
+    return <div>Loading...</div>
+  }
+
+  return (
+    <Router>
+      <Header />
+      <div className="App">
+        {user ? (
+          <Routes>
+            <Route path="/home" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/ministries" element={<Ministries />} />
+            <Route path="/sermons" element={<Sermons />} />
+            <Route path="*" element={<Navigate to="/home" replace />} />
+          </Routes>          
+        ) : (
+          <Routes>
+            <Route path="/" element={<Navigate to="/SignUp" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/SignUp" element={<SignUp />} />
+            <Route path="*" element={<Navigate to="login" replace />} />
+          </Routes>
+        )}       
+      </div>
+      <Contact />
+      <Footer />
+    </Router>
+  )
+}
+
 function App() {
   return (
     <LanguageProvider>
-      <div className="App">
-        <Header />
-        <Home />
-        <About />
-        <Events />
-        <Ministries />
-        <Sermons />
-        <Contact />
-        <Footer />
-      </div>
+      <UserProvider>
+        <AppContent/>
+      </UserProvider>      
     </LanguageProvider>
   );
 }
