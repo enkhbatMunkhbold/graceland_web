@@ -97,7 +97,7 @@
   font-weight: 500;
 }
 
-.give-button {
+.login-button {
   display: none;
   background-color: #2563eb;
   color: white;
@@ -109,12 +109,33 @@
 }
 
 @media (min-width: 768px) {
-  .give-button {
+  .login-button {
     display: block;
   }
 }
 
-.give-button:hover {
+.login-button:hover {
+  background-color: #1d4ed8;
+}
+
+.logout-button {
+  display: none;
+  background-color: #2563eb;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+@media (min-width: 768px) {
+  .logout-button {
+    display: block;
+  }
+}
+
+.logout-button:hover {
   background-color: #1d4ed8;
 }
 
@@ -164,7 +185,7 @@
   color: #2563eb;
 }
 
-.give-button-mobile {
+.login-button-mobile {
   background-color: #2563eb;
   color: white;
   padding: 0.5rem 1rem;
@@ -175,6 +196,21 @@
   transition: background-color 0.2s;
 }
 
-.give-button-mobile:hover {
+.login-button-mobile:hover {
+  background-color: #1d4ed8;
+}
+
+.logout-button-mobile {
+  background-color: #2563eb;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.2s;
+}
+
+.logout-button-mobile:hover {
   background-color: #1d4ed8;
 }

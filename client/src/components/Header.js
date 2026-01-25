@@ -1,13 +1,34 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { MN, US } from 'country-flag-icons/react/3x2';
+import UserContext from '../context/UserContext';
+import { api } from '../services/api';
 import logoImage from '../assets/logo_with_name.png';
 import '../styling/header.css';
 
 function Header() {
+  const { user, setUser } = useContext(UserContext)
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { language, toggleLanguage, t } = useLanguage();
+  const navigate = useNavigate()
+
+  const handleAuthClick = async () => {
+    if (user) {
+      // Logout
+      try {
+        await api.logout();
+        setUser(null);
+        navigate('/home');
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
+    } else {
+      // Navigate to login
+      navigate('/login');
+    }
+  };
 
   const navItems = [
     { label: t('home'), href: '#home' },
@@ -57,8 +78,11 @@ function Header() {
               <span className="language-text">{language === 'en' ? 'MN' : 'EN'}</span>
             </button>
             
-            <button className="give-button">
-              {t('login')}
+            <button 
+              className={user ? "logout-button" : "login-button"}
+              onClick={handleAuthClick}
+            >
+              {user ? t('logout') : t('login')}
             </button>
 
             {/* Mobile menu button */}
@@ -85,8 +109,14 @@ function Header() {
                   {item.label}
                 </a>
               ))}
-              <button className="give-button-mobile">
-                {t('login')}
+              <button 
+                className={user ? "logout-button-mobile" : "login-button-mobile"}
+                onClick={() => {
+                  handleAuthClick();
+                  setIsMenuOpen(false);
+                }}
+              >
+                {user ? t('logout') : t('login')}
               </button>
             </nav>
           </div>
