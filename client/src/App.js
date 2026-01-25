@@ -10,6 +10,8 @@ import Ministries from './components/Ministries';
 import Sermons from './components/Sermons';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
+import Login from './components/Login';
+import SignUp from './components/SignUp';
 import './styling/global.css';
 
 function AppContent() {
@@ -34,10 +36,11 @@ function AppContent() {
           </Routes>          
         ) : (
           <Routes>
-            <Route path="/" element={<Navigate to="/SignUp" replace />} />
+            <Route path="/" element={<Navigate to="/home" replace />} />
+            <Route path="/home" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/SignUp" element={<SignUp />} />
-            <Route path="*" element={<Navigate to="login" replace />} />
+            <Route path="*" element={<Navigate to="home" replace />} />
           </Routes>
         )}       
       </div>

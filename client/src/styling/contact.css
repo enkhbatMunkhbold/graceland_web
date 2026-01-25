@@ -3,6 +3,7 @@
   padding: 4rem 0;
   background-color: rgba(251, 146, 60, 0.6);
   color: white;
+  position: relative;
 }
 
 .contact-container {

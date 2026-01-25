@@ -12,6 +12,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
   color: #111827;
+  background-image: url('../assets/Shining\ star.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  min-height: 100vh;
 }
 
 code {
@@ -33,10 +39,5 @@ html {
 }
 
 .App {
-  background-image: url('../assets/Shining\ star.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
   min-height: 100vh;
 }
