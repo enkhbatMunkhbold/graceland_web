@@ -82,6 +82,14 @@
   opacity: 0.6;
 }
 
+.form-group input:invalid:not(:focus):not(:placeholder-shown) {
+  border-color: #ef4444;
+}
+
+.form-group input:valid:not(:focus):not(:placeholder-shown) {
+  border-color: #10b981;
+}
+
 .auth-button {
   width: 100%;
   background-color: #2563eb;
@@ -122,6 +130,13 @@
   font-size: 0.875rem;
   text-align: center;
   border: 1px solid #fca5a5;
+}
+
+.form-error {
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  text-shadow: none;
 }
 
 .auth-footer {

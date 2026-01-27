@@ -1,41 +1,49 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 import { useLanguage } from '../context/LanguageContext';
 import UserContext from '../context/UserContext';
 import { api } from '../services/api';
 import '../styling/login.css';
 
 const Login = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { t } = useLanguage();
   const { setUser, refreshUser } = useContext(UserContext);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
+  const validationSchema = useMemo(() => Yup.object({
+    username: Yup.string()
+      .trim()
+      .required(t('fillAllFields')),
+    password: Yup.string()
+      .required(t('fillAllFields')),
+  }), [t]);
 
-    if (!username.trim() || !password.trim()) {
-      setError(t('fillAllFields'));
-      setIsLoading(false);
-      return;
-    }
+  const formik = useFormik({
+    initialValues: {
+      username: '',
+      password: '',
+    },
+    validationSchema: validationSchema,
+    onSubmit: async (values) => {
+      setError('');
+      setIsLoading(true);
 
-    try {
-      const userData = await api.login(username.trim(), password);
-      setUser(userData);
-      await refreshUser();
-      navigate('/home');
-    } catch (err) {
-      setError(err.message || t('loginError'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      try {
+        const userData = await api.login(values.username.trim(), values.password);
+        setUser(userData);
+        await refreshUser();
+        navigate('/profile');
+      } catch (err) {
+        setError(err.message || t('loginError'));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+  });
 
   return (
     <div className="auth-container">
@@ -45,18 +53,23 @@ const Login = () => {
         
         {error && <div className="auth-error">{error}</div>}
         
-        <form onSubmit={handleSubmit} className="auth-form">
+        <form onSubmit={formik.handleSubmit} className="auth-form">
           <div className="form-group">
             <label htmlFor="username">{t('username')}</label>
             <input
               type="text"
               id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              name="username"
+              value={formik.values.username}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
               placeholder={t('usernamePlaceholder')}
               disabled={isLoading}
               autoComplete="username"
             />
+            {formik.touched.username && formik.errors.username && (
+              <div className="form-error">{formik.errors.username}</div>
+            )}
           </div>
 
           <div className="form-group">
@@ -64,18 +77,23 @@ const Login = () => {
             <input
               type="password"
               id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              name="password"
+              value={formik.values.password}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
               placeholder={t('passwordPlaceholder')}
               disabled={isLoading}
               autoComplete="current-password"
             />
+            {formik.touched.password && formik.errors.password && (
+              <div className="form-error">{formik.errors.password}</div>
+            )}
           </div>
 
           <button 
             type="submit" 
             className="auth-button"
-            disabled={isLoading}
+            disabled={isLoading || !formik.isValid}
           >
             {isLoading ? t('loggingIn') : t('login')}
           </button>
