@@ -26,7 +26,7 @@ class CheckSession(Resource):
             session.pop('user_id', None)
             return {'error': 'Not authenticated'}, 401
         
-        user_data = schemas.UserSchema.dump(user)
+        user_data = schemas.user_schema.dump(user)
         return user_data, 200
     
 api.add_resource(CheckSession, '/check_session')
@@ -35,7 +35,7 @@ class Login(Resource):
     def post(self):
         try:
           data = request.get_json()
-          if not data or not all(c in data for c in ['useranme', 'password']):
+          if not data or not all(c in data for c in ['username', 'password']):
               return {'error': 'MIssing required fields'}, 400
           
           user = models.User.query.filter_by(username=data['username']).first()
@@ -45,7 +45,7 @@ class Login(Resource):
           if user.authenticate(data['password']):
               session['user_id'] = user.id
               session.permanent = True
-              return models.user_schema.dump(user), 200
+              return schemas.user_schema.dump(user), 200
           return {'message': 'Invalid credentials'}, 401    
 
         except Exception as e:
@@ -70,8 +70,8 @@ class SignUp(Resource):
         try:
             data = request.get_json()
 
-            if not data or all(c in data for c in ['username', 'email', 'password']):
-                return {'error': 'Missing required fields'}, 401
+            if not data or not all(c in data for c in ['username', 'email', 'password']):
+                return {'error': 'Missing required fields'}, 400
             
             if models.User.query.filter_by(username=data['username']).first():
                 return {'error': 'Username already exists'}, 400

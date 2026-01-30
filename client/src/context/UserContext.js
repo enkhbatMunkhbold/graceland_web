@@ -16,7 +16,7 @@ export const UserProvider = ({ children }) => {
           setUser(user)
           setIsLoading(false)
         })
-      } else if (r.status === 204) {
+      } else if (r.status === 204 || r.status === 401) {
         setUser(null)
         setIsLoading(false)
       } else {
@@ -38,7 +38,7 @@ export const UserProvider = ({ children }) => {
       if(response.ok) {
         const userData = await response.json()
         setUser(userData)
-      } else if(response.status === 204) {
+      } else if(response.status === 204 || response.status === 401) {
         setUser(null)
       } else {
         throw new Error(`HTTP error! Status: ${response.status}`)
