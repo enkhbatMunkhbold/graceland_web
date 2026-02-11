@@ -40,9 +40,10 @@ function AppContent() {
           <Routes>
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/home" element={<Home />} />
+            <Route path="/about" element={<About />} />
             <Route path="/login" element={<Login />} />
             <Route path="/SignUp" element={<SignUp />} />
-            <Route path="*" element={<Navigate to="home" replace />} />
+            <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>
         )}       
       </div>

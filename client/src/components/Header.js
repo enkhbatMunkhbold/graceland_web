@@ -39,12 +39,12 @@ function Header() {
 
   const navItems = [
     { label: t('home'), href: '/home', isRoute: true },
-    { label: t('about'), href: '#about' },
-    { label: t('ministries'), href: '#ministries' },
-    { label: t('events'), href: '#events' },
-    { label: t('sermons'), href: '#sermons' },
+    { label: t('about'), href: '/about', isRoute: true },
+    { label: t('ministries'), href: '/ministries', isRoute: true },
+    { label: t('events'), href: '/events', isRoute: true },
+    { label: t('sermons'), href: '/sermons', isRoute: true },
     ...(user ? [{ label: t('profile'), href: '/profile', isRoute: true }] : []),
-    { label: t('give'), href: '#give' },
+    { label: t('give'), href: '/give', isRoute: true },
     { label: t('contact'), href: '#contact' },    
   ];
 
