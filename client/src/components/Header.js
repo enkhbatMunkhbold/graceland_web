@@ -31,12 +31,6 @@ function Header() {
     }
   };
 
-  const handleHomeClick = (e) => {
-    e.preventDefault();
-    navigate('/home');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   const navItems = [
     { label: t('home'), href: '/home', isRoute: true },
     { label: t('about'), href: '/about', isRoute: true },
@@ -62,16 +56,6 @@ function Header() {
           {/* Desktop Navigation */}
           <nav className="nav-desktop">
             {navItems.map(item => (
-              item.href === '/home' ? (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  className="nav-link"
-                  onClick={handleHomeClick}
-                >
-                  {item.label}
-                </a>
-              ) : item.isRoute ? (
                 <a
                   key={item.href}
                   href={item.href}
@@ -79,19 +63,11 @@ function Header() {
                   onClick={(e) => {
                     e.preventDefault();
                     navigate(item.href);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                 >
                   {item.label}
                 </a>
-              ) : (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  className="nav-link"
-                >
-                  {item.label}
-                </a>
-              )
             ))}
           </nav>
 
@@ -131,19 +107,7 @@ function Header() {
           <div className="nav-mobile">
             <nav className="nav-mobile-content">
               {navItems.map(item => (
-                item.href === '/home' ? (
-                  <a
-                    key={item.href}
-                    href={item.href}
-                    className="nav-mobile-link"
-                    onClick={(e) => {
-                      handleHomeClick(e);
-                      setIsMenuOpen(false);
-                    }}
-                  >
-                    {item.label}
-                  </a>
-                ) : item.isRoute ? (
+                item.isRoute ? (
                   <a
                     key={item.href}
                     href={item.href}
