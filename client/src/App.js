@@ -5,6 +5,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Header from './components/Header';
 import Home from './components/Home';
 import About from './components/About';
+import AboutUs from './components/AboutUs';
+import OurStory from './components/OurStory';
+import OurBeliefs from './components/OurBeliefs';
 import Events from './components/Events';
 import Ministries from './components/Ministries';
 import Sermons from './components/Sermons';
@@ -31,6 +34,9 @@ function AppContent() {
             <Route path="/home" element={<Home />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/about" element={<About />} />
+            <Route path="/about/us" element={<AboutUs />} />
+            <Route path="/about/story" element={<OurStory />} />
+            <Route path="/about/beliefs" element={<OurBeliefs />} />
             <Route path="/events" element={<Events />} />
             <Route path="/ministries" element={<Ministries />} />
             <Route path="/sermons" element={<Sermons />} />
@@ -41,6 +47,9 @@ function AppContent() {
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/home" element={<Home />} />
             <Route path="/about" element={<About />} />
+            <Route path="/about/us" element={<AboutUs />} />
+            <Route path="/about/story" element={<OurStory />} />
+            <Route path="/about/beliefs" element={<OurBeliefs />} />
             <Route path="/sermons" element={<Sermons />} />
             <Route path="/login" element={<Login />} />
             <Route path="/SignUp" element={<SignUp />} />

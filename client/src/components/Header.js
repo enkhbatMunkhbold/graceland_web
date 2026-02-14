@@ -31,9 +31,15 @@ function Header() {
     }
   };
 
+  const aboutSubItems = [
+    { label: t('aboutUs'), href: '/about/us', isRoute: true },
+    { label: t('ourStory'), href: '/about/story', isRoute: true },
+    { label: t('ourBeliefs'), href: '/about/beliefs', isRoute: true },
+  ];
+
   const navItems = [
     { label: t('home'), href: '/home', isRoute: true },
-    { label: t('about'), href: '/about', isRoute: true },
+    { label: t('about'), href: '/about', isRoute: true, subItems: aboutSubItems },
     { label: t('ministries'), href: '/ministries', isRoute: true },
     { label: t('events'), href: '/events', isRoute: true },
     { label: t('sermons'), href: '/sermons', isRoute: true },
@@ -41,6 +47,13 @@ function Header() {
     { label: t('give'), href: '/give', isRoute: true },
     { label: t('contact'), href: '#contact' },    
   ];
+
+  const handleNavClick = (href, isRoute) => {
+    if (isRoute) {
+      navigate(href);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   return (
     <header className="header">
@@ -56,18 +69,39 @@ function Header() {
           {/* Desktop Navigation */}
           <nav className="nav-desktop">
             {navItems.map(item => (
+              item.subItems ? (
+                <div key={item.href} className="nav-item-with-dropdown">
+                  <span className="nav-link nav-link-trigger">{item.label}</span>
+                  <div className="nav-dropdown">
+                    {item.subItems.map(sub => (
+                      <a
+                        key={sub.href}
+                        href={sub.href}
+                        className="nav-dropdown-link"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleNavClick(sub.href, sub.isRoute);
+                        }}
+                      >
+                        {sub.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ) : (
                 <a
                   key={item.href}
                   href={item.href}
                   className="nav-link"
                   onClick={(e) => {
                     e.preventDefault();
-                    navigate(item.href);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    if (item.isRoute) handleNavClick(item.href, true);
+                    else window.location.href = item.href;
                   }}
                 >
                   {item.label}
                 </a>
+              )
             ))}
           </nav>
 
@@ -107,7 +141,25 @@ function Header() {
           <div className="nav-mobile">
             <nav className="nav-mobile-content">
               {navItems.map(item => (
-                item.isRoute ? (
+                item.subItems ? (
+                  <div key={item.href} className="nav-mobile-group">
+                    <span className="nav-mobile-label">{item.label}</span>
+                    {item.subItems.map(sub => (
+                      <a
+                        key={sub.href}
+                        href={sub.href}
+                        className="nav-mobile-link nav-mobile-sublink"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate(sub.href);
+                          setIsMenuOpen(false);
+                        }}
+                      >
+                        {sub.label}
+                      </a>
+                    ))}
+                  </div>
+                ) : item.isRoute ? (
                   <a
                     key={item.href}
                     href={item.href}
