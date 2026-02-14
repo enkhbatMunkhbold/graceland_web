@@ -1,6 +1,7 @@
 .events-section {
   text-align: center;
   padding: 4rem 0;
+  min-height: 100vh;
   background-color: rgba(59, 130, 246, 0.6);
   color: white;
   position: relative;
