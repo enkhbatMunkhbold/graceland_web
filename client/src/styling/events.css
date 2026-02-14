@@ -1,79 +1,44 @@
 .events-section {
+  text-align: center;
   padding: 4rem 0;
   background-color: rgba(59, 130, 246, 0.6);
   color: white;
-  height: 60rem;
-}
-
-.events-container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 0 1rem;
-  display: flex;
-  align-items: flex-start;
-  gap: 2rem;
   position: relative;
 }
 
-.section-header {
+.events-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.events-section .section-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  width: 100%;
   display: flex;
-  align-items: flex-start;
+  justify-content: center;
+  align-items: center;
 }
 
-@media (max-width: 1000px) {
-  .events-grid,
-  .no-events {
-    left: calc(1rem + 290.4px + 3rem + 2rem);
-  }
-}
-
-@media (max-width: 768px) {
-  .events-container {
-    flex-direction: column;
-  }
-  
-  .section-header {
-    width: 100%;
-  }
-  
-  .events-grid,
-  .no-events {
-    position: static;
-    left: auto;
-    width: 100%;
-    max-width: 100%;
-  }
-}
-
-.section-header {
-  text-align: left;
-  flex: 0 0 30%;
-  width: 30%;
-}
-
-.section-title {
+.events-section .section-title {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  font-size: 7rem;
-  font-weight: 1000;
-  margin-bottom: 0.5rem;
-  margin-right: 3rem;
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
   color: #ffffff;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  line-height: 0.6;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  text-align: left;
+  text-align: center;
+  line-height: 1.2;
 }
 
-.section-title .word {
-  display: block;
-  margin-bottom: 0.35em;
+.events-section .section-title .word {
+  display: inline;
 }
 
-.section-title .word:last-child {
-  margin-bottom: 0;
+.events-section .section-title .word:not(:last-child)::after {
+  content: '\00a0';
 }
 
 .loading,
@@ -82,11 +47,10 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   font-size: 1.2rem;
   font-weight: 800;
-  /* text-transform: uppercase; */
   color: #ffffff;
   letter-spacing: 0.1em;
   line-height: 1;
-  text-align: left;
+  text-align: center;
 }
 
 .error {
@@ -94,27 +58,16 @@
 }
 
 .events-grid {
-  position: absolute;
-  /* left: calc(50vw - 113.6px); */
-  margin-left: 500px;
-  width: calc(1000px * 0.7);
-  max-width: calc(50vw + 113.6px - 2rem);
+  width: 100%;
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
-  top: 0;
-  align-items: flex-start;
+  text-align: left;
 }
 
 .no-events {
-  position: absolute;
-  /* left: calc(50vw - 113.6px); */
-  margin-left: 500px;
-  width: calc(1000px * 0.7);
-  max-width: calc(50vw + 113.6px - 2rem);
-  top: 0;
-  display: flex;
-  align-items: flex-start;
+  width: 100%;
+  text-align: center;
 }
 
 @media (min-width: 768px) {
@@ -147,14 +100,6 @@
   width: 4rem;
   height: 4rem;
   color: white;
-}
-
-.events-content {
-  /* padding: 1.5rem; */
-  position: absolute;
-  margin-left: 500px;
-  width: calc(1000px * 0.7);
-  max-width: calc(50vw + 113.6px - 2rem);
 }
 
 .event-title {

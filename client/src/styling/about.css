@@ -1,99 +1,60 @@
 .about-section {
+  text-align: center;
   padding: 4rem 0;
   background-color: rgba(220, 210, 170, 0.75);
   color: white;
-  height: 60rem;
-}
-
-.about-container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 0 1rem;
-  display: flex;
-  align-items: flex-start;
-  gap: 2rem;
   position: relative;
 }
 
-.section-header {
+.about-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.about-section .section-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  width: 100%;
   display: flex;
-  align-items: flex-start;
+  justify-content: center;
+  align-items: center;
 }
 
-@media (max-width: 1000px) {
-  .about-content {
-    left: calc(1rem + 290.4px + 3rem + 2rem);
-  }
-}
-
-@media (max-width: 768px) {
-  .about-container {
-    flex-direction: column;
-  }
-  
-  .section-header {
-    width: 100%;
-  }
-  
-  .about-content {
-    position: static;
-    left: auto;
-    width: 100%;
-    max-width: 100%;
-  }
-}
-
-.section-header {
-  text-align: left;
-  flex: 0 0 30%;
-  width: 30%;
-}
-
-.section-title {
+.about-section .section-title {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  font-size: 7rem;
-  font-weight: 1000;
-  /* margin-bottom: 1rem; */
-  margin-right: 3rem;
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
   color: #ffffff;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  line-height: 0.6;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  text-align: left;
+  text-align: center;
+  line-height: 1.2;
 }
 
-.section-title .word {
-  display: block;
-  margin-bottom: 0.35em;
+.about-section .section-title .word {
+  display: inline;
 }
 
-.section-title .word:last-child {
-  margin-bottom: 0;
+.about-section .section-title .word:not(:last-child)::after {
+  content: '\00a0';
 }
 
 .about-content {
-  position: absolute;
-  margin-left: 500px;
-  /* left: calc(50vw - 113.6px); */
-  width: calc(1000px * 0.7);
-  max-width: calc(50vw + 113.6px - 2rem);
-  top: 0;
-  display: flex;
-  align-items: flex-start;
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: left;
 }
 
 .about-text {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   font-size: 1rem;
   font-weight: 800;
-  /* text-transform: uppercase; */
   color: #ffffff;
   letter-spacing: 0.15em;
-  line-height: 1;
-  text-align: left;
+  line-height: 1.5;
 }
 
 @media (min-width: 768px) {
@@ -101,4 +62,3 @@
     font-size: 1.2rem;
   }
 }
-
