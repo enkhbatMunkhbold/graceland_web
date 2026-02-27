@@ -73,9 +73,10 @@
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  margin-top: 0.25rem;
-  min-width: 10rem;
-  padding: 0.5rem 0;
+  margin-top: 0;
+  width: max-content;
+  min-width: max-content;
+  padding: 0.25rem 0 0 0;
   background: white;
   border-radius: 0.5rem;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -94,7 +95,9 @@
 
 .nav-dropdown-link {
   display: block;
-  padding: 0.5rem 1rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.625rem 1.25rem;
   color: #374151;
   text-decoration: none;
   font-size: 0.9375rem;
