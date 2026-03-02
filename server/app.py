@@ -60,7 +60,7 @@ class Logout(Resource):
         if not user_id:
             return {'error': 'Not authenticated'}, 401
         
-        session.pop(user_id, None)
+        session.pop('user_id', None)
         return {'message': 'Logout successful'}, 200
 
 api.add_resource(Logout, '/logout')

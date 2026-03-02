@@ -6,6 +6,7 @@ import '../styling/profile.css'
 
 const Profile = () => {
   const navigate = useNavigate()
+  const { user, refreshUser } = useContext(UserContext)
 
   useEffect(() => {
     document.body.classList.add('profile-route')
@@ -20,7 +21,7 @@ const Profile = () => {
         aria-hidden="true"
       />
       <div className="profile-page">
-        <div className="profile-content">Profile</div>
+        <div className="profile-content">Welcome, {user.username}!</div>
       </div>
     </>
   )
