@@ -44,7 +44,7 @@ function Header() {
     { label: t('events'), href: '/events', isRoute: true },
     { label: t('sermons'), href: '/sermons', isRoute: true },
     ...(user ? [{ label: t('profile'), href: '/profile', isRoute: true }] : []),
-    { label: t('give'), href: '/give', isRoute: true },
+    { label: t('give'), href: 'https://gracelandbible.breezechms.com/give/online' },
     { label: t('contact'), href: '#contact' },    
   ];
 
