@@ -212,6 +212,9 @@ class Sermon(db.Model):
   notes = db.Column(db.Text)
   audio_url = db.Column(db.String(500))
   video_url = db.Column(db.String(500))
+  # For Facebook Page sync: id from Graph API and source label
+  external_id = db.Column(db.String(100), nullable=True)
+  source = db.Column(db.String(50), nullable=True)  # e.g. 'facebook'
 
   def __repr__(self):
     return f'<Sermon {self.title}>'

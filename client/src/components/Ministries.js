@@ -5,6 +5,10 @@ import '../styling/ministries.css';
 
 import childrenImage from '../assets/Children.jpg';
 import interhighImage from '../assets/Interhigh.jpg';
+import youngAdultsImage from '../assets/Young Adults.jpg';
+import womenImage from '../assets/Women.jpg';
+import menImage from '../assets/Men.jpg';
+import marriageImage from '../assets/Marriage.jpg';
 
 function Ministries() {
   const [ministries, setMinistries] = useState([]);
@@ -24,6 +28,34 @@ function Ministries() {
     name: t('youthMinistryTitle'),
     description: t('youthMinistryPara1'),
     staticImage: interhighImage,
+  }), [t]);
+
+  const youngAdultsMinistry = useMemo(() => ({
+    id: 'youngAdults',
+    name: t('youngAdultsMinistryTitle'),
+    description: t('youngAdultsMinistryPara1'),
+    staticImage: youngAdultsImage,
+  }), [t]);
+
+  const womenMinistry = useMemo(() => ({
+    id: 'women',
+    name: t('womenMinistryTitle'),
+    description: t('womenMinistryPara1'),
+    staticImage: womenImage,
+  }), [t]);
+
+  const menMinistry = useMemo(() => ({
+    id: 'men',
+    name: t('menMinistryTitle'),
+    description: t('menMinistryPara1'),
+    staticImage: menImage,
+  }), [t]);
+
+  const marriageMinistry = useMemo(() => ({
+    id: 'marriage',
+    name: t('marriageMinistryTitle'),
+    description: t('marriageMinistryPara1'),
+    staticImage: marriageImage,
   }), [t]);
 
   useEffect(() => {
@@ -136,6 +168,74 @@ function Ministries() {
                 <h2 className="ministry-block-title">{youthMinistry.name}</h2>
                 <div className="ministry-block-description">
                   <p>{t('youthMinistryPara1')}</p>
+                </div>
+                <a href="#contact" className="ministry-block-cta">
+                  {t('learnMore').toUpperCase()}
+                </a>
+              </div>
+            </article>
+            <article
+              key={youngAdultsMinistry.id}
+              className="ministry-block ministry-block--image-left"
+            >
+              <div className="ministry-block-media">
+                <img src={youngAdultsMinistry.staticImage} alt={youngAdultsMinistry.name} className="ministry-block-img" />
+              </div>
+              <div className="ministry-block-body">
+                <h2 className="ministry-block-title">{youngAdultsMinistry.name}</h2>
+                <div className="ministry-block-description">
+                  <p>{t('youngAdultsMinistryPara1')}</p>
+                </div>
+                <a href="#contact" className="ministry-block-cta">
+                  {t('learnMore').toUpperCase()}
+                </a>
+              </div>
+            </article>
+            <article
+              key={womenMinistry.id}
+              className="ministry-block ministry-block--image-right"
+            >
+              <div className="ministry-block-media">
+                <img src={womenMinistry.staticImage} alt={womenMinistry.name} className="ministry-block-img" />
+              </div>
+              <div className="ministry-block-body">
+                <h2 className="ministry-block-title">{womenMinistry.name}</h2>
+                <div className="ministry-block-description">
+                  <p>{t('womenMinistryPara1')}</p>
+                </div>
+                <a href="#contact" className="ministry-block-cta">
+                  {t('learnMore').toUpperCase()}
+                </a>
+              </div>
+            </article>
+            <article
+              key={menMinistry.id}
+              className="ministry-block ministry-block--image-left"
+            >
+              <div className="ministry-block-media">
+                <img src={menMinistry.staticImage} alt={menMinistry.name} className="ministry-block-img" />
+              </div>
+              <div className="ministry-block-body">
+                <h2 className="ministry-block-title">{menMinistry.name}</h2>
+                <div className="ministry-block-description">
+                  <p>{t('menMinistryPara1')}</p>
+                </div>
+                <a href="#contact" className="ministry-block-cta">
+                  {t('learnMore').toUpperCase()}
+                </a>
+              </div>
+            </article>
+            <article
+              key={marriageMinistry.id}
+              className="ministry-block ministry-block--image-right"
+            >
+              <div className="ministry-block-media">
+                <img src={marriageMinistry.staticImage} alt={marriageMinistry.name} className="ministry-block-img" />
+              </div>
+              <div className="ministry-block-body">
+                <h2 className="ministry-block-title">{marriageMinistry.name}</h2>
+                <div className="ministry-block-description">
+                  <p>{t('marriageMinistryPara1')}</p>
                 </div>
                 <a href="#contact" className="ministry-block-cta">
                   {t('learnMore').toUpperCase()}
