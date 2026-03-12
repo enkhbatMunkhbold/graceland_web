@@ -104,6 +104,52 @@
   text-transform: none;
 }
 
+.contact-social-links {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.contact-social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2rem;
+  color: #ffffff;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.contact-social-link--facebook {
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-right: 15px;
+  background-color: #1877f2;
+  border-radius: 6px;
+}
+
+.contact-social-link--facebook:hover {
+  opacity: 0.9;
+  transform: scale(1.05);
+}
+
+.contact-social-link--email {
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-left: 15px;
+  background-color: #e85d4c;
+  border-radius: 50%;
+}
+
+.contact-social-link--email:hover {
+  opacity: 0.9;
+  transform: scale(1.05);
+}
+
+.contact-social-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
 .contact-form {
   display: flex;
   flex-direction: column;

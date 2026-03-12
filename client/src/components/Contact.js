@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MapPin, Mail } from 'lucide-react';
+import { MapPin, Mail, Facebook } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../services/api';
 import '../styling/contact.css';
@@ -48,16 +48,24 @@ function Contact() {
               <div>
                 <h3 className="info-title">{t('address')}</h3>
                 <p className="info-text">1955 Geary Rd.<br />Walnut Creek,<br />CA 94597</p>
+                <div className="contact-social-links">
+                  <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" className="contact-social-link contact-social-link--facebook" aria-label="Facebook">
+                    <Facebook className="contact-social-icon" />
+                  </a>
+                  <a href="mailto:graceland@bible.church" className="contact-social-link contact-social-link--email" aria-label="Email">
+                    <Mail className="contact-social-icon" />
+                  </a>
+                </div>
               </div>
             </div>
             
-            <div className="info-item">
+            {/* <div className="info-item">
               <Mail className="info-icon" />
               <div>
                 <h3 className="info-title">{t('emailAddress')}</h3>
                 <p className="info-text">graceland@bible.church</p>
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* Contact Form */}
