@@ -18,9 +18,12 @@ function Contact() {
   const handleSubmit = async () => {
     setSubmitting(true);
     setSubmitMessage('');
-    
+    const payload = {
+      ...formData,
+      name: formData.name.trim() || 'Зочин'
+    };
     try {
-      await api.submitContact(formData);
+      await api.submitContact(payload);
       setSubmitMessage('Message sent successfully!');
       setFormData({ name: '', email: '', subject: '', message: '' });
     } catch (err) {
@@ -66,20 +69,20 @@ function Contact() {
               onChange={(e) => setFormData({...formData, name: e.target.value})}
               className="form-input"
             />
-            <input
+            {/* <input
               type="email"
               placeholder={t('yourEmail')}
               value={formData.email}
               onChange={(e) => setFormData({...formData, email: e.target.value})}
               className="form-input"
-            />
-            <input
+            /> */}
+            {/* <input
               type="text"
               placeholder={t('subject')}
               value={formData.subject}
               onChange={(e) => setFormData({...formData, subject: e.target.value})}
               className="form-input"
-            />
+            /> */}
             <textarea
               placeholder={t('message')}
               value={formData.message}
