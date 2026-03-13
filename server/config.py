@@ -10,7 +10,7 @@ from sqlalchemy import MetaData
 app = Flask(__name__)
 
 # Facebook Page integration (optional): set in env for sermon sync
-FACEBOOK_PAGE_ID = os.environ.get('FACEBOOK_PAGE_ID', '').strip()
+FACEBOOK_PAGE_ID = os.environ.get('AzFmAomvrf9Pj1QbBf2CDIg', '').strip()
 FACEBOOK_PAGE_ACCESS_TOKEN = os.environ.get('FACEBOOK_PAGE_ACCESS_TOKEN', '').strip()
 app.secret_key = b'Y\xf1Xz\x00\xad|eQ\x80t \xca\x1a\x10K'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
