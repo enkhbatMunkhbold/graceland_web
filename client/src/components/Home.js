@@ -1,4 +1,6 @@
+import { useContext } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import UserContext from '../context/UserContext';
 import '../styling/home.css';
 import image1 from '../images/481156816_599771773215075_9010741751255276992_n.jpg';
 import image2 from '../images/481982600_1020936049892073_9048145883288638001_n.jpg';
@@ -12,11 +14,17 @@ import image9 from '../images/529477432_1296518745533815_540512601034851597_n.jp
 
 function Home() {
   const { t, language } = useLanguage();
+  const { user } = useContext(UserContext);
 
   const carouselImages = [image1, image2, image3, image4, image5, image6, image7, image8, image9];
 
   return (
     <section id="home" className="home-section">
+      {user && (
+        <div className="home-user-greeting">
+          {t('welcomeUser')}, {user.username}!
+        </div>
+      )}
       <div className="home-container">
         <div className="home-content">
           {language === 'mn' ? (

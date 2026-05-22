@@ -38,7 +38,7 @@ const Login = () => {
         const userData = await api.login(values.username.trim(), values.password);
         setUser(userData);
         await refreshUser();
-        navigate('/profile');
+        navigate('/home');
       } catch (err) {
         setError(err.message || t('loginError'));
       } finally {

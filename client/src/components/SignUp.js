@@ -50,7 +50,7 @@ const SignUp = () => {
         const userData = await api.signup(values.username.trim(), values.email.trim(), values.password);
         setUser(userData);
         await refreshUser();
-        navigate('/profile');
+        navigate('/home');
       } catch (err) {
         setError(err.message || t('signupError'));
       } finally {

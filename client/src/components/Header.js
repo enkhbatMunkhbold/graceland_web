@@ -28,6 +28,7 @@ function Header() {
     } else {
       // Navigate to login
       navigate('/login');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -43,7 +44,6 @@ function Header() {
     { label: t('ministries'), href: '/ministries', isRoute: true },
     { label: t('events'), href: '/events', isRoute: true },
     { label: t('sermons'), href: '/sermons', isRoute: true },
-    ...(user ? [{ label: t('profile'), href: '/profile', isRoute: true }] : []),
     { label: t('give'), href: 'https://gracelandbible.breezechms.com/give/online' },
     { label: t('contact'), href: '#contact' },    
   ];

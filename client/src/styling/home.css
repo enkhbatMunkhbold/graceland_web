@@ -9,6 +9,26 @@
   padding-top: 5rem;
 }
 
+.home-user-greeting {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+@media (min-width: 768px) {
+  .home-user-greeting {
+    top: 1.5rem;
+    left: 1.5rem;
+    font-size: 1.125rem;
+  }
+}
+
 .home-container {
   max-width: 1280px;
   margin: 0 auto;

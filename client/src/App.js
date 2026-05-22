@@ -15,7 +15,6 @@ import Contact from './components/Contact';
 import Footer from './components/Footer';
 import Login from './components/Login';
 import SignUp from './components/SignUp';
-import Profile from './components/Profile';
 import './styling/global.css';
 
 function AppContent() {
@@ -32,7 +31,6 @@ function AppContent() {
         {user ? (
           <Routes>
             <Route path="/home" element={<Home />} />
-            <Route path="/profile" element={<Profile />} />
             <Route path="/about" element={<About />} />
             <Route path="/about/us" element={<AboutUs />} />
             <Route path="/about/story" element={<OurStory />} />
