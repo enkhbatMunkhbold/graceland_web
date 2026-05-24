@@ -10,6 +10,11 @@ import OurStory from './components/OurStory';
 import OurBeliefs from './components/OurBeliefs';
 import Events from './components/Events';
 import Ministries from './components/Ministries';
+import Children from './components/Children';
+import Youth from './components/Youth';
+import YoungAdult from './components/YoungAdult';
+import Men from './components/Men';
+import Women from './components/Women';
 import Sermons from './components/Sermons';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
@@ -37,6 +42,11 @@ function AppContent() {
             <Route path="/about/beliefs" element={<OurBeliefs />} />
             <Route path="/events" element={<Events />} />
             <Route path="/ministries" element={<Ministries />} />
+            <Route path="/ministries/children" element={<Children />} />
+            <Route path="/ministries/youth" element={<Youth />} />
+            <Route path="/ministries/young-adult" element={<YoungAdult />} />
+            <Route path="/ministries/men" element={<Men />} />
+            <Route path="/ministries/women" element={<Women />} />
             <Route path="/sermons" element={<Sermons />} />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>          
@@ -50,6 +60,11 @@ function AppContent() {
             <Route path="/about/beliefs" element={<OurBeliefs />} />
             <Route path="/events" element={<Events />} />
             <Route path="/ministries" element={<Ministries />} />
+            <Route path="/ministries/children" element={<Children />} />
+            <Route path="/ministries/youth" element={<Youth />} />
+            <Route path="/ministries/young-adult" element={<YoungAdult />} />
+            <Route path="/ministries/men" element={<Men />} />
+            <Route path="/ministries/women" element={<Women />} />
             <Route path="/sermons" element={<Sermons />} />
             <Route path="/login" element={<Login />} />
             <Route path="/SignUp" element={<SignUp />} />

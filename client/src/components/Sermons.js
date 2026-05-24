@@ -4,8 +4,16 @@ import { useLanguage } from '../context/LanguageContext';
 import { api } from '../services/api';
 import '../styling/sermons.css';
 
+function getSermonWatchUrl(sermon) {
+  if (sermon.source === 'facebook' && sermon.external_id) {
+    return `https://www.facebook.com/watch/?v=${sermon.external_id}`;
+  }
+  return sermon.video_url || sermon.audio_url || null;
+}
+
 function Sermons() {
   const [sermons, setSermons] = useState([]);
+  const [selectedSermonId, setSelectedSermonId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -15,6 +23,9 @@ function Sermons() {
     api.getSermons()
       .then(data => {
         setSermons(data);
+        if (data.length > 0) {
+          setSelectedSermonId(data[0].id);
+        }
         setLoading(false);
       })
       .catch(err => {
@@ -35,7 +46,12 @@ function Sermons() {
     );
   }, [sermons, searchQuery]);
 
-  const featuredVideoUrl = sermons.length > 0 ? sermons[0]?.video_url : null;
+  const selectedSermon = useMemo(() => {
+    if (!sermons.length) return null;
+    return sermons.find(s => s.id === selectedSermonId) || sermons[0];
+  }, [sermons, selectedSermonId]);
+
+  const featuredVideoUrl = selectedSermon?.video_url || null;
 
   if (loading) {
     return (
@@ -59,18 +75,32 @@ function Sermons() {
             <div className="sermons-video-window">
               <iframe
                 src={featuredVideoUrl}
-                title="Sermon video"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                title={selectedSermon?.title || 'Sermon video'}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 className="sermons-video-iframe"
               />
             </div>
           ) : (
             <div className="sermons-video-placeholder">
-              <span>{sermons.length === 0 ? t('latestSermons') : t('watchNow')}</span>
+              <span>{t('noSermonsYet')}</span>
             </div>
           )}
         </div>
+        {selectedSermon && (
+          <div className="sermons-hero-caption">
+            <h2 className="sermons-hero-title">{selectedSermon.title}</h2>
+            {selectedSermon.date && (
+              <p className="sermons-hero-date">
+                {new Date(selectedSermon.date).toLocaleDateString(undefined, {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </p>
+            )}
+          </div>
+        )}
       </section>
 
       <section className="sermons-content">
@@ -102,36 +132,51 @@ function Sermons() {
               {filteredSermons.length === 0 ? (
                 <li className="sermons-list-empty">{t('noSermonsMatchSearch')}</li>
               ) : (
-                filteredSermons.map(sermon => (
-                  <li key={sermon.id} className="sermon-list-item">
-                    <div className="sermon-list-main">
-                      <h3 className="sermon-list-title">{sermon.title}</h3>
-                      {sermon.speaker_name && (
-                        <p className="sermon-list-speaker">{sermon.speaker_name}</p>
-                      )}
-                      {sermon.scripture_reference && (
-                        <p className="sermon-list-scripture">{sermon.scripture_reference}</p>
-                      )}
-                      <p className="sermon-list-date">
-                        {new Date(sermon.date).toLocaleDateString(undefined, {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </p>
-                    </div>
-                    {(sermon.video_url || sermon.audio_url) && (
-                      <a
-                        href={sermon.video_url || sermon.audio_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="sermon-list-watch"
+                filteredSermons.map(sermon => {
+                  const watchUrl = getSermonWatchUrl(sermon);
+                  const isSelected = selectedSermon?.id === sermon.id;
+
+                  return (
+                    <li
+                      key={sermon.id}
+                      className={`sermon-list-item${isSelected ? ' sermon-list-item--active' : ''}`}
+                    >
+                      <button
+                        type="button"
+                        className="sermon-list-main sermon-list-select"
+                        onClick={() => {
+                          setSelectedSermonId(sermon.id);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
                       >
-                        {t('watchNow')} →
-                      </a>
-                    )}
-                  </li>
-                ))
+                        <h3 className="sermon-list-title">{sermon.title}</h3>
+                        {sermon.speaker_name && (
+                          <p className="sermon-list-speaker">{sermon.speaker_name}</p>
+                        )}
+                        {sermon.scripture_reference && (
+                          <p className="sermon-list-scripture">{sermon.scripture_reference}</p>
+                        )}
+                        <p className="sermon-list-date">
+                          {new Date(sermon.date).toLocaleDateString(undefined, {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                          })}
+                        </p>
+                      </button>
+                      {watchUrl && (
+                        <a
+                          href={watchUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="sermon-list-watch"
+                        >
+                          {t('watchNow')} →
+                        </a>
+                      )}
+                    </li>
+                  );
+                })
               )}
             </ul>
           )}

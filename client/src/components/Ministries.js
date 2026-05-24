@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../services/api';
 import '../styling/ministries.css';
@@ -15,6 +16,10 @@ function Ministries() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { t } = useLanguage();
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const childrenMinistry = useMemo(() => ({
     id: 'children',
@@ -152,9 +157,9 @@ function Ministries() {
                   <p>{t('childrenMinistryPara1')}</p>
                   <p>{t('childrenMinistryPara2')}</p>
                 </div>
-                <a href="#contact" className="ministry-block-cta">
+                <Link to="/ministries/children" className="ministry-block-cta" onClick={scrollToTop}>
                   {t('learnMore').toUpperCase()}
-                </a>
+                </Link>
               </div>
             </article>
             <article
@@ -169,9 +174,9 @@ function Ministries() {
                 <div className="ministry-block-description">
                   <p>{t('youthMinistryPara1')}</p>
                 </div>
-                <a href="#contact" className="ministry-block-cta">
+                <Link to="/ministries/youth" className="ministry-block-cta" onClick={scrollToTop}>
                   {t('learnMore').toUpperCase()}
-                </a>
+                </Link>
               </div>
             </article>
             <article
@@ -186,9 +191,9 @@ function Ministries() {
                 <div className="ministry-block-description">
                   <p>{t('youngAdultsMinistryPara1')}</p>
                 </div>
-                <a href="#contact" className="ministry-block-cta">
+                <Link to="/ministries/young-adult" className="ministry-block-cta" onClick={scrollToTop}>
                   {t('learnMore').toUpperCase()}
-                </a>
+                </Link>
               </div>
             </article>
             <article
@@ -203,9 +208,9 @@ function Ministries() {
                 <div className="ministry-block-description">
                   <p>{t('womenMinistryPara1')}</p>
                 </div>
-                <a href="#contact" className="ministry-block-cta">
+                <Link to="/ministries/women" className="ministry-block-cta" onClick={scrollToTop}>
                   {t('learnMore').toUpperCase()}
-                </a>
+                </Link>
               </div>
             </article>
             <article
@@ -220,9 +225,9 @@ function Ministries() {
                 <div className="ministry-block-description">
                   <p>{t('menMinistryPara1')}</p>
                 </div>
-                <a href="#contact" className="ministry-block-cta">
+                <Link to="/ministries/men" className="ministry-block-cta" onClick={scrollToTop}>
                   {t('learnMore').toUpperCase()}
-                </a>
+                </Link>
               </div>
             </article>
             <article

@@ -4,7 +4,7 @@ from flask_restful import Resource
 from flask_migrate import Migrate
 from sqlalchemy.exc import IntegrityError
 from marshmallow.exceptions import ValidationError
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
@@ -637,6 +637,7 @@ api.add_resource(EventRegistrationByID, '/events/<int:event_id>/registrations/<i
 
 class Sermons(Resource):
     def get(self):
+        _sync_facebook_sermons()
         sermons = models.Sermon.query.order_by(models.Sermon.date.desc()).all()
         return schemas.sermons_schema.dump(sermons)
     
@@ -705,7 +706,84 @@ def _facebook_video_embed_url(permalink_url):
     """Build iframe-friendly Facebook video embed URL."""
     if not permalink_url or not permalink_url.startswith('http'):
         return None
-    return f'https://www.facebook.com/plugins/video.php?href={quote(permalink_url, safe="")}&width=500&show_text=false&height=280'
+    return (
+        f'https://www.facebook.com/plugins/video.php?href={quote(permalink_url, safe="")}'
+        f'&show_text=false&width=900&height=506'
+    )
+
+
+_last_facebook_sync = None
+FACEBOOK_SYNC_INTERVAL = timedelta(minutes=10)
+
+
+def _sync_facebook_sermons(force=False):
+    """Fetch page videos from Facebook Graph API and upsert sermon records."""
+    global _last_facebook_sync
+
+    if not FACEBOOK_PAGE_ID or not FACEBOOK_PAGE_ACCESS_TOKEN:
+        return {'skipped': True, 'reason': 'not_configured'}
+
+    now = datetime.now()
+    if not force and _last_facebook_sync and now - _last_facebook_sync < FACEBOOK_SYNC_INTERVAL:
+        return {'skipped': True, 'reason': 'cached'}
+
+    url = (
+        f'https://graph.facebook.com/v18.0/{FACEBOOK_PAGE_ID}/videos'
+        f'?fields=id,created_time,description,permalink_url,title,length'
+        f'&access_token={FACEBOOK_PAGE_ACCESS_TOKEN}&limit=50'
+    )
+    try:
+        req = Request(url, headers={'User-Agent': 'ChurchCMS/1.0'})
+        with urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read().decode())
+    except HTTPError as e:
+        body = e.read().decode() if e.fp else ''
+        return {'error': 'Facebook API error', 'detail': body or str(e)}
+    except URLError as e:
+        return {'error': 'Network error', 'detail': str(e.reason)}
+    except (json.JSONDecodeError, KeyError) as e:
+        return {'error': 'Invalid Facebook response', 'detail': str(e)}
+
+    items = data.get('data') or []
+    created = 0
+    updated = 0
+    for v in items:
+        vid = v.get('id')
+        permalink = (v.get('permalink_url') or '').strip()
+        video_url = _facebook_video_embed_url(permalink) if permalink else None
+        if not video_url:
+            continue
+        created_str = (v.get('created_time') or '')[:10]
+        try:
+            sermon_date = date.fromisoformat(created_str) if created_str else date.today()
+        except ValueError:
+            sermon_date = date.today()
+        raw_title = (v.get('title') or v.get('description') or '').strip()
+        title = (raw_title[:252] + '..') if len(raw_title) > 255 else (raw_title or f'Facebook Live - {sermon_date}')
+        existing = models.Sermon.query.filter_by(source='facebook', external_id=vid).first()
+        if existing:
+            existing.title = title
+            existing.date = sermon_date
+            existing.video_url = video_url
+            updated += 1
+        else:
+            db.session.add(models.Sermon(
+                title=title,
+                date=sermon_date,
+                video_url=video_url,
+                external_id=vid,
+                source='facebook',
+            ))
+            created += 1
+
+    try:
+        db.session.commit()
+        _last_facebook_sync = now
+    except Exception as e:
+        db.session.rollback()
+        return {'error': 'Database error', 'detail': str(e)}
+
+    return {'created': created, 'updated': updated, 'fetched': len(items)}
 
 
 class SyncFacebookSermons(Resource):
@@ -716,59 +794,18 @@ class SyncFacebookSermons(Resource):
                 'error': 'Facebook Page not configured',
                 'message': 'Set FACEBOOK_PAGE_ID and FACEBOOK_PAGE_ACCESS_TOKEN in the server environment.'
             }, 503
-        url = (
-            f'https://graph.facebook.com/v18.0/{FACEBOOK_PAGE_ID}/videos'
-            f'?fields=id,created_time,description,permalink_url,title,length'
-            f'&access_token={FACEBOOK_PAGE_ACCESS_TOKEN}&limit=50'
-        )
-        try:
-            req = Request(url, headers={'User-Agent': 'ChurchCMS/1.0'})
-            with urlopen(req, timeout=30) as resp:
-                data = json.loads(resp.read().decode())
-        except HTTPError as e:
-            body = e.read().decode() if e.fp else ''
-            return {'error': 'Facebook API error', 'detail': body or str(e)}, 502
-        except URLError as e:
-            return {'error': 'Network error', 'detail': str(e.reason)}, 502
-        except (json.JSONDecodeError, KeyError) as e:
-            return {'error': 'Invalid Facebook response', 'detail': str(e)}, 502
-        items = data.get('data') or []
-        created = 0
-        updated = 0
-        for v in items:
-            vid = v.get('id')
-            permalink = (v.get('permalink_url') or '').strip()
-            video_url = _facebook_video_embed_url(permalink) if permalink else None
-            if not video_url:
-                continue
-            created_str = (v.get('created_time') or '')[:10]
-            try:
-                sermon_date = date.fromisoformat(created_str) if created_str else date.today()
-            except ValueError:
-                sermon_date = date.today()
-            raw_title = (v.get('title') or v.get('description') or '').strip()
-            title = (raw_title[:252] + '..') if len(raw_title) > 255 else (raw_title or f'Facebook Live - {sermon_date}')
-            existing = models.Sermon.query.filter_by(source='facebook', external_id=vid).first()
-            if existing:
-                existing.title = title
-                existing.date = sermon_date
-                existing.video_url = video_url
-                updated += 1
-            else:
-                db.session.add(models.Sermon(
-                    title=title,
-                    date=sermon_date,
-                    video_url=video_url,
-                    external_id=vid,
-                    source='facebook',
-                ))
-                created += 1
-        try:
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            return {'error': 'Database error', 'detail': str(e)}, 500
-        return {'message': 'Sync complete', 'created': created, 'updated': updated, 'fetched': len(items)}, 200
+
+        result = _sync_facebook_sermons(force=True)
+        if result.get('error'):
+            return {'error': result['error'], 'detail': result.get('detail')}, 502
+        if result.get('skipped'):
+            return {'message': 'Sync skipped', 'detail': result.get('reason')}, 200
+        return {
+            'message': 'Sync complete',
+            'created': result.get('created', 0),
+            'updated': result.get('updated', 0),
+            'fetched': result.get('fetched', 0),
+        }, 200
 
 
 api.add_resource(SyncFacebookSermons, '/sermons/sync-facebook')

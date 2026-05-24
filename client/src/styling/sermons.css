@@ -6,10 +6,31 @@
 .sermons-hero {
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 2rem 1rem;
   background: linear-gradient(180deg, rgba(168, 85, 247, 0.15) 0%, rgba(168, 85, 247, 0.05) 100%);
+}
+
+.sermons-hero-caption {
+  width: 100%;
+  max-width: 900px;
+  margin-top: 1.25rem;
+  text-align: center;
+}
+
+.sermons-hero-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.35rem;
+}
+
+.sermons-hero-date {
+  font-size: 0.9375rem;
+  color: #6b7280;
+  margin: 0;
 }
 
 .sermons-hero-video-wrap {
@@ -153,6 +174,22 @@
   border-bottom: 1px solid #e5e7eb;
 }
 
+.sermon-list-item--active {
+  background: rgba(168, 85, 247, 0.08);
+  border-radius: 8px;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.sermon-list-select {
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+  width: 100%;
+}
+
 .sermon-list-item:last-child {
   border-bottom: none;
 }
@@ -192,6 +229,7 @@
   color: #a855f7;
   font-weight: 600;
   font-size: 0.9375rem;
+  text-decoration: none;
   transition: color 0.2s;
 }
 

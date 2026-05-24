@@ -49,7 +49,7 @@ function Contact() {
                 <h3 className="info-title">{t('address')}</h3>
                 <p className="info-text">1955 Geary Rd.<br />Walnut Creek,<br />CA 94597</p>
                 <div className="contact-social-links">
-                  <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" className="contact-social-link contact-social-link--facebook" aria-label="Facebook">
+                  <a href="https://www.facebook.com/profile.php?id=AzFmAomvrf9Pj1QbBf2CDIg" target="_blank" rel="noopener noreferrer" className="contact-social-link contact-social-link--facebook" aria-label="Facebook">
                     <Facebook className="contact-social-icon" />
                   </a>
                   <a href="mailto:graceland@bible.church" className="contact-social-link contact-social-link--email" aria-label="Email">
