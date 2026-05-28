@@ -23,6 +23,7 @@ import {
   getFederalHolidayMapForYears,
   HOLIDAY_TRANSLATION_KEYS,
 } from '../utils/usFederalHolidays';
+import { formatFullDate, formatMonthYear } from '../utils/formatLocalizedDate';
 import '../styling/events.css';
 
 const WEEKDAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -265,17 +266,9 @@ function Events() {
   const selectedDateKey = toDateKey(selectedDate);
   const selectedDayEvents = eventsByDate[selectedDateKey] || [];
 
-  const monthLabel = viewDate.toLocaleDateString(language === 'mn' ? 'mn-MN' : 'en-US', {
-    month: 'long',
-    year: 'numeric',
-  });
+  const monthLabel = formatMonthYear(viewDate, language);
 
-  const selectedDateLabel = selectedDate.toLocaleDateString(language === 'mn' ? 'mn-MN' : 'en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  const selectedDateLabel = formatFullDate(selectedDate, language);
 
   const { allDayEvents, eventsByHour } = useMemo(() => {
     const byHour = HOUR_SLOTS.reduce((acc, hour) => {
@@ -466,14 +459,14 @@ function Events() {
           <div className="error">Error: {error}</div>
         ) : (
           <>
-            <div className="events-layout-columns">
+            <div className={`events-layout-columns${user ? '' : ' events-layout-columns--calendar-only'}`}>
               <div className="events-calendar-column">
                 <div className="events-calendar-toolbar">
                   <div className="events-calendar-nav">
                     <button type="button" className="events-calendar-nav-btn" onClick={goToPreviousMonth} aria-label={t('previousMonth')}>
                       <ChevronLeft />
                     </button>
-                    <h3 className="events-calendar-month">{monthLabel}</h3>
+                    <h3 className={`events-calendar-month${language === 'mn' ? ' events-date-title--mn' : ''}`}>{monthLabel}</h3>
                     <button type="button" className="events-calendar-nav-btn" onClick={goToNextMonth} aria-label={t('nextMonth')}>
                       <ChevronRight />
                     </button>
@@ -548,8 +541,9 @@ function Events() {
               </div>
               </div>
 
+              {user && (
               <div className="events-day-column">
-                <h3 className="events-day-panel-title">{selectedDateLabel}</h3>
+                <h3 className={`events-day-panel-title${language === 'mn' ? ' events-date-title--mn' : ''}`}>{selectedDateLabel}</h3>
                 <aside className="events-day-panel">
                   <div className="events-day-panel-content">
                     <div className="events-time-slots">
@@ -573,6 +567,7 @@ function Events() {
                   </div>
                 </aside>
               </div>
+              )}
             </div>
           </>
         )}

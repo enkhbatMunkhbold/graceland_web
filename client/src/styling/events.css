@@ -8,7 +8,7 @@
 }
 
 .events-container {
-  max-width: 1280px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 1rem;
 }
@@ -108,6 +108,11 @@
   gap: 1rem;
 }
 
+.events-layout-columns--calendar-only .events-calendar-column {
+  flex: 1;
+  max-width: none;
+}
+
 .events-calendar-column,
 .events-day-column {
   display: flex;
@@ -117,14 +122,14 @@
 }
 
 .events-calendar-column {
-  flex: 1.35;
+  flex: 1.2;
   min-width: 0;
 }
 
 .events-day-column {
   flex: 1;
-  min-width: 280px;
-  max-width: 420px;
+  min-width: 320px;
+  max-width: 560px;
 }
 
 .events-calendar-month,
@@ -148,6 +153,11 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.events-date-title--mn {
+  text-transform: none;
 }
 
 .events-calendar-actions {
@@ -191,12 +201,6 @@
 .events-add-icon {
   width: 1rem;
   height: 1rem;
-}
-
-.events-layout-columns {
-  display: flex;
-  align-items: stretch;
-  gap: 1rem;
 }
 
 .events-calendar {
@@ -689,6 +693,10 @@
 
   .events-day-column {
     max-width: none;
+  }
+
+  .events-day-panel-title {
+    white-space: normal;
   }
 
   .events-day-panel {
