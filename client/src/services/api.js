@@ -2,8 +2,12 @@ const API_BASE_URL = 'http://localhost:5555';
 
 export const api = {
   // Events
-  getEvents: async () => {
-    const response = await fetch(`${API_BASE_URL}/events`);
+  getEvents: async (year, month) => {
+    const params = new URLSearchParams();
+    if (year) params.set('year', String(year));
+    if (month) params.set('month', String(month));
+    const query = params.toString();
+    const response = await fetch(`${API_BASE_URL}/events${query ? `?${query}` : ''}`);
     if (!response.ok) throw new Error('Failed to fetch events');
     return response.json();
   },
@@ -11,6 +15,46 @@ export const api = {
   getEventById: async (id) => {
     const response = await fetch(`${API_BASE_URL}/events/${id}`);
     if (!response.ok) throw new Error('Failed to fetch event');
+    return response.json();
+  },
+
+  createEvent: async (data) => {
+    const response = await fetch(`${API_BASE_URL}/events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to create event');
+    }
+    return response.json();
+  },
+
+  updateEvent: async (id, data) => {
+    const response = await fetch(`${API_BASE_URL}/events/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to update event');
+    }
+    return response.json();
+  },
+
+  deleteEvent: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/events/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to delete event');
+    }
     return response.json();
   },
 

@@ -1,5 +1,6 @@
 # schemas.py
 from config import ma
+from auth_utils import user_is_admin
 from models import (User, Member, Ministry, MinistryLeader, MinistryMember, Group, GroupMember, Event,        EventRegistration,
                    Sermon, Donation, PrayerRequest, Page, Announcement, 
                    Media, ContactMessage, NavigationMenu, NavigationItem)
@@ -47,11 +48,15 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     member = fields.Nested(MemberSchema, dump_only=True)
     email = fields.Email(required=True)
     full_name = fields.Method("get_full_name")
+    is_admin = fields.Method("get_is_admin")
     
     def get_full_name(self, obj):
         if obj.member:
             return f"{obj.member.first_name} {obj.member.last_name}"
         return None
+
+    def get_is_admin(self, obj):
+        return user_is_admin(obj)
         
 class UserPasswordChangeSchema(ma.Schema):
     old_password = fields.String(required=True, load_only=True)

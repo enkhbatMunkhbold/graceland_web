@@ -11,6 +11,7 @@ from urllib.parse import quote
 import json
 import models  # Import models to register them with SQLAlchemy
 import schemas
+from auth_utils import user_is_admin
 
 # Initialize Flask-Migrate
 migrate = Migrate(app, db)
@@ -18,6 +19,20 @@ migrate = Migrate(app, db)
 @app.route('/')
 def index():
     return '<h1>Church Management System</h1>'
+
+
+def _get_current_user():
+    user_id = session.get('user_id')
+    if not user_id:
+        return None
+    return db.session.get(models.User, user_id)
+
+
+def _require_admin():
+    user = _get_current_user()
+    if not user or not user_is_admin(user):
+        return None
+    return user
 
 class CheckSession(Resource):
     def get(self):
@@ -521,16 +536,34 @@ api.add_resource(GroupMembers, '/groups/<int:group_id>/members')
 
 class Events(Resource):
     def get(self):
-        events = models.Event.query.order_by(models.Event.start_datetime.desc()).all()
+        month = request.args.get('month', type=int)
+        year = request.args.get('year', type=int)
+        query = models.Event.query
+
+        if month and year:
+            month_start = datetime(year, month, 1)
+            if month == 12:
+                month_end = datetime(year + 1, 1, 1)
+            else:
+                month_end = datetime(year, month + 1, 1)
+            query = query.filter(
+                models.Event.start_datetime >= month_start,
+                models.Event.start_datetime < month_end,
+            )
+
+        events = query.order_by(models.Event.start_datetime.asc()).all()
         return schemas.events_schema.dump(events), 200
             
     def post(self):
+        if not _require_admin():
+            return {'error': 'Admin access required'}, 403
+
         try:
             data = request.get_json()
             new_event = schemas.event_schema.load(data)
             db.session.add(new_event)
             db.session.commit()
-            return schemas.event_schema.dump(new_event), 200
+            return schemas.event_schema.dump(new_event), 201
         except ValidationError as ve:
             db.session.rollback()
             return {'error': ve.messages}, 400
@@ -548,6 +581,9 @@ class EventByID(Resource):
         return schemas.event_schema.dump(event)
     
     def patch(self, event_id):
+        if not _require_admin():
+            return {'error': 'Admin access required'}, 403
+
         event = db.session.get(models.Event, event_id)
         if not event:
             return {'error': 'Event not found'}, 404
@@ -564,12 +600,15 @@ class EventByID(Resource):
             return schemas.event_schema.dump(event), 200
         except ValidationError as ve:
             db.session.rollback()
-            return {'error', ve.messages}, 400
+            return {'error': ve.messages}, 400
         except Exception as e:
             db.session.rollback()
-            return {'error', str(e)}, 500
+            return {'error': str(e)}, 500
         
     def delete(self, event_id):
+        if not _require_admin():
+            return {'error': 'Admin access required'}, 403
+
         event = db.session.get(models.Event, event_id)
         if not event:
             return {'error': 'Event not found'}, 404
