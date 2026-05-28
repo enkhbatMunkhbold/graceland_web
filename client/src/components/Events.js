@@ -1,12 +1,66 @@
 import { useState, useEffect, useMemo, useCallback, useContext } from 'react';
-import { ChevronLeft, ChevronRight, Clock, MapPin, Plus, X } from 'lucide-react';
+import {
+  Award,
+  ChevronLeft,
+  ChevronRight,
+  Flag,
+  HardHat,
+  Heart,
+  Landmark,
+  MapPin,
+  Plus,
+  Ship,
+  Sparkles,
+  Star,
+  TreePine,
+  UtensilsCrossed,
+  X,
+} from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import UserContext from '../context/UserContext';
 import { api } from '../services/api';
+import {
+  getFederalHolidayMapForYears,
+  HOLIDAY_TRANSLATION_KEYS,
+} from '../utils/usFederalHolidays';
 import '../styling/events.css';
 
 const WEEKDAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const WEEKDAYS_MN = ['Ня', 'Да', 'Мя', 'Лх', 'Пү', 'Ба', 'Бя'];
+const HOUR_SLOTS = Array.from({ length: 24 }, (_, hour) => hour);
+
+function formatHourLabel(hour, language) {
+  const date = new Date(2000, 0, 1, hour, 0);
+  return date.toLocaleTimeString(language === 'mn' ? 'mn-MN' : 'en-US', {
+    hour: 'numeric',
+    hour12: true,
+  });
+}
+
+const HOLIDAY_ICONS = {
+  newYearsDay: Sparkles,
+  mlkDay: Heart,
+  presidentsDay: Landmark,
+  memorialDay: Flag,
+  juneteenth: Star,
+  independenceDay: Flag,
+  laborDay: HardHat,
+  columbusDay: Ship,
+  veteransDay: Award,
+  thanksgiving: UtensilsCrossed,
+  christmas: TreePine,
+};
+
+function EventLabel({ event, className = '' }) {
+  const Icon = event.holidayKey ? HOLIDAY_ICONS[event.holidayKey] : null;
+
+  return (
+    <span className={`events-event-label ${className}`.trim()}>
+      {Icon && <Icon className="events-event-icon" aria-hidden="true" />}
+      <span className="events-event-label-text">{event.title}</span>
+    </span>
+  );
+}
 
 function toDateKey(date) {
   const y = date.getFullYear();
@@ -72,6 +126,34 @@ function buildSundayServiceEvent(date, title) {
     location: null,
     isRecurring: true,
   };
+}
+
+function buildHolidayEvent(date, holidayKey, title) {
+  const dateKey = toDateKey(date);
+  return {
+    id: `holiday-${holidayKey}-${dateKey}`,
+    title,
+    holidayKey,
+    start_datetime: `${dateKey}T00:00:00`,
+    end_datetime: null,
+    location: null,
+    isHoliday: true,
+    isRecurring: true,
+  };
+}
+
+function sortDayEvents(dayEvents) {
+  const priority = (event) => {
+    if (event.isHoliday) return 0;
+    if (event.isRecurring) return 1;
+    return 2;
+  };
+
+  return [...dayEvents].sort((a, b) => {
+    const byPriority = priority(a) - priority(b);
+    if (byPriority !== 0) return byPriority;
+    return new Date(a.start_datetime) - new Date(b.start_datetime);
+  });
 }
 
 function emptyForm(date) {
@@ -146,6 +228,11 @@ function Events() {
     [viewYear, viewMonth]
   );
 
+  const holidayMap = useMemo(() => {
+    const years = [...new Set(calendarDays.map(day => day.date.getFullYear()))];
+    return getFederalHolidayMapForYears(years);
+  }, [calendarDays]);
+
   const eventsByDate = useMemo(() => {
     const map = {};
     events.forEach(event => {
@@ -155,17 +242,25 @@ function Events() {
     });
 
     calendarDays.forEach(day => {
-      if (day.date.getDay() !== 0) return;
       const key = toDateKey(day.date);
-      if (!map[key]) map[key] = [];
-      map[key].push(buildSundayServiceEvent(day.date, t('sundayService')));
+
+      const holidayKey = holidayMap[key];
+      if (holidayKey) {
+        if (!map[key]) map[key] = [];
+        map[key].push(buildHolidayEvent(day.date, holidayKey, t(HOLIDAY_TRANSLATION_KEYS[holidayKey])));
+      }
+
+      if (day.date.getDay() === 0) {
+        if (!map[key]) map[key] = [];
+        map[key].push(buildSundayServiceEvent(day.date, t('sundayService')));
+      }
     });
 
-    Object.values(map).forEach(dayEvents => {
-      dayEvents.sort((a, b) => new Date(a.start_datetime) - new Date(b.start_datetime));
+    Object.keys(map).forEach(key => {
+      map[key] = sortDayEvents(map[key]);
     });
     return map;
-  }, [events, calendarDays, t]);
+  }, [events, calendarDays, holidayMap, t]);
 
   const selectedDateKey = toDateKey(selectedDate);
   const selectedDayEvents = eventsByDate[selectedDateKey] || [];
@@ -174,6 +269,82 @@ function Events() {
     month: 'long',
     year: 'numeric',
   });
+
+  const selectedDateLabel = selectedDate.toLocaleDateString(language === 'mn' ? 'mn-MN' : 'en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  const { allDayEvents, eventsByHour } = useMemo(() => {
+    const byHour = HOUR_SLOTS.reduce((acc, hour) => {
+      acc[hour] = [];
+      return acc;
+    }, {});
+    const allDay = [];
+
+    selectedDayEvents.forEach(event => {
+      if (event.isHoliday) {
+        allDay.push(event);
+        return;
+      }
+      const hour = new Date(event.start_datetime).getHours();
+      byHour[hour].push(event);
+    });
+
+    return { allDayEvents: allDay, eventsByHour: byHour };
+  }, [selectedDayEvents]);
+
+  const renderSlotEvent = (event) => (
+    <article
+      key={event.id}
+      className={[
+        'events-slot-event',
+        event.isHoliday && 'events-slot-event--holiday',
+        event.isRecurring && !event.isHoliday && 'events-slot-event--recurring',
+      ].filter(Boolean).join(' ')}
+    >
+      <div className="events-slot-event-title">
+        <EventLabel event={event} className="event-title-label" />
+      </div>
+      {!event.isHoliday && (
+        <p className="events-slot-event-time">
+          {new Date(event.start_datetime).toLocaleTimeString(language === 'mn' ? 'mn-MN' : 'en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+          })}
+          {event.end_datetime && (
+            <>
+              {' – '}
+              {new Date(event.end_datetime).toLocaleTimeString(language === 'mn' ? 'mn-MN' : 'en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+              })}
+            </>
+          )}
+        </p>
+      )}
+      {event.description && (
+        <p className="events-slot-event-description">{event.description}</p>
+      )}
+      {event.location && (
+        <p className="events-slot-event-location">
+          <MapPin className="meta-icon" />
+          {event.location}
+        </p>
+      )}
+      {isAdmin && !event.isRecurring && !event.isHoliday && (
+        <button
+          type="button"
+          className="event-edit-btn events-slot-event-edit"
+          onClick={() => openEditModal(event)}
+        >
+          {t('editEvent')}
+        </button>
+      )}
+    </article>
+  );
 
   const openCreateModal = (date) => {
     setEditingEvent(null);
@@ -295,137 +466,113 @@ function Events() {
           <div className="error">Error: {error}</div>
         ) : (
           <>
-            <div className="events-calendar-toolbar">
-              <div className="events-calendar-nav">
-                <button type="button" className="events-calendar-nav-btn" onClick={goToPreviousMonth} aria-label={t('previousMonth')}>
-                  <ChevronLeft />
-                </button>
-                <h3 className="events-calendar-month">{monthLabel}</h3>
-                <button type="button" className="events-calendar-nav-btn" onClick={goToNextMonth} aria-label={t('nextMonth')}>
-                  <ChevronRight />
-                </button>
-              </div>
-              <div className="events-calendar-actions">
-                <button type="button" className="events-today-btn" onClick={goToToday}>
-                  {t('today')}
-                </button>
-                {isAdmin && (
-                  <button
-                    type="button"
-                    className="events-add-btn"
-                    onClick={() => openCreateModal(selectedDate)}
-                  >
-                    <Plus className="events-add-icon" />
-                    {t('addEvent')}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className="events-calendar">
-              <div className="events-calendar-weekdays">
-                {weekdays.map(label => (
-                  <div key={label} className="events-calendar-weekday">{label}</div>
-                ))}
-              </div>
-              <div className="events-calendar-grid">
-                {calendarDays.map(day => {
-                  const dateKey = toDateKey(day.date);
-                  const dayEvents = eventsByDate[dateKey] || [];
-                  const isSelected = dateKey === selectedDateKey;
-                  const isToday = dateKey === todayKey;
-
-                  return (
-                    <button
-                      key={dateKey + day.isCurrentMonth}
-                      type="button"
-                      className={[
-                        'events-calendar-day',
-                        !day.isCurrentMonth && 'events-calendar-day--muted',
-                        isSelected && 'events-calendar-day--selected',
-                        isToday && 'events-calendar-day--today',
-                      ].filter(Boolean).join(' ')}
-                      onClick={() => handleDayClick(day)}
-                      onDoubleClick={() => handleDayDoubleClick(day)}
-                    >
-                      <span className="events-calendar-day-number">{day.date.getDate()}</span>
-                      {dayEvents.length > 0 && (
-                        <div className="events-calendar-day-events">
-                          {dayEvents.slice(0, 2).map(event => (
-                            <span
-                              key={event.id}
-                              className={`events-calendar-event-pill${event.isRecurring ? ' events-calendar-event-pill--recurring' : ''}`}
-                              title={event.title}
-                            >
-                              {event.title}
-                            </span>
-                          ))}
-                          {dayEvents.length > 2 && (
-                            <span className="events-calendar-more">+{dayEvents.length - 2}</span>
-                          )}
-                        </div>
-                      )}
+            <div className="events-layout-columns">
+              <div className="events-calendar-column">
+                <div className="events-calendar-toolbar">
+                  <div className="events-calendar-nav">
+                    <button type="button" className="events-calendar-nav-btn" onClick={goToPreviousMonth} aria-label={t('previousMonth')}>
+                      <ChevronLeft />
                     </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="events-day-panel">
-              <h3 className="events-day-panel-title">
-                {t('eventsOnDay')} — {selectedDate.toLocaleDateString(language === 'mn' ? 'mn-MN' : 'en-US', {
-                  weekday: 'long',
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
-              </h3>
-
-              {selectedDayEvents.length > 0 && (
-                <div className="events-day-list">
-                  {selectedDayEvents.map(event => (
-                    <article key={event.id} className="event-card event-card--compact">
-                      <div className="event-content">
-                        <h4 className="event-title">{event.title}</h4>
-                        {event.description && (
-                          <p className="event-description">{event.description}</p>
-                        )}
-                        <div className="event-meta">
-                          <Clock className="meta-icon" />
-                          {new Date(event.start_datetime).toLocaleTimeString(language === 'mn' ? 'mn-MN' : 'en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                          })}
-                          {event.end_datetime && (
-                            <>
-                              {' – '}
-                              {new Date(event.end_datetime).toLocaleTimeString(language === 'mn' ? 'mn-MN' : 'en-US', {
-                                hour: 'numeric',
-                                minute: '2-digit',
-                              })}
-                            </>
-                          )}
-                        </div>
-                        {event.location && (
-                          <div className="event-meta">
-                            <MapPin className="meta-icon" />
-                            {event.location}
-                          </div>
-                        )}
-                        {isAdmin && !event.isRecurring && (
-                          <button
-                            type="button"
-                            className="event-edit-btn"
-                            onClick={() => openEditModal(event)}
-                          >
-                            {t('editEvent')}
-                          </button>
-                        )}
-                      </div>
-                    </article>
+                    <h3 className="events-calendar-month">{monthLabel}</h3>
+                    <button type="button" className="events-calendar-nav-btn" onClick={goToNextMonth} aria-label={t('nextMonth')}>
+                      <ChevronRight />
+                    </button>
+                  </div>
+                  <div className="events-calendar-actions">
+                    <button type="button" className="events-today-btn" onClick={goToToday}>
+                      {t('today')}
+                    </button>
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        className="events-add-btn"
+                        onClick={() => openCreateModal(selectedDate)}
+                      >
+                        <Plus className="events-add-icon" />
+                        {t('addEvent')}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="events-calendar">
+                <div className="events-calendar-weekdays">
+                  {weekdays.map(label => (
+                    <div key={label} className="events-calendar-weekday">{label}</div>
                   ))}
                 </div>
-              )}
+                <div className="events-calendar-grid">
+                  {calendarDays.map(day => {
+                    const dateKey = toDateKey(day.date);
+                    const dayEvents = eventsByDate[dateKey] || [];
+                    const isSelected = dateKey === selectedDateKey;
+                    const isToday = dateKey === todayKey;
+
+                    return (
+                      <button
+                        key={dateKey + day.isCurrentMonth}
+                        type="button"
+                        className={[
+                          'events-calendar-day',
+                          !day.isCurrentMonth && 'events-calendar-day--muted',
+                          isSelected && 'events-calendar-day--selected',
+                          isToday && 'events-calendar-day--today',
+                        ].filter(Boolean).join(' ')}
+                        onClick={() => handleDayClick(day)}
+                        onDoubleClick={() => handleDayDoubleClick(day)}
+                      >
+                        <span className="events-calendar-day-number">{day.date.getDate()}</span>
+                        {dayEvents.length > 0 && (
+                          <div className="events-calendar-day-events">
+                            {dayEvents.slice(0, 3).map(event => (
+                              <span
+                                key={event.id}
+                                className={[
+                                  'events-calendar-event-pill',
+                                  event.isHoliday && 'events-calendar-event-pill--holiday',
+                                  event.isRecurring && !event.isHoliday && 'events-calendar-event-pill--recurring',
+                                ].filter(Boolean).join(' ')}
+                                title={event.title}
+                              >
+                                <EventLabel event={event} />
+                              </span>
+                            ))}
+                            {dayEvents.length > 3 && (
+                              <span className="events-calendar-more">+{dayEvents.length - 3}</span>
+                            )}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              </div>
+
+              <div className="events-day-column">
+                <h3 className="events-day-panel-title">{selectedDateLabel}</h3>
+                <aside className="events-day-panel">
+                  <div className="events-day-panel-content">
+                    <div className="events-time-slots">
+                      {allDayEvents.length > 0 && (
+                        <div className="events-time-slot events-time-slot--allday">
+                          <div className="events-time-slot-label">{t('allDay')}</div>
+                          <div className="events-time-slot-body">
+                            {allDayEvents.map(renderSlotEvent)}
+                          </div>
+                        </div>
+                      )}
+                      {HOUR_SLOTS.map(hour => (
+                        <div key={hour} className="events-time-slot">
+                          <div className="events-time-slot-label">{formatHourLabel(hour, language)}</div>
+                          <div className="events-time-slot-body">
+                            {eventsByHour[hour].map(renderSlotEvent)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </aside>
+              </div>
             </div>
           </>
         )}
