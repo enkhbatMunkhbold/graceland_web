@@ -76,3 +76,53 @@
     font-size: 1.125rem;
   }
 }
+
+/* Ministry canvas pages */
+.ministry-page--children {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.62)), url('../assets/Children.jpg');
+}
+
+.ministry-page--youth {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.62)), url('../assets/Interhigh.jpg');
+}
+
+.ministry-page--young-adult {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.62)), url('../assets/Young Adults.jpg');
+}
+
+.ministry-page--men {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.62)), url('../assets/Men.jpg');
+}
+
+.ministry-page--women {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.62)), url('../assets/Women.jpg');
+}
+
+.ministry-page--marriage {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.62)), url('../assets/Marriage.jpg');
+}
+
+.ministry-page-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Same footprint as Events calendar column + day/time-slot column */
+.ministry-page-canvas {
+  width: 100%;
+  min-height: calc(2.5rem + 1rem + 2.5rem + 1rem + (24 * 3rem));
+  background: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .ministry-page-canvas {
+    min-height: 32rem;
+  }
+}

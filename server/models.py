@@ -258,6 +258,19 @@ class Page(db.Model):
   def __repr__(self):
     return f'<Page {self.title}>'
 
+
+class MinistryPageContent(db.Model):
+  __tablename__ = 'ministry_page_contents'
+
+  id = db.Column(db.Integer, primary_key=True)
+  slug = db.Column(db.String(50), unique=True, nullable=False)
+  blocks = db.Column(db.Text, default='[]')
+  updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+  def __repr__(self):
+    return f'<MinistryPageContent {self.slug}>'
+
+
 class Announcement(db.Model):
   __tablename__ = 'announcements'
   

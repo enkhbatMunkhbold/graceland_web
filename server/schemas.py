@@ -2,7 +2,7 @@
 from config import ma
 from auth_utils import user_is_admin
 from models import (User, Member, Ministry, MinistryLeader, MinistryMember, Group, GroupMember, Event,        EventRegistration,
-                   Sermon, Donation, PrayerRequest, Page, Announcement, 
+                   Sermon, Donation, PrayerRequest, Page, MinistryPageContent, Announcement,
                    Media, ContactMessage, NavigationMenu, NavigationItem)
 from marshmallow import fields, validate, validates, validates_schema, ValidationError
 from datetime import datetime, time
@@ -420,6 +420,107 @@ class PrayerRequestSchema(ma.SQLAlchemyAutoSchema):
                 raise ValidationError('Prayer request contains inappropriate content')
 
 # ============================================
+# MINISTRY PAGE CONTENT
+# ============================================
+MINISTRY_PAGE_SLUGS = ('children', 'youth', 'young-adult', 'men', 'women', 'marriage')
+
+
+class MinistryPageContentSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = MinistryPageContent
+        load_instance = True
+
+    slug = fields.String(required=True, validate=validate.OneOf(MINISTRY_PAGE_SLUGS))
+    blocks = fields.Method('get_blocks', deserialize='load_blocks')
+
+    def get_blocks(self, obj):
+        import json
+        try:
+            return json.loads(obj.blocks or '[]')
+        except (TypeError, json.JSONDecodeError):
+            return []
+
+    def load_blocks(self, value):
+        import json
+        if value is None:
+            return '[]'
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except json.JSONDecodeError:
+                raise ValidationError('blocks must be valid JSON')
+        if not isinstance(value, list):
+            raise ValidationError('blocks must be a list')
+
+        validated = []
+        for block in value:
+            if not isinstance(block, dict):
+                raise ValidationError('Each block must be an object')
+
+            block_type = block.get('type')
+            if block_type not in ('text', 'image', 'video', 'file', 'embed'):
+                raise ValidationError('Block type must be text, image, video, file, or embed')
+
+            block_id = block.get('id')
+            if not block_id or not isinstance(block_id, str):
+                raise ValidationError('Each block requires an id')
+
+            if block_type == 'text':
+                content = block.get('content', '')
+                if not isinstance(content, str):
+                    raise ValidationError('Text block content must be a string')
+                validated.append({
+                    'id': block_id[:100],
+                    'type': 'text',
+                    'content': content[:10000],
+                })
+            elif block_type == 'image':
+                url = block.get('url', '')
+                if not isinstance(url, str) or not url.strip():
+                    raise ValidationError('Image block requires a url')
+                caption = block.get('caption', '')
+                validated.append({
+                    'id': block_id[:100],
+                    'type': 'image',
+                    'url': url[:2000],
+                    'caption': caption[:500] if isinstance(caption, str) else '',
+                })
+            elif block_type == 'video':
+                url = block.get('url', '')
+                if not isinstance(url, str) or not url.strip():
+                    raise ValidationError('Video block requires a url')
+                validated.append({
+                    'id': block_id[:100],
+                    'type': 'video',
+                    'url': url[:2000],
+                })
+            elif block_type == 'file':
+                title = block.get('title', '')
+                url = block.get('url', '')
+                if not isinstance(url, str) or not url.strip():
+                    raise ValidationError('File block requires a url')
+                validated.append({
+                    'id': block_id[:100],
+                    'type': 'file',
+                    'title': title[:255] if isinstance(title, str) else '',
+                    'url': url[:2000],
+                })
+            elif block_type == 'embed':
+                title = block.get('title', '')
+                url = block.get('url', '')
+                if not isinstance(url, str) or not url.strip():
+                    raise ValidationError('Embed block requires a url')
+                validated.append({
+                    'id': block_id[:100],
+                    'type': 'embed',
+                    'title': title[:255] if isinstance(title, str) else '',
+                    'url': url[:2000],
+                })
+
+        return json.dumps(validated)
+
+
+# ============================================
 # PAGE SCHEMA WITH VALIDATION
 # ============================================
 class PageSchema(ma.SQLAlchemyAutoSchema):
@@ -594,6 +695,8 @@ donations_schema = DonationSchema(many=True)
 
 prayer_request_schema = PrayerRequestSchema()
 prayer_requests_schema = PrayerRequestSchema(many=True)
+
+ministry_page_content_schema = MinistryPageContentSchema()
 
 page_schema = PageSchema()
 pages_schema = PageSchema(many=True)

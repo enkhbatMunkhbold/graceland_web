@@ -17,6 +17,8 @@ ADMIN_USERNAMES = os.environ.get('ADMIN_USERNAMES', '').strip()
 app.secret_key = b'Y\xf1Xz\x00\xad|eQ\x80t \xca\x1a\x10K'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATION'] = False
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'uploads')
 app.json.compact = False
 
 metadata = MetaData(naming_convention={

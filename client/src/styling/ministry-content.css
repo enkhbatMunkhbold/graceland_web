@@ -1,0 +1,412 @@
+.ministry-content-field {
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.ministry-content-field--plain,
+.ministry-content-field--canvas {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.ministry-content-field--canvas {
+  padding: 1.5rem;
+}
+
+.ministry-content-admin--plain,
+.ministry-content-admin--canvas {
+  margin-bottom: 1.5rem;
+}
+
+.ministry-content-admin--canvas {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+}
+
+.ministry-content-field--canvas .ministry-content-status,
+.ministry-content-field--canvas .ministry-content-empty {
+  color: #6b7280;
+}
+
+.ministry-content-field--canvas .ministry-content-error {
+  color: #dc2626;
+}
+
+.ministry-content-field--canvas .ministry-content-text {
+  color: #111827;
+}
+
+.ministry-content-field--canvas .ministry-content-figure figcaption {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+.ministry-content-field--canvas .ministry-content-file {
+  background: #f8fafc;
+  border-color: #e5e7eb;
+  color: #1e40af;
+}
+
+.ministry-content-field--canvas .ministry-content-file:hover {
+  background: #eff6ff;
+}
+
+.ministry-content-field--canvas .ministry-content-embed-title {
+  color: #111827;
+}
+
+.ministry-content-field--canvas .ministry-content-admin-toolbar button,
+.ministry-content-field--canvas .ministry-content-actions button {
+  border-color: #d1d5db;
+  background: #ffffff;
+  color: #1f2937;
+}
+
+.ministry-content-field--canvas .ministry-content-admin-toolbar button:hover,
+.ministry-content-field--canvas .ministry-content-save:hover {
+  background: #f3f4f6;
+}
+
+.ministry-content-field--canvas .ministry-content-save {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.ministry-content-field--canvas .ministry-content-edit-block {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+.ministry-content-field--droppable {
+  position: relative;
+}
+
+.ministry-content-file-input {
+  display: none;
+}
+
+.ministry-content-drop-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px dashed #cbd5e1;
+  border-radius: 0.5rem;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.ministry-content-browse-btn {
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.35rem;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #1e40af;
+  cursor: pointer;
+}
+
+.ministry-content-browse-btn:hover:not(:disabled) {
+  background: #eff6ff;
+}
+
+.ministry-content-browse-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ministry-content-drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: rgba(37, 99, 235, 0.12);
+  border: 2px dashed #2563eb;
+  border-radius: 0.5rem;
+  color: #1d4ed8;
+  font-size: 1.05rem;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.ministry-content-field--drag-over {
+  outline: 2px dashed #2563eb;
+  outline-offset: -2px;
+}
+
+.ministry-content-uploading {
+  margin: 0 0 1rem;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.ministry-content-field--canvas .ministry-content-empty--canvas {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 12rem;
+  font-size: 1.125rem;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.ministry-content-status,
+.ministry-content-empty {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+  margin: 0;
+}
+
+.ministry-content-error {
+  color: #ffb4b4;
+  text-align: center;
+  margin: 1rem 0 0;
+}
+
+.ministry-content-admin {
+  margin-bottom: 2rem;
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  text-align: left;
+}
+
+.ministry-content-admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.ministry-content-admin-toolbar button,
+.ministry-content-actions button {
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.55rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.ministry-content-admin-toolbar button:hover,
+.ministry-content-save:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.ministry-content-edit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ministry-content-edit-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.ministry-content-edit-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.ministry-content-edit-block textarea,
+.ministry-content-edit-block input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.95rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.95);
+  color: #1a1a1a;
+}
+
+.ministry-content-edit-block textarea {
+  resize: vertical;
+  min-height: 6rem;
+}
+
+.ministry-content-preview {
+  max-width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 0.4rem;
+}
+
+.ministry-content-remove {
+  align-self: flex-start;
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.75rem;
+  border: none;
+  border-radius: 0.35rem;
+  background: rgba(220, 80, 80, 0.85);
+  color: #fff;
+  cursor: pointer;
+}
+
+.ministry-content-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.ministry-content-save {
+  background: rgba(72, 160, 96, 0.9) !important;
+  border-color: rgba(72, 160, 96, 1) !important;
+}
+
+.ministry-content-cancel {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.ministry-content-display {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  text-align: left;
+}
+
+.ministry-content-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+  line-height: 1.7;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.ministry-content-figure {
+  margin: 0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.ministry-content-figure img {
+  display: block;
+  width: 100%;
+  max-height: 480px;
+  object-fit: cover;
+}
+
+.ministry-content-figure figcaption {
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.ministry-content-video {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  background: #000;
+}
+
+.ministry-content-video iframe,
+.ministry-content-video video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  object-fit: contain;
+}
+
+.ministry-content-file {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.ministry-content-file:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.ministry-content-file-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ministry-content-file-label {
+  font-size: 1rem;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.ministry-content-embed-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.ministry-content-embed-frame {
+  position: relative;
+  width: 100%;
+  padding-bottom: min(75%, 560px);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  background: #000;
+}
+
+.ministry-content-embed-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+@media (min-width: 768px) {
+  .ministry-content-text {
+    font-size: 1.125rem;
+  }
+}

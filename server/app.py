@@ -1,5 +1,5 @@
 from config import app, db, api, FACEBOOK_PAGE_ID, FACEBOOK_PAGE_ACCESS_TOKEN
-from flask import session, request
+from flask import session, request, send_from_directory
 from flask_restful import Resource
 from flask_migrate import Migrate
 from sqlalchemy.exc import IntegrityError
@@ -9,9 +9,11 @@ from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 import json
+import os
 import models  # Import models to register them with SQLAlchemy
 import schemas
 from auth_utils import user_is_admin
+from ministry_upload import ministry_upload_allowed, save_ministry_upload
 
 # Initialize Flask-Migrate
 migrate = Migrate(app, db)
@@ -915,6 +917,91 @@ class DonationByID(Resource):
             return {'error': str(e)}, 500
         
 api.add_resource(DonationByID, '/donations/<int:donation_id>')
+
+
+MINISTRY_PAGE_SLUGS = {'children', 'youth', 'young-adult', 'men', 'women', 'marriage'}
+
+
+class MinistryPageContentBySlug(Resource):
+    def get(self, slug):
+        if slug not in MINISTRY_PAGE_SLUGS:
+            return {'error': 'Ministry page not found'}, 404
+
+        page = models.MinistryPageContent.query.filter_by(slug=slug).first()
+        if not page:
+            return {'slug': slug, 'blocks': []}, 200
+
+        return schemas.ministry_page_content_schema.dump(page), 200
+
+    def put(self, slug):
+        if slug not in MINISTRY_PAGE_SLUGS:
+            return {'error': 'Ministry page not found'}, 404
+
+        if not _require_admin():
+            return {'error': 'Admin access required'}, 403
+
+        data = request.get_json(silent=True) or {}
+        data['slug'] = slug
+
+        page = models.MinistryPageContent.query.filter_by(slug=slug).first()
+        try:
+            if page:
+                updated = schemas.ministry_page_content_schema.load(
+                    data, instance=page, partial=True
+                )
+            else:
+                updated = schemas.ministry_page_content_schema.load(data)
+                db.session.add(updated)
+
+            db.session.commit()
+            return schemas.ministry_page_content_schema.dump(updated), 200
+        except ValidationError as ve:
+            db.session.rollback()
+            return {'error': ve.messages}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+
+
+api.add_resource(MinistryPageContentBySlug, '/ministry-pages/<string:slug>')
+
+
+class MinistryPageUpload(Resource):
+    def post(self, slug):
+        if slug not in MINISTRY_PAGE_SLUGS:
+            return {'error': 'Ministry page not found'}, 404
+
+        if not _require_admin():
+            return {'error': 'Admin access required'}, 403
+
+        file = request.files.get('file')
+        if not file or not file.filename:
+            return {'error': 'No file provided'}, 400
+
+        if not ministry_upload_allowed(file.filename):
+            return {'error': 'File type not allowed'}, 400
+
+        try:
+            stored_name = save_ministry_upload(app, slug, file)
+            url = f"{request.host_url.rstrip('/')}/uploads/ministry/{slug}/{stored_name}"
+            return {'url': url, 'filename': file.filename}, 201
+        except Exception as e:
+            return {'error': str(e)}, 500
+
+
+api.add_resource(MinistryPageUpload, '/ministry-pages/<string:slug>/upload')
+
+
+@app.route('/uploads/ministry/<string:slug>/<path:filename>')
+def serve_ministry_upload(slug, filename):
+    if slug not in MINISTRY_PAGE_SLUGS:
+        return {'error': 'Not found'}, 404
+
+    directory = os.path.join(app.config['UPLOAD_FOLDER'], 'ministry', slug)
+    if not os.path.isdir(directory):
+        return {'error': 'Not found'}, 404
+
+    return send_from_directory(directory, filename)
 
 
 if __name__ == '__main__':

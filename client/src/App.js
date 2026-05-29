@@ -15,6 +15,7 @@ import Youth from './components/Youth';
 import YoungAdult from './components/YoungAdult';
 import Men from './components/Men';
 import Women from './components/Women';
+import Marriage from './components/Marriage';
 import Sermons from './components/Sermons';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
@@ -47,6 +48,7 @@ function AppContent() {
             <Route path="/ministries/young-adult" element={<YoungAdult />} />
             <Route path="/ministries/men" element={<Men />} />
             <Route path="/ministries/women" element={<Women />} />
+            <Route path="/ministries/marriage" element={<Marriage />} />
             <Route path="/sermons" element={<Sermons />} />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>          
@@ -60,11 +62,12 @@ function AppContent() {
             <Route path="/about/beliefs" element={<OurBeliefs />} />
             <Route path="/events" element={<Events />} />
             <Route path="/ministries" element={<Ministries />} />
-            <Route path="/ministries/children" element={<Children />} />
-            <Route path="/ministries/youth" element={<Youth />} />
-            <Route path="/ministries/young-adult" element={<YoungAdult />} />
-            <Route path="/ministries/men" element={<Men />} />
-            <Route path="/ministries/women" element={<Women />} />
+            <Route path="/ministries/children" element={<Navigate to="/login" replace />} />
+            <Route path="/ministries/youth" element={<Navigate to="/login" replace />} />
+            <Route path="/ministries/young-adult" element={<Navigate to="/login" replace />} />
+            <Route path="/ministries/men" element={<Navigate to="/login" replace />} />
+            <Route path="/ministries/women" element={<Navigate to="/login" replace />} />
+            <Route path="/ministries/marriage" element={<Navigate to="/login" replace />} />
             <Route path="/sermons" element={<Sermons />} />
             <Route path="/login" element={<Login />} />
             <Route path="/SignUp" element={<SignUp />} />

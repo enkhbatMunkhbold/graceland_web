@@ -94,6 +94,43 @@ export const api = {
     return response.json();
   },
 
+  getMinistryPageContent: async (slug) => {
+    const response = await fetch(`${API_BASE_URL}/ministry-pages/${slug}`, {
+      credentials: 'include',
+    });
+    if (!response.ok) throw new Error('Failed to fetch ministry page content');
+    return response.json();
+  },
+
+  updateMinistryPageContent: async (slug, data) => {
+    const response = await fetch(`${API_BASE_URL}/ministry-pages/${slug}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to update ministry page content');
+    }
+    return response.json();
+  },
+
+  uploadMinistryFile: async (slug, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch(`${API_BASE_URL}/ministry-pages/${slug}/upload`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to upload file');
+    }
+    return response.json();
+  },
+
   // Groups
   getGroups: async () => {
     const response = await fetch(`${API_BASE_URL}/groups`);
