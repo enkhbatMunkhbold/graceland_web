@@ -213,10 +213,14 @@ function MinistryContentField({ slug, variant = 'default' }) {
     }
 
     if (block.type === 'image') {
+      const isSmall = block.size === 'small';
       return (
-        <figure key={block.id} className="ministry-content-figure">
+        <figure
+          key={block.id}
+          className={`ministry-content-figure${isSmall ? ' ministry-content-figure--small' : ''}`}
+        >
           <img src={block.url} alt={block.caption || t('ministryContentImageAlt')} />
-          {block.caption ? <figcaption>{block.caption}</figcaption> : null}
+          {block.caption && !isSmall ? <figcaption>{block.caption}</figcaption> : null}
         </figure>
       );
     }
@@ -270,6 +274,20 @@ function MinistryContentField({ slug, variant = 'default' }) {
     }
 
     if (block.type === 'image') {
+      const isSmall = block.size === 'small';
+
+      if (isSmall) {
+        return (
+          <div key={block.id} className="ministry-content-edit-block ministry-content-edit-block--thumb">
+            <img className="ministry-content-thumb" src={block.url} alt={block.caption || ''} />
+            {block.caption ? <span className="ministry-content-thumb-label">{block.caption}</span> : null}
+            <button type="button" className="ministry-content-remove" onClick={() => removeBlock(block.id)}>
+              {t('ministryContentRemove')}
+            </button>
+          </div>
+        );
+      }
+
       return (
         <div key={block.id} className="ministry-content-edit-block">
           <label className="ministry-content-edit-label">{t('ministryContentImageUrl')}</label>
@@ -447,7 +465,7 @@ function MinistryContentField({ slug, variant = 'default' }) {
           </div>
 
           {(isEditing || blocks.length > 0) && (
-            <div className="ministry-content-edit-list">
+            <div className={`ministry-content-edit-list${isCanvas ? ' ministry-content-edit-list--canvas' : ''}`}>
               {blocks.length === 0 ? (
                 <p className="ministry-content-empty">{t(isCanvas ? 'ministryContentEmptyPlainAdmin' : 'ministryContentEmptyAdmin')}</p>
               ) : (

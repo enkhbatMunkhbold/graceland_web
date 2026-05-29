@@ -479,12 +479,16 @@ class MinistryPageContentSchema(ma.SQLAlchemyAutoSchema):
                 if not isinstance(url, str) or not url.strip():
                     raise ValidationError('Image block requires a url')
                 caption = block.get('caption', '')
-                validated.append({
+                image_block = {
                     'id': block_id[:100],
                     'type': 'image',
                     'url': url[:2000],
                     'caption': caption[:500] if isinstance(caption, str) else '',
-                })
+                }
+                size = block.get('size')
+                if size == 'small':
+                    image_block['size'] = 'small'
+                validated.append(image_block)
             elif block_type == 'video':
                 url = block.get('url', '')
                 if not isinstance(url, str) or not url.strip():

@@ -66,3 +66,121 @@
     font-size: 1.2rem;
   }
 }
+
+/* Our Beliefs — statement of faith document (Arial / document typography) */
+.beliefs-section {
+  min-height: 100vh;
+  padding: 3rem 0 4rem;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('../assets/our_people.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  font-family: Arial, 'Arimo', Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.beliefs-container {
+  max-width: 60%;
+  margin: 0 auto;
+  /* padding: 0 2rem; */
+}
+
+.beliefs-document-sheet {
+  width: 100%;
+  background: #ffffff;
+  padding: 2.5rem 2.75rem;
+  text-align: left;
+  color: #333333;
+  font-family: inherit;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.beliefs-document-title {
+  margin: 0 0 1.5rem;
+  font-family: inherit;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: normal;
+  text-transform: uppercase;
+  color: #5bb7a5;
+}
+
+.beliefs-document-intro {
+  margin: 0 0 2.25rem;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #333333;
+}
+
+.beliefs-document-intro-link {
+  color: inherit;
+  font-family: inherit;
+  text-decoration: underline;
+  text-underline-offset: 1px;
+}
+
+.beliefs-document-intro-link:hover {
+  color: #5bb7a5;
+}
+
+.beliefs-document-body {
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #333333;
+}
+
+.beliefs-document-section {
+  margin-bottom: 1.5rem;
+}
+
+.beliefs-document-section:last-child {
+  margin-bottom: 0;
+}
+
+.beliefs-document-section-title {
+  margin: 0 0 0.35rem;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #222222;
+}
+
+.beliefs-document-body p {
+  margin: 0;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.beliefs-document-section p + p {
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .beliefs-section {
+    padding: 2rem 0 3rem;
+  }
+
+  .beliefs-container {
+    padding: 0 1.25rem;
+  }
+
+  .beliefs-document-sheet {
+    padding: 1.75rem 1.5rem;
+  }
+
+  .beliefs-document-title {
+    font-size: 24px;
+  }
+
+  .beliefs-document-section {
+    margin-bottom: 1.25rem;
+  }
+}
