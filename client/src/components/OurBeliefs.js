@@ -9,20 +9,20 @@ function OurBeliefs() {
   return (
     <section id="our-beliefs" className="beliefs-section">
       <div className="beliefs-container">
-        <article className="beliefs-document-sheet" aria-label="Statement of Faith">
-          <h1 className="beliefs-document-title">Statement of Faith</h1>
+        <article className="beliefs-document-sheet" aria-label={statement.title}>
+          <h1 className="beliefs-document-title">{statement.title}</h1>
 
           <p className="beliefs-document-intro">
-            As members of the{' '}
+            {statement.introBeforeLink}
             <a
               href="https://www.sbc.net"
               className="beliefs-document-intro-link"
               target="_blank"
               rel="noopener noreferrer"
             >
-              Southern Baptist Convention
+              {statement.linkLabel}
             </a>
-            , we believe
+            {statement.introAfterLink}
           </p>
 
           <div className="beliefs-document-body">

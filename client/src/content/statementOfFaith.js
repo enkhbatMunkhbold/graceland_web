@@ -1,4 +1,10 @@
+import { statementOfFaithMn } from './statementOfFaithMn';
+
 const statementOfFaithEn = {
+  title: 'Statement of Faith',
+  introBeforeLink: 'As members of the ',
+  linkLabel: 'Southern Baptist Convention',
+  introAfterLink: ', we believe',
   sections: [
     {
       title: 'The Scriptures',
@@ -71,8 +77,8 @@ const statementOfFaithEn = {
 };
 
 export function getStatementOfFaith(language) {
-  if (language === 'en') {
-    return statementOfFaithEn;
+  if (language === 'mn') {
+    return statementOfFaithMn;
   }
   return statementOfFaithEn;
 }
