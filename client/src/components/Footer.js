@@ -6,6 +6,7 @@ import '../styling/footer.css';
 
 const ADDRESS = '1955 Geary Rd, Walnut Creek, CA 94597';
 const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ADDRESS)}`;
+const MAPS_EMBED_URL = `https://www.google.com/maps?q=${encodeURIComponent(ADDRESS)}&output=embed`;
 const FACEBOOK_URL = 'https://www.facebook.com/gracelandoakland';
 const YOUTUBE_URL = 'https://www.youtube.com/@gracelandbiblechurch7040';
 
@@ -18,6 +19,7 @@ function Footer() {
     visitUs: 'Манай хаяг',
     directions: 'Чиглэл авах',
     maps: 'Google Maps',
+    mapTitle: 'Graceland Bible Church-ийн байршил',
     rights: 'Бүх эрх хуулиар хамгаалагдсан.',
   } : {
     welcome: 'A welcoming Mongolian church community centered on Jesus, Scripture, and life together.',
@@ -25,6 +27,7 @@ function Footer() {
     visitUs: 'Visit us',
     directions: 'Get directions',
     maps: 'Google Maps',
+    mapTitle: 'Graceland Bible Church location',
     rights: 'All rights reserved.',
   };
 
@@ -81,6 +84,15 @@ function Footer() {
             <a className="footer-direction-link" href={MAPS_URL} target="_blank" rel="noopener noreferrer">
               {copy.directions}
             </a>
+            <div className="footer-map">
+              <iframe
+                src={MAPS_EMBED_URL}
+                title={copy.mapTitle}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
+            </div>
           </div>
 
           <div className="footer-column">
