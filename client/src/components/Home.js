@@ -1,16 +1,17 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CalendarDays, Clock3, Gift, HeartHandshake, MapPin, Play } from 'lucide-react';
+import { ArrowRight, CalendarDays, Clock3, Gift, HeartHandshake, MapPin, Play, Users } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import UserContext from '../context/UserContext';
 import { api } from '../services/api';
-import heroImage from '../images/481156816_599771773215075_9010741751255276992_n.jpg';
+import heroImage from '../images/484869371_1005337404351491_7788059528405399719_n.jpg';
 import childrenImage from '../assets/Children.jpg';
 import youthImage from '../assets/Interhigh.jpg';
 import youngAdultsImage from '../assets/Young Adults.jpg';
 import '../styling/home.css';
 
 const GIVING_URL = 'https://gracelandbible.breezechms.com/give/online';
+const YOUTUBE_URL = 'https://www.youtube.com/@gracelandbiblechurch7040';
 
 function formatDate(value, language) {
   return new Date(value).toLocaleDateString(language === 'mn' ? 'mn-MN' : 'en-US', {
@@ -63,7 +64,7 @@ function Home() {
   return (
     <main className="home-page">
       <section className="home-hero" aria-labelledby="home-hero-title">
-        <img className="home-hero-image" src={heroImage} alt="" />
+        <img className="home-hero-image" src={heroImage} alt="" fetchPriority="high" />
         <div className="home-hero-overlay" />
         <div className="home-shell home-hero-content">
           {user && <p className="home-user-greeting">{t('welcomeUser')}, {user.username}!</p>}
@@ -83,9 +84,25 @@ function Home() {
             </Link>
           </div>
         </div>
+        <div id="plan-your-visit" className="home-hero-visit">
+          <div className="home-shell home-hero-visit-grid">
+            <div className="home-hero-visit-intro">
+              <p className="home-kicker">{t('youAreWelcome')}</p>
+              <h2>{t('joinUsThisWeek')}</h2>
+            </div>
+            <div className="home-hero-visit-item">
+              <Clock3 aria-hidden="true" />
+              <div><strong>{t('sundayWorship')}</strong><span>{t('sundayWorshipTime')}</span></div>
+            </div>
+            <div className="home-hero-visit-item">
+              <MapPin aria-hidden="true" />
+              <div><strong>{t('ourLocation')}</strong><span>1955 Geary Rd, Walnut Creek</span></div>
+            </div>
+          </div>
+        </div>
       </section>
 
-      <section id="plan-your-visit" className="home-section home-visit-section">
+      <section className="home-section home-visit-section">
         <div className="home-shell">
           <div className="home-section-heading home-section-heading--center">
             <p className="home-kicker">{t('youAreWelcome')}</p>
@@ -105,19 +122,24 @@ function Home() {
               <MapPin aria-hidden="true" />
               <div><h3>{t('ourLocation')}</h3><p>1955 Geary Rd., Walnut Creek, CA 94597</p></div>
             </article>
+            <article className="home-service-card">
+              <Users aria-hidden="true" />
+              <div><h3>{t('firstVisitWelcome')}</h3><p>{t('firstVisitDetails')}</p></div>
+            </article>
           </div>
         </div>
       </section>
 
-      <section className="home-section home-sermon-section">
-        <div className="home-shell">
-          <div className="home-section-heading">
-            <p className="home-kicker">{t('growInTheWord')}</p>
-            <h2>{t('latestMessage')}</h2>
-          </div>
-          <article className="home-feature-card">
+      <section className="home-section home-highlights-section">
+        <div className="home-shell home-highlights-grid">
+          <article className="home-highlight-column home-sermon-column">
+            <div className="home-section-heading">
+              <p className="home-kicker">{t('growInTheWord')}</p>
+              <h2>{t('latestMessage')}</h2>
+            </div>
+            <div className="home-feature-card">
             <div className="home-feature-media">
-              <img src={youngAdultsImage} alt="" />
+              <img src={youngAdultsImage} alt="" loading="lazy" />
               <span className="home-feature-play" aria-hidden="true"><Play /></span>
             </div>
             <div className="home-feature-content">
@@ -138,24 +160,23 @@ function Home() {
                 </>
               ) : (
                 <>
-                  <h3>{t('noSermonsYet')}</h3>
-                  <Link className="home-text-link" to="/sermons">{t('visitSermonsPage')} <ArrowRight aria-hidden="true" /></Link>
+                  <h3>{t('sermonInvitationTitle')}</h3>
+                  <p>{t('sermonInvitationCopy')}</p>
+                  <div className="home-inline-actions">
+                    <a className="home-text-link" href={YOUTUBE_URL} target="_blank" rel="noopener noreferrer">{t('watchOnYouTube')} <ArrowRight aria-hidden="true" /></a>
+                    <Link className="home-text-link home-text-link--subtle" to="/sermons">{t('visitSermonsPage')}</Link>
+                  </div>
                 </>
               )}
             </div>
+            </div>
           </article>
-        </div>
-      </section>
 
-      <section className="home-section home-events-section">
-        <div className="home-shell">
-          <div className="home-heading-row">
+          <article className="home-highlight-column home-events-column">
             <div className="home-section-heading">
               <p className="home-kicker">{t('lifeTogether')}</p>
               <h2>{t('upcomingEvents')}</h2>
             </div>
-            <Link className="home-text-link" to="/events">{t('viewAllEvents')} <ArrowRight aria-hidden="true" /></Link>
-          </div>
           <div className="home-event-grid">
             {contentLoading ? <p>{t('homeContentLoading')}</p> : upcomingEvents.length ? upcomingEvents.map(event => {
               const date = new Date(event.start_datetime);
@@ -173,31 +194,32 @@ function Home() {
                 </article>
               );
             }) : (
-              <div className="home-empty-card"><CalendarDays aria-hidden="true" /><p>{t('noUpcomingEvents')}</p></div>
+              <div className="home-empty-card">
+                <CalendarDays aria-hidden="true" />
+                <div><h3>{t('sundayInvitationTitle')}</h3><p>{t('sundayInvitationCopy')}</p></div>
+              </div>
             )}
           </div>
-        </div>
-      </section>
+          <Link className="home-text-link home-column-link" to="/events">{t('viewAllEvents')} <ArrowRight aria-hidden="true" /></Link>
+          </article>
 
-      <section className="home-section home-ministries-section">
-        <div className="home-shell">
-          <div className="home-heading-row">
+          <article className="home-highlight-column home-ministries-column">
             <div className="home-section-heading">
               <p className="home-kicker">{t('findCommunity')}</p>
               <h2>{t('ministriesForEverySeason')}</h2>
             </div>
-            <Link className="home-text-link" to="/ministries">{t('exploreMinistries')} <ArrowRight aria-hidden="true" /></Link>
-          </div>
           <div className="home-ministry-grid">
             {ministries.map(ministry => (
               <Link className="home-ministry-card" to={ministry.path} key={ministry.path}>
-                <img src={ministry.image} alt="" /><div className="home-ministry-overlay" />
+                <img src={ministry.image} alt="" loading="lazy" /><div className="home-ministry-overlay" />
                 <div className="home-ministry-content">
                   <h3>{ministry.title}</h3><span>{t('learnMore')} <ArrowRight aria-hidden="true" /></span>
                 </div>
               </Link>
             ))}
           </div>
+          <Link className="home-text-link home-column-link" to="/ministries">{t('exploreMinistries')} <ArrowRight aria-hidden="true" /></Link>
+          </article>
         </div>
       </section>
 
