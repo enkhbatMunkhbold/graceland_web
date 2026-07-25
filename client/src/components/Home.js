@@ -1,6 +1,6 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CalendarDays, Clock3, Gift, HeartHandshake, MapPin, Play } from 'lucide-react';
+import { ArrowRight, CalendarDays, Clock3, Gift, HeartHandshake, MapPin, MessageCircle, Play } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import UserContext from '../context/UserContext';
 import { api } from '../services/api';
@@ -205,17 +205,24 @@ function Home() {
 
       <section className="home-section home-care-section">
         <div className="home-shell home-care-grid">
+          <article className="home-care-card home-care-card--contact">
+            <MessageCircle aria-hidden="true" />
+            <p className="home-kicker">{t('letsConnect')}</p>
+            <h2>{t('getInTouch')}</h2>
+            <p>{t('careContactIntro')}</p>
+            <a className="home-button home-button--care" href="#contact">{t('contactUs')} <ArrowRight aria-hidden="true" /></a>
+          </article>
           <article className="home-care-card home-care-card--prayer">
             <HeartHandshake aria-hidden="true" />
             <p className="home-kicker">{t('weAreHereForYou')}</p>
-            <h2>{t('needPrayer')}</h2><p>{t('prayerIntro')}</p>
-            <a className="home-button home-button--light" href="#contact">{t('sharePrayerRequest')} <ArrowRight aria-hidden="true" /></a>
+            <h2>{t('needPrayer')}</h2><p>{t('carePrayerIntro')}</p>
+            <a className="home-button home-button--care" href="#contact">{t('submitPrayerRequest')} <ArrowRight aria-hidden="true" /></a>
           </article>
           <article className="home-care-card home-care-card--giving">
             <Gift aria-hidden="true" />
             <p className="home-kicker">{t('generosity')}</p>
-            <h2>{t('onlineGiving')}</h2><p>{t('givingIntro')}</p>
-            <a className="home-button home-button--outline-dark" href={GIVING_URL} target="_blank" rel="noopener noreferrer">
+            <h2>{t('onlineGiving')}</h2><p>{t('careGivingIntro')}</p>
+            <a className="home-button home-button--care" href={GIVING_URL} target="_blank" rel="noopener noreferrer">
               {t('giveOnline')} <ArrowRight aria-hidden="true" />
             </a>
           </article>

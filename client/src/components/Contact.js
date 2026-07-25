@@ -1,117 +1,101 @@
-import { useState } from 'react';
-import { MapPin, Mail, Facebook } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../services/api';
 import '../styling/contact.css';
 
 function Contact() {
   const { t } = useLanguage();
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
-  });
+  const [isOpen, setIsOpen] = useState(() => window.location.hash === '#contact');
+  const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
   const [submitting, setSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
+  const closeButtonRef = useRef(null);
 
-  const handleSubmit = async () => {
+  useEffect(() => {
+    const syncWithHash = () => setIsOpen(window.location.hash === '#contact');
+    window.addEventListener('hashchange', syncWithHash);
+    return () => window.removeEventListener('hashchange', syncWithHash);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    closeButtonRef.current?.focus();
+    const handleKeyDown = event => {
+      if (event.key === 'Escape') closeContact();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
+  const closeContact = () => {
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+    setIsOpen(false);
+  };
+
+  const handleSubmit = async event => {
+    event.preventDefault();
     setSubmitting(true);
     setSubmitMessage('');
-    const payload = {
-      ...formData,
-      name: formData.name.trim() || 'Зочин'
-    };
+    const payload = { ...formData, name: formData.name.trim() || 'Зочин' };
     try {
       await api.submitContact(payload);
-      setSubmitMessage('Message sent successfully!');
+      setSubmitMessage(t('contactSuccess'));
       setFormData({ name: '', email: '', subject: '', message: '' });
-    } catch (err) {
-      setSubmitMessage('Error sending message. Please try again.');
+    } catch (error) {
+      setSubmitMessage(t('contactError'));
     } finally {
       setSubmitting(false);
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <section id="contact" className="contact-section">
-      <div className="contact-container">
-        <div className="section-header">
-          <h2 className="section-title">{t('getInTouch')}</h2>
-        </div>
-
-        <div className="contact-grid">
-          {/* Contact Info */}
-          <div className="contact-info">
-            <div className="info-item">
-              <MapPin className="info-icon" />
-              <div>
-                <h3 className="info-title">{t('address')}</h3>
-                <p className="info-text">1955 Geary Rd.<br />Walnut Creek,<br />CA 94597</p>
-                <div className="contact-social-links">
-                  <a href="https://www.facebook.com/profile.php?id=AzFmAomvrf9Pj1QbBf2CDIg" target="_blank" rel="noopener noreferrer" className="contact-social-link contact-social-link--facebook" aria-label="Facebook">
-                    <Facebook className="contact-social-icon" />
-                  </a>
-                  <a href="mailto:graceland@bible.church" className="contact-social-link contact-social-link--email" aria-label="Email">
-                    <Mail className="contact-social-icon" />
-                  </a>
-                </div>
-              </div>
-            </div>
-            
-            {/* <div className="info-item">
-              <Mail className="info-icon" />
-              <div>
-                <h3 className="info-title">{t('emailAddress')}</h3>
-                <p className="info-text">graceland@bible.church</p>
-              </div>
-            </div> */}
-          </div>
-
-          {/* Contact Form */}
-          <div className="contact-form">
+    <section id="contact" className="contact-dialog" role="dialog" aria-modal="true" aria-labelledby="contact-title">
+      <button className="contact-backdrop" type="button" onClick={closeContact} aria-label={t('closeContact')} />
+      <div className="contact-panel">
+        <button ref={closeButtonRef} className="contact-close" type="button" onClick={closeContact} aria-label={t('closeContact')}>
+          <X aria-hidden="true" />
+        </button>
+        <p className="contact-kicker">{t('letsConnect')}</p>
+        <h2 id="contact-title">{t('getInTouch')}</h2>
+        <p className="contact-intro">{t('careContactIntro')}</p>
+        <form className="contact-form" onSubmit={handleSubmit}>
+          <label>
+            <span>{t('yourName')}</span>
             <input
               type="text"
-              placeholder={t('yourName')}
               value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              onChange={event => setFormData({ ...formData, name: event.target.value })}
               className="form-input"
+              autoComplete="name"
             />
-            {/* <input
-              type="email"
-              placeholder={t('yourEmail')}
-              value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
-              className="form-input"
-            /> */}
-            {/* <input
-              type="text"
-              placeholder={t('subject')}
-              value={formData.subject}
-              onChange={(e) => setFormData({...formData, subject: e.target.value})}
-              className="form-input"
-            /> */}
+          </label>
+          <label>
+            <span>{t('message')}</span>
             <textarea
-              placeholder={t('message')}
               value={formData.message}
-              onChange={(e) => setFormData({...formData, message: e.target.value})}
+              onChange={event => setFormData({ ...formData, message: event.target.value })}
               rows="5"
               className="form-textarea"
+              required
             />
-            <button
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="form-button"
-            >
-              {submitting ? 'Sending...' : t('sendMessage')}
-            </button>
-            {submitMessage && (
-              <p className={`submit-message ${submitMessage.includes('Error') ? 'error' : 'success'}`}>
-                {submitMessage}
-              </p>
-            )}
-          </div>
-        </div>
+          </label>
+          <button type="submit" disabled={submitting} className="form-button">
+            {submitting ? t('sendingMessage') : t('sendMessage')}
+          </button>
+          {submitMessage && (
+            <p className={`submit-message ${submitMessage === t('contactError') ? 'error' : 'success'}`} role="status">
+              {submitMessage}
+            </p>
+          )}
+        </form>
       </div>
     </section>
   );
