@@ -104,7 +104,7 @@ function Home() {
             </div>
             <div className="home-hero-visit-item">
               <MapPin aria-hidden="true" />
-              <div><strong>{t('ourLocation')}</strong><span>1955 Geary Rd, Walnut Creek</span></div>
+              <div><strong>{t('ourLocation')}</strong><span>1955 Geary Rd, Walnut Creek, CA 94597</span></div>
             </div>
           </div>
         </div>
