@@ -113,6 +113,7 @@ function Footer() {
         <div className="footer-bottom">
           <p>© {year} {t('churchName')}. {copy.rights}</p>
           <div className="footer-bottom-links">
+            <Link to="/login" className="footer-staff-link" onClick={scrollToTop}>{t('staffLogin')}</Link>
             <a href={FACEBOOK_URL} target="_blank" rel="noopener noreferrer">Facebook</a>
             <a href={YOUTUBE_URL} target="_blank" rel="noopener noreferrer">YouTube</a>
             <a href={MAPS_URL} target="_blank" rel="noopener noreferrer">{copy.maps}</a>

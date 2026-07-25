@@ -224,6 +224,14 @@
   color: rgba(255, 255, 255, 0.58);
 }
 
+.footer-bottom-links .footer-staff-link {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.footer-bottom-links .footer-staff-link:hover {
+  color: #e8d7ad;
+}
+
 .footer a:focus-visible {
   outline: 3px solid #e8d7ad;
   outline-offset: 4px;

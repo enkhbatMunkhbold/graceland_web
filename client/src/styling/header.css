@@ -3,3 +3,8 @@
 @media(min-width:1150px){.nav-desktop{gap:.65rem}.nav-link{padding-inline:.8rem}.nav-link:after{right:.8rem;left:.8rem}.header-actions{gap:.6rem}}
 @media(max-width:420px){.header-container{padding:0 .65rem}.logo-image{height:42px}.header--scrolled .logo-image{height:38px}.language-toggle{padding:0 .25rem}}
 @media(prefers-reduced-motion:reduce){.header,.header-content,.logo-image,.nav-link:after,.nav-dropdown{transition:none}}
+
+/* Public action: giving stays prominent; staff authentication lives in the footer. */
+.donate-button{min-height:42px;display:inline-flex;align-items:center;justify-content:center;padding:.65rem 1rem;border:1px solid #b89243;background:#c8a85e;color:#17271c;font-size:.7rem;font-weight:850;letter-spacing:.08em;text-decoration:none;text-transform:uppercase;transition:background .2s,transform .2s}.donate-button:hover{background:#e5d19f;transform:translateY(-1px)}.donate-button:focus-visible{outline:3px solid #263b2c;outline-offset:2px}.header-actions .logout-button{background:transparent;border-color:transparent;color:#405046;padding-inline:.7rem}.header-actions .logout-button:hover{background:#f5f1e7;color:#17271c}
+@media(max-width:420px){.logo-image{height:40px}.header--scrolled .logo-image{height:36px}.donate-button{min-height:40px;padding:.55rem .7rem;font-size:.62rem}.language-text{display:none}}
+@media(prefers-reduced-motion:reduce){.donate-button{transition:none}.donate-button:hover{transform:none}}

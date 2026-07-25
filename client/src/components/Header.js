@@ -8,6 +8,8 @@ import { api } from '../services/api';
 import logoImage from '../assets/logo_with_name.png';
 import '../styling/header.css';
 
+const GIVING_URL = 'https://gracelandbible.breezechms.com/give/online';
+
 function Header() {
   const { user, setUser } = useContext(UserContext)
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -55,7 +57,6 @@ function Header() {
     { label: t('ministries'), href: '/ministries', isRoute: true },
     { label: t('events'), href: '/events', isRoute: true },
     { label: t('sermons'), href: '/sermons', isRoute: true },
-    { label: t('give'), href: 'https://gracelandbible.breezechms.com/give/online' },
     { label: t('contact'), href: '#contact' },    
   ];
 
@@ -131,12 +132,14 @@ function Header() {
               <span className="language-text">{language === 'en' ? 'MN' : 'EN'}</span>
             </button>
             
-            <button 
-              className={user ? "logout-button" : "login-button"}
-              onClick={handleAuthClick}
-            >
-              {user ? t('logout') : t('login')}
-            </button>
+            {user && (
+              <button className="logout-button" onClick={handleAuthClick}>
+                {t('logout')}
+              </button>
+            )}
+            <a className="donate-button" href={GIVING_URL}>
+              {t('give')}
+            </a>
 
             {/* Mobile menu button */}
             <button
@@ -197,15 +200,17 @@ function Header() {
                   </a>
                 )
               ))}
-              <button 
-                className={user ? "logout-button-mobile" : "login-button-mobile"}
-                onClick={() => {
-                  handleAuthClick();
-                  setIsMenuOpen(false);
-                }}
-              >
-                {user ? t('logout') : t('login')}
-              </button>
+              {user && (
+                <button
+                  className="logout-button-mobile"
+                  onClick={() => {
+                    handleAuthClick();
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  {t('logout')}
+                </button>
+              )}
             </nav>
           </div>
         )}
