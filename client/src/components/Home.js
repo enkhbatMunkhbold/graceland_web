@@ -1,6 +1,6 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CalendarDays, Clock3, Gift, HeartHandshake, MapPin, Play, Users } from 'lucide-react';
+import { ArrowRight, CalendarDays, Clock3, Gift, HeartHandshake, MapPin, Play } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import UserContext from '../context/UserContext';
 import { api } from '../services/api';
@@ -86,9 +86,17 @@ function Home() {
         </div>
         <div id="plan-your-visit" className="home-hero-visit">
           <div className="home-shell home-hero-visit-grid">
-            <div className="home-hero-visit-intro">
-              <p className="home-kicker">{t('youAreWelcome')}</p>
-              <h2>{t('joinUsThisWeek')}</h2>
+            <div className="home-hero-visit-item">
+              <Clock3 aria-hidden="true" />
+              <div><strong>{t('mondayMorningPrayer')}</strong><span>{t('morningPrayerTime')}</span></div>
+            </div>
+            <div className="home-hero-visit-item">
+              <Clock3 aria-hidden="true" />
+              <div><strong>{t('wednesdayMorningPrayer')}</strong><span>{t('morningPrayerTime')}</span></div>
+            </div>
+            <div className="home-hero-visit-item">
+              <Clock3 aria-hidden="true" />
+              <div><strong>{t('fridayPrayer')}</strong><span>{t('fridayPrayerTime')}</span></div>
             </div>
             <div className="home-hero-visit-item">
               <Clock3 aria-hidden="true" />
@@ -98,34 +106,6 @@ function Home() {
               <MapPin aria-hidden="true" />
               <div><strong>{t('ourLocation')}</strong><span>1955 Geary Rd, Walnut Creek</span></div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="home-section home-visit-section">
-        <div className="home-shell">
-          <div className="home-section-heading home-section-heading--center">
-            <p className="home-kicker">{t('youAreWelcome')}</p>
-            <h2>{t('joinUsThisWeek')}</h2>
-            <p>{t('visitIntro')}</p>
-          </div>
-          <div className="home-service-grid">
-            <article className="home-service-card">
-              <CalendarDays aria-hidden="true" />
-              <div><h3>{t('sundayWorship')}</h3><p>{t('sundayWorshipTime')}</p></div>
-            </article>
-            <article className="home-service-card">
-              <Clock3 aria-hidden="true" />
-              <div><h3>{t('fridayPrayer')}</h3><p>{t('fridayPrayerTime')}</p></div>
-            </article>
-            <article className="home-service-card">
-              <MapPin aria-hidden="true" />
-              <div><h3>{t('ourLocation')}</h3><p>1955 Geary Rd., Walnut Creek, CA 94597</p></div>
-            </article>
-            <article className="home-service-card">
-              <Users aria-hidden="true" />
-              <div><h3>{t('firstVisitWelcome')}</h3><p>{t('firstVisitDetails')}</p></div>
-            </article>
           </div>
         </div>
       </section>

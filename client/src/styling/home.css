@@ -6,3 +6,9 @@
 
 /* Graceland leaf-green accent palette */
 .home-page{--gold:#91cf62;--pale:#cce9b7}.home-kicker,.home-text-link{color:#477d2e}.home-service-card>svg,.home-empty-card svg{color:#62a83f}.home-button--primary{background:#91cf62;color:#14251a}.home-button--primary:hover{background:#b8e394}.home-button:focus-visible,.home-text-link:focus-visible,.home-ministry-card:focus-visible{outline-color:#72bd4b}
+
+/* Hero service schedule */
+.home-hero-visit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home-hero-visit-item{min-width:0}.home-hero-visit-item:last-child{grid-column:1/-1}.home-hero-visit-item span{overflow-wrap:anywhere}
+@media(max-width:699px){.home-hero{min-height:840px;padding-bottom:230px}.home-hero-visit-item{padding:.85rem 0}.home-hero-visit-item:nth-child(even){border-left:1px solid rgba(255,255,255,.12);padding-left:1rem}.home-hero-visit-item:last-child{border-top:1px solid rgba(255,255,255,.12);border-left:0;padding-left:0}}
+@media(min-width:700px) and (max-width:999px){.home-hero{padding-bottom:180px}.home-hero-visit-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.home-hero-visit-item{padding:1.15rem}.home-hero-visit-item:nth-child(2),.home-hero-visit-item:nth-child(3),.home-hero-visit-item:nth-child(5){border-left:1px solid rgba(255,255,255,.12)}.home-hero-visit-item:nth-child(n+4){border-top:1px solid rgba(255,255,255,.12)}.home-hero-visit-item:last-child{grid-column:auto}}
+@media(min-width:1000px){.home-hero{padding-bottom:104px}.home-hero-visit-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.home-hero-visit-item{padding:1.35rem 1rem}.home-hero-visit-item+.home-hero-visit-item{border-left:1px solid rgba(255,255,255,.12)}.home-hero-visit-item:last-child{grid-column:auto}}
