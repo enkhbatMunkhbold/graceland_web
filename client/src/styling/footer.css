@@ -288,3 +288,42 @@
     transform: none;
   }
 }
+
+/* Graceland leaf-green accent palette */
+.footer {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(145, 207, 98, 0.1), transparent 34%),
+    #132219;
+}
+
+.footer-accent {
+  background: linear-gradient(90deg, #4f9134, #b8e394 50%, #4f9134);
+}
+
+.footer-heading,
+.footer-direction-link,
+.footer-bottom-links .footer-staff-link:hover {
+  color: #b8e394;
+}
+
+.footer-link::after,
+.footer-address svg,
+.footer-services svg {
+  background-color: #72bd4b;
+  color: #91cf62;
+}
+
+.footer-map {
+  border-color: rgba(184, 227, 148, 0.32);
+}
+
+.footer-map:focus-within,
+.footer a:focus-visible {
+  outline-color: #91cf62;
+}
+
+.footer-socials a:hover {
+  border-color: #91cf62;
+  background: #91cf62;
+  color: #132219;
+}
