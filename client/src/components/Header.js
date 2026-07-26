@@ -9,6 +9,7 @@ import logoImage from '../assets/logo_with_name.png';
 import '../styling/header.css';
 
 const GIVING_URL = 'https://gracelandbible.breezechms.com/give/online';
+const CONTACT_EMAIL = 'info@gracelandbible.church';
 
 function Header() {
   const { user, setUser } = useContext(UserContext)
@@ -57,7 +58,7 @@ function Header() {
     { label: t('ministries'), href: '/ministries', isRoute: true },
     { label: t('events'), href: '/events', isRoute: true },
     { label: t('sermons'), href: '/sermons', isRoute: true },
-    { label: t('contact'), href: '#contact' },    
+    { label: t('contact'), href: `mailto:${CONTACT_EMAIL}` },
   ];
 
   const handleNavClick = (href, isRoute) => {

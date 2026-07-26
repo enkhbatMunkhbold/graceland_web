@@ -992,6 +992,41 @@ class MinistryPageUpload(Resource):
 api.add_resource(MinistryPageUpload, '/ministry-pages/<string:slug>/upload')
 
 
+class AnonymousFeedback(Resource):
+    def post(self):
+        data = request.get_json(silent=True) or {}
+        name = str(data.get('name', '')).strip() or 'Anonymous'
+        subject = str(data.get('subject', '')).strip() or 'Feedback'
+        message = str(data.get('message', '')).strip()
+
+        if len(name) > 100:
+            return {'error': 'Name must be 100 characters or fewer'}, 400
+        if len(subject) > 255:
+            return {'error': 'Subject must be 255 characters or fewer'}, 400
+        if not message:
+            return {'error': 'Feedback is required'}, 400
+        if len(message) > 5000:
+            return {'error': 'Feedback must be 5,000 characters or fewer'}, 400
+
+        feedback = models.ContactMessage(
+            name=name,
+            email='info@gracelandbible.church',
+            subject=subject,
+            message=message,
+        )
+
+        try:
+            db.session.add(feedback)
+            db.session.commit()
+            return {'message': 'Feedback submitted successfully'}, 201
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+
+
+api.add_resource(AnonymousFeedback, '/feedback')
+
+
 @app.route('/uploads/ministry/<string:slug>/<path:filename>')
 def serve_ministry_upload(slug, filename):
     if slug not in MINISTRY_PAGE_SLUGS:
@@ -1006,5 +1041,3 @@ def serve_ministry_upload(slug, filename):
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
-
-

@@ -4,7 +4,7 @@ import { ArrowRight, CalendarDays, Clock3, Gift, HeartHandshake, MapPin, Message
 import { useLanguage } from '../context/LanguageContext';
 import UserContext from '../context/UserContext';
 import { api } from '../services/api';
-import heroImage from '../images/484869371_1005337404351491_7788059528405399719_n.jpg';
+import heroImage from '../assets/Worship God.jpg';
 import childrenImage from '../assets/Children.jpg';
 import youthImage from '../assets/Interhigh.jpg';
 import youngAdultsImage from '../assets/Young Adults.jpg';
@@ -207,10 +207,10 @@ function Home() {
         <div className="home-shell home-care-grid">
           <article className="home-care-card home-care-card--contact">
             <MessageCircle aria-hidden="true" />
-            <p className="home-kicker">{t('letsConnect')}</p>
-            <h2>{t('getInTouch')}</h2>
-            <p>{t('careContactIntro')}</p>
-            <a className="home-button home-button--care" href="#contact">{t('contactUs')} <ArrowRight aria-hidden="true" /></a>
+            <p className="home-kicker">{t('feedbackKicker')}</p>
+            <h2>{t('feedbackTitle')}</h2>
+            <p>{t('feedbackIntro')}</p>
+            <a className="home-button home-button--care" href="#feedback">{t('leaveFeedback')} <ArrowRight aria-hidden="true" /></a>
           </article>
           <article className="home-care-card home-care-card--prayer">
             <HeartHandshake aria-hidden="true" />
