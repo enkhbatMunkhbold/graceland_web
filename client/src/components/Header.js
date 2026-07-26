@@ -59,7 +59,11 @@ function Header() {
     { label: t('events'), href: '/events', isRoute: true },
     { label: t('sermons'), href: '/sermons', isRoute: true },
     ...(user?.is_admin ? [{ label: t('adminDashboard'), href: '/admin', isRoute: true }] : []),
-    { label: t('contact'), href: `mailto:${CONTACT_EMAIL}` },
+    {
+      label: t('contact'),
+      href: `mailto:${CONTACT_EMAIL}`,
+      openInNewWindow: true,
+    },
   ];
 
   const handleNavClick = (href, isRoute) => {
@@ -106,11 +110,14 @@ function Header() {
                 <a
                   key={item.href}
                   href={item.href}
+                  target={item.openInNewWindow ? '_blank' : undefined}
+                  rel={item.openInNewWindow ? 'noopener noreferrer' : undefined}
                   className={`nav-link${item.isRoute && (location.pathname === item.href || (item.href !== '/home' && location.pathname.startsWith(`${item.href}/`))) ? ' nav-link--active' : ''}`}
                   onClick={(e) => {
-                    e.preventDefault();
-                    if (item.isRoute) handleNavClick(item.href, true);
-                    else window.location.href = item.href;
+                    if (item.isRoute) {
+                      e.preventDefault();
+                      handleNavClick(item.href, true);
+                    }
                   }}
                 >
                   {item.label}
@@ -195,6 +202,8 @@ function Header() {
                   <a
                     key={item.href}
                     href={item.href}
+                    target={item.openInNewWindow ? '_blank' : undefined}
+                    rel={item.openInNewWindow ? 'noopener noreferrer' : undefined}
                     className="nav-mobile-link"
                     onClick={() => setIsMenuOpen(false)}
                   >

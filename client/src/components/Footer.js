@@ -100,11 +100,19 @@ function Footer() {
             <ul className="footer-services">
               <li>
                 <Clock3 aria-hidden="true" />
-                <span><strong>{t('sundayWorship')}</strong>{t('sundayWorshipTime')}</span>
+                <span><strong>{t('mondayMorningPrayer')}</strong>{t('morningPrayerTime')}</span>
+              </li>
+              <li>
+                <Clock3 aria-hidden="true" />
+                <span><strong>{t('wednesdayMorningPrayer')}</strong>{t('morningPrayerTime')}</span>
               </li>
               <li>
                 <Clock3 aria-hidden="true" />
                 <span><strong>{t('fridayPrayer')}</strong>{t('fridayPrayerTime')}</span>
+              </li>
+              <li>
+                <Clock3 aria-hidden="true" />
+                <span><strong>{t('sundayWorship')}</strong>{t('sundayWorshipTime')}</span>
               </li>
             </ul>
           </div>
