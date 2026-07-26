@@ -401,13 +401,14 @@ class PrayerRequestSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = PrayerRequest
         load_instance = True
-        include_fk = True
-    
-    user = fields.Nested('UserSchema', only=('id', 'full_name'), dump_only=True)
-    
-    request_text = fields.String(required=True, validate=validate.Length(min=10, max=2000))
+        exclude = ('user_id',)
+
+    name = fields.String(validate=validate.Length(max=100))
+    request_text = fields.String(required=True, validate=validate.Length(min=1, max=2000))
     is_public = fields.Boolean()
-    status = fields.String(validate=validate.OneOf(['pending', 'answered']))
+    status = fields.String(validate=validate.OneOf([
+        'new', 'approved_public', 'private', 'answered', 'archived'
+    ]))
     
     @validates('request_text')
     def validate_request_text(self, value):

@@ -162,6 +162,61 @@ export const api = {
     return response.json();
   },
 
+  // Prayer requests. publication_consent is permission for staff review only;
+  // it never makes a request public without approved_public status.
+  submitPrayerRequest: async (data) => {
+    const response = await fetch(`${API_BASE_URL}/prayer-requests`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to submit prayer request');
+    }
+    return response.json();
+  },
+
+  getPrayerWall: async () => {
+    const response = await fetch(`${API_BASE_URL}/prayer-wall`);
+    if (!response.ok) throw new Error('Failed to load prayer wall');
+    return response.json();
+  },
+
+  getAdminPrayerRequests: async () => {
+    const response = await fetch(`${API_BASE_URL}/admin/prayer-requests`, {
+      credentials: 'include'
+    });
+    if (!response.ok) throw new Error('Failed to load prayer requests');
+    return response.json();
+  },
+
+  updatePrayerRequestStatus: async (id, status) => {
+    const response = await fetch(`${API_BASE_URL}/admin/prayer-requests/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ status })
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to update prayer request');
+    }
+    return response.json();
+  },
+
+  deletePrayerRequest: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/admin/prayer-requests/${id}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to delete prayer request');
+    }
+    return response.json();
+  },
+
   // Auth
   login: async (username, password) => {
     const response = await fetch(`${API_BASE_URL}/login`, {

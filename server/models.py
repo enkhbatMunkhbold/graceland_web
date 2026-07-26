@@ -238,9 +238,12 @@ class PrayerRequest(db.Model):
   
   id = db.Column(db.Integer, primary_key=True)
   user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+  name = db.Column(db.String(100), nullable=False, default='Anonymous')
   request_text = db.Column(db.Text, nullable=False)
-  is_public = db.Column(db.Boolean, default=False)
-  status = db.Column(db.String(20), default='pending')
+  # Visitor consent only. True permits staff to approve publication; it never
+  # makes a request public without status='approved_public'.
+  is_public = db.Column(db.Boolean, default=False, nullable=False)
+  status = db.Column(db.String(20), default='new', nullable=False)
   date_submitted = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
   def __repr__(self):

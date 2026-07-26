@@ -919,6 +919,189 @@ class DonationByID(Resource):
 api.add_resource(DonationByID, '/donations/<int:donation_id>')
 
 
+PRAYER_STATUSES = {
+    'new', 'approved_public', 'private', 'answered', 'archived'
+}
+
+
+def _admin_prayer_data(prayer_request):
+    return {
+        'id': prayer_request.id,
+        'name': prayer_request.name or 'Anonymous',
+        'request_text': prayer_request.request_text,
+        # is_public is visitor publication consent, not approval.
+        'publication_consent': bool(prayer_request.is_public),
+        'status': prayer_request.status,
+        'date_submitted': (
+            prayer_request.date_submitted.isoformat()
+            if prayer_request.date_submitted else None
+        ),
+    }
+
+
+class PrayerRequests(Resource):
+    def post(self):
+        data = request.get_json(silent=True) or {}
+        if not isinstance(data, dict):
+            return {'error': 'Invalid request data'}, 400
+
+        name_value = data.get('name', '')
+        request_value = data.get('request_text', '')
+        if name_value is not None and not isinstance(name_value, str):
+            return {'error': 'Name must be text'}, 400
+        if not isinstance(request_value, str):
+            return {'error': 'Prayer request must be text'}, 400
+
+        name = (name_value or '').strip() or 'Anonymous'
+        request_text = request_value.strip()
+        publication_consent = data.get('publication_consent', False)
+
+        if len(name) > 100:
+            return {'error': 'Name must be 100 characters or fewer'}, 400
+        if not request_text:
+            return {'error': 'Prayer request is required'}, 400
+        if len(request_text) > 2000:
+            return {'error': 'Prayer request must be 2,000 characters or fewer'}, 400
+        if not isinstance(publication_consent, bool):
+            return {'error': 'Publication consent must be true or false'}, 400
+
+        prayer_request = models.PrayerRequest(
+            user_id=None,
+            name=name,
+            request_text=request_text,
+            # Consent permits later review; it never publishes automatically.
+            is_public=publication_consent,
+            status='new',
+        )
+
+        try:
+            db.session.add(prayer_request)
+            db.session.commit()
+            return {'message': 'Prayer request submitted successfully'}, 201
+        except Exception:
+            db.session.rollback()
+            return {'error': 'Unable to submit prayer request'}, 500
+
+
+api.add_resource(PrayerRequests, '/prayer-requests')
+
+
+class PrayerWall(Resource):
+    def get(self):
+        try:
+            requests_for_wall = (
+                models.PrayerRequest.query
+                .filter(
+                    models.PrayerRequest.status == 'approved_public',
+                    # is_public is consent; approved_public is staff approval.
+                    models.PrayerRequest.is_public.is_(True),
+                )
+                .order_by(
+                    models.PrayerRequest.date_submitted.desc(),
+                    models.PrayerRequest.id.desc(),
+                )
+                .limit(30)
+                .all()
+            )
+            return [
+                {
+                    'number': index,
+                    'name': prayer_request.name or 'Anonymous',
+                    'request_text': prayer_request.request_text,
+                    'date': (
+                        prayer_request.date_submitted.isoformat()
+                        if prayer_request.date_submitted else None
+                    ),
+                }
+                for index, prayer_request in enumerate(
+                    requests_for_wall, start=1
+                )
+            ], 200
+        except Exception:
+            return {'error': 'Unable to load prayer wall'}, 500
+
+
+api.add_resource(PrayerWall, '/prayer-wall')
+
+
+class AdminPrayerRequests(Resource):
+    def get(self):
+        if not _require_admin():
+            return {'error': 'Admin access required'}, 403
+
+        try:
+            prayer_requests = (
+                models.PrayerRequest.query
+                .order_by(
+                    models.PrayerRequest.date_submitted.desc(),
+                    models.PrayerRequest.id.desc(),
+                )
+                .all()
+            )
+            return [
+                _admin_prayer_data(item) for item in prayer_requests
+            ], 200
+        except Exception:
+            db.session.rollback()
+            return {'error': 'Unable to load prayer requests'}, 500
+
+
+api.add_resource(AdminPrayerRequests, '/admin/prayer-requests')
+
+
+class AdminPrayerRequestByID(Resource):
+    def patch(self, prayer_request_id):
+        if not _require_admin():
+            return {'error': 'Admin access required'}, 403
+
+        try:
+            prayer_request = db.session.get(
+                models.PrayerRequest, prayer_request_id
+            )
+            if not prayer_request:
+                return {'error': 'Prayer request not found'}, 404
+
+            data = request.get_json(silent=True) or {}
+            status = str(data.get('status', '')).strip()
+            if status not in PRAYER_STATUSES:
+                return {'error': 'Invalid prayer request status'}, 400
+            if status == 'approved_public' and not prayer_request.is_public:
+                return {
+                    'error': 'This request does not have publication consent'
+                }, 400
+
+            prayer_request.status = status
+            db.session.commit()
+            return _admin_prayer_data(prayer_request), 200
+        except Exception:
+            db.session.rollback()
+            return {'error': 'Unable to update prayer request'}, 500
+
+    def delete(self, prayer_request_id):
+        if not _require_admin():
+            return {'error': 'Admin access required'}, 403
+
+        try:
+            prayer_request = db.session.get(
+                models.PrayerRequest, prayer_request_id
+            )
+            if not prayer_request:
+                return {'error': 'Prayer request not found'}, 404
+
+            db.session.delete(prayer_request)
+            db.session.commit()
+            return {'message': 'Prayer request deleted'}, 200
+        except Exception:
+            db.session.rollback()
+            return {'error': 'Unable to delete prayer request'}, 500
+
+
+api.add_resource(
+    AdminPrayerRequestByID,
+    '/admin/prayer-requests/<int:prayer_request_id>',
+)
+
+
 MINISTRY_PAGE_SLUGS = {'children', 'youth', 'young-adult', 'men', 'women', 'marriage'}
 
 

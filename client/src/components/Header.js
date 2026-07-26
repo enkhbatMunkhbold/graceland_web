@@ -58,6 +58,7 @@ function Header() {
     { label: t('ministries'), href: '/ministries', isRoute: true },
     { label: t('events'), href: '/events', isRoute: true },
     { label: t('sermons'), href: '/sermons', isRoute: true },
+    ...(user?.is_admin ? [{ label: t('adminDashboard'), href: '/admin', isRoute: true }] : []),
     { label: t('contact'), href: `mailto:${CONTACT_EMAIL}` },
   ];
 

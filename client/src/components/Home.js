@@ -216,7 +216,7 @@ function Home() {
             <HeartHandshake aria-hidden="true" />
             <p className="home-kicker">{t('weAreHereForYou')}</p>
             <h2>{t('needPrayer')}</h2><p>{t('carePrayerIntro')}</p>
-            <a className="home-button home-button--care" href="#contact">{t('submitPrayerRequest')} <ArrowRight aria-hidden="true" /></a>
+            <Link className="home-button home-button--care" to="/prayer">{t('submitPrayerRequest')} <ArrowRight aria-hidden="true" /></Link>
           </article>
           <article className="home-care-card home-care-card--giving">
             <Gift aria-hidden="true" />
