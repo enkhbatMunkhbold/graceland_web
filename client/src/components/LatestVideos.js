@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Play, X } from 'lucide-react';
+import { Play, Search, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../services/api';
 import '../styling/latest-videos.css';
 
-function LatestVideos({ onSelectVideo }) {
+function LatestVideos({ onSelectVideo, searchQuery = '', onSearchChange }) {
   const [videos, setVideos] = useState([]);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -12,14 +12,29 @@ function LatestVideos({ onSelectVideo }) {
   const { t } = useLanguage();
 
   useEffect(() => {
-    api.getLatestYouTubeVideos()
-      .then(data => setVideos(data))
-      .catch(error => {
-        console.error('Unable to load latest YouTube videos:', error);
-        setFailed(true);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    let active = true;
+    setLoading(true);
+    setFailed(false);
+
+    const searchTimer = window.setTimeout(() => {
+      api.getLatestYouTubeVideos(searchQuery)
+        .then(data => {
+          if (active) setVideos(data);
+        })
+        .catch(error => {
+          console.error('Unable to load YouTube videos:', error);
+          if (active) setFailed(true);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }, searchQuery.trim() ? 350 : 0);
+
+    return () => {
+      active = false;
+      window.clearTimeout(searchTimer);
+    };
+  }, [searchQuery]);
 
   useEffect(() => {
     if (!selectedVideo) return undefined;
@@ -38,9 +53,27 @@ function LatestVideos({ onSelectVideo }) {
   return (
     <section className="latest-videos" aria-labelledby="latest-videos-title">
       <div className="latest-videos-inner">
-        <div className="latest-videos-heading">
-          <p>{t('latestVideosKicker')}</p>
-          <h2 id="latest-videos-title">{t('latestVideosTitle')}</h2>
+        <div className="latest-videos-header">
+          <div className="latest-videos-heading">
+            <p>{t('latestVideosKicker')}</p>
+            <h2 id="latest-videos-title">{t('latestVideosTitle')}</h2>
+          </div>
+
+          {onSearchChange && (
+            <div className="sermons-search-wrap">
+              <input
+                type="search"
+                className="sermons-search-input"
+                placeholder={t('searchPlaceholder')}
+                value={searchQuery}
+                onChange={event => onSearchChange(event.target.value)}
+                aria-label={t('search')}
+              />
+              <button type="button" className="sermons-search-btn" aria-label={t('search')}>
+                <Search className="sermons-search-icon" />
+              </button>
+            </div>
+          )}
         </div>
 
         {loading ? (

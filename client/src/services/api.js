@@ -94,11 +94,15 @@ export const api = {
     return response.json();
   },
 
-  getLatestYouTubeVideos: async () => {
-    const response = await fetch(`${API_BASE_URL}/youtube/videos`);
+  getLatestYouTubeVideos: async (query = '') => {
+    const params = new URLSearchParams({ limit: '9' });
+    if (query.trim()) params.set('q', query.trim());
+    const response = await fetch(`${API_BASE_URL}/youtube/videos?${params}`, {
+      cache: 'no-store',
+    });
     if (!response.ok) throw new Error('Latest videos are temporarily unavailable.');
     const data = await response.json();
-    return data.videos || [];
+    return (data.videos || []).slice(0, 9);
   },
 
   // Ministries

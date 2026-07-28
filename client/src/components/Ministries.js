@@ -11,6 +11,43 @@ import youngAdultsImage from '../assets/Young Adults.jpg';
 import womenImage from '../assets/Women.jpg';
 import menImage from '../assets/Men.jpg';
 import marriageImage from '../assets/Marriage.jpg';
+import khuushuurImage from '../assets/ministries-khuushuur.jpg';
+import storageImage from '../assets/ministries-storage.jpg';
+import praiseImage from '../assets/ministries-praise.jpg';
+import fireFestivalImage from '../assets/ministries-fire-festival.jpg';
+
+const heroSlides = [
+  { image: khuushuurImage, label: 'Хуушуур' },
+  { image: praiseImage, label: 'Магтаал' },
+  { image: storageImage, label: 'Агуулахад' },
+  { image: fireFestivalImage, label: 'Галын наадам' },
+];
+
+function MinistriesHero({ title }) {
+  const titleWords = title.split(' ');
+
+  return (
+    <section className="ministries-hero">
+      <div className="ministries-hero-collage" aria-hidden="true">
+        <div className="ministries-hero-track">
+          {[...heroSlides, ...heroSlides].map((slide, index) => (
+            <img
+              src={slide.image}
+              alt=""
+              key={`${slide.label}-${index}`}
+              className="ministries-hero-photo"
+            />
+          ))}
+        </div>
+      </div>
+      <div className="ministries-hero-overlay" />
+      <h1 className="ministries-hero-title">
+        <span className="ministries-hero-line">{titleWords[0]}</span>
+        <span className="ministries-hero-line">{titleWords.slice(1).join(' ')}</span>
+      </h1>
+    </section>
+  );
+}
 
 function Ministries() {
   const [ministries, setMinistries] = useState([]);
@@ -89,13 +126,7 @@ function Ministries() {
   if (loading) {
     return (
       <main className="ministries-page">
-        <section className="ministries-hero">
-          <div className="ministries-hero-overlay" />
-          <h1 className="ministries-hero-title">
-            <span className="ministries-hero-line">{t('ourMinistries').split(' ')[0]}</span>
-            <span className="ministries-hero-line">{t('ourMinistries').split(' ').slice(1).join(' ')}</span>
-          </h1>
-        </section>
+        <MinistriesHero title={t('ourMinistries')} />
         <section className="ministries-content">
           <div className="ministries-intro">
             <p>{t('ministriesIntro1')}</p>
@@ -110,13 +141,7 @@ function Ministries() {
   if (error) {
     return (
       <main className="ministries-page">
-        <section className="ministries-hero">
-          <div className="ministries-hero-overlay" />
-          <h1 className="ministries-hero-title">
-            <span className="ministries-hero-line">{t('ourMinistries').split(' ')[0]}</span>
-            <span className="ministries-hero-line">{t('ourMinistries').split(' ').slice(1).join(' ')}</span>
-          </h1>
-        </section>
+        <MinistriesHero title={t('ourMinistries')} />
         <section className="ministries-content">
           <div className="ministries-intro">
             <p>{t('ministriesIntro1')}</p>
@@ -130,13 +155,7 @@ function Ministries() {
 
   return (
     <main className="ministries-page">
-      <section className="ministries-hero">
-        <div className="ministries-hero-overlay" />
-        <h1 className="ministries-hero-title">
-          <span className="ministries-hero-line">{t('ourMinistries').split(' ')[0]}</span>
-          <span className="ministries-hero-line">{t('ourMinistries').split(' ').slice(1).join(' ')}</span>
-        </h1>
-      </section>
+      <MinistriesHero title={t('ourMinistries')} />
 
       <section className="ministries-content">
         <div className="ministries-intro">

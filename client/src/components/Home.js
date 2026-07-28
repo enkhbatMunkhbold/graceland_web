@@ -1,6 +1,6 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CalendarDays, Clock3, Gift, HeartHandshake, MapPin, MessageCircle, Play } from 'lucide-react';
+import { ArrowRight, CalendarDays, CloudSun, Clock3, Gift, HeartHandshake, MapPin, MessageCircle, Play } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import UserContext from '../context/UserContext';
 import { api } from '../services/api';
@@ -8,10 +8,13 @@ import heroImage from '../assets/Worship God.jpg';
 import childrenImage from '../assets/Children.jpg';
 import youthImage from '../assets/Interhigh.jpg';
 import youngAdultsImage from '../assets/Young Adults.jpg';
+import preacherImage from '../assets/preacher.jpg';
 import '../styling/home.css';
 
 const GIVING_URL = 'https://gracelandbible.breezechms.com/give/online';
 const YOUTUBE_URL = 'https://www.youtube.com/@gracelandbiblechurch7040';
+const WEATHER_URL = 'https://weather.com/en-MH/weather/today/l/Walnut%2BCreek%2BCA%2BUnited%2BStates?canonicalCityId=68b6dc922062f6664354084b9d9807b0f335a2a92ddb85ba01b164546cdd2068';
+const WEATHER_API_URL = 'https://api.open-meteo.com/v1/forecast?latitude=37.92626&longitude=-122.07590&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=America%2FLos_Angeles&forecast_days=1';
 
 function formatDate(value, language) {
   return new Date(value).toLocaleDateString(language === 'mn' ? 'mn-MN' : 'en-US', {
@@ -27,24 +30,78 @@ function getSermonWatchUrl(sermon) {
   return sermon.video_url || sermon.audio_url || null;
 }
 
+function getWeatherCondition(code, t) {
+  if (code === 0) return t('weatherSunny');
+  if (code === 1) return t('weatherMostlySunny');
+  if (code === 2) return t('weatherPartlyCloudy');
+  if (code === 3) return t('weatherCloudy');
+  if ([45, 48].includes(code)) return t('weatherFoggy');
+  if ([51, 53, 55, 56, 57].includes(code)) return t('weatherDrizzle');
+  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return t('weatherRainy');
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return t('weatherSnowy');
+  if ([95, 96, 99].includes(code)) return t('weatherStormy');
+  return t('weatherConditions');
+}
+
 function Home() {
   const { t, language } = useLanguage();
   const { user } = useContext(UserContext);
   const [sermons, setSermons] = useState([]);
   const [events, setEvents] = useState([]);
+  const [weather, setWeather] = useState(null);
   const [contentLoading, setContentLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
-    Promise.allSettled([api.getSermons(), api.getEvents()])
-      .then(([sermonResult, eventResult]) => {
+    const now = new Date();
+    const calendarRequests = [0, 1, 2].map(monthOffset => {
+      const month = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
+      return api.getGoogleCalendarEvents(month.getFullYear(), month.getMonth() + 1);
+    });
+
+    Promise.allSettled([api.getSermons(), api.getEvents(), ...calendarRequests])
+      .then(([sermonResult, localEventResult, ...calendarResults]) => {
         if (!active) return;
         if (sermonResult.status === 'fulfilled') setSermons(sermonResult.value);
-        if (eventResult.status === 'fulfilled') setEvents(eventResult.value);
+        const localEvents = localEventResult.status === 'fulfilled'
+          ? localEventResult.value
+          : [];
+        const calendarEvents = calendarResults.flatMap(result =>
+          result.status === 'fulfilled' ? result.value : []
+        );
+        const uniqueEvents = [...localEvents, ...calendarEvents].filter(
+          (event, index, allEvents) =>
+            allEvents.findIndex(candidate =>
+              candidate.id === event.id &&
+              candidate.start_datetime === event.start_datetime
+            ) === index
+        );
+        setEvents(uniqueEvents);
       })
       .finally(() => active && setContentLoading(false));
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    fetch(WEATHER_API_URL)
+      .then(response => {
+        if (!response.ok) throw new Error('Weather is temporarily unavailable.');
+        return response.json();
+      })
+      .then(data => {
+        if (active && Number.isFinite(data.current?.temperature_2m)) {
+          setWeather({
+            temperature: Math.round(data.current.temperature_2m),
+            condition: getWeatherCondition(data.current.weather_code, t),
+            high: Math.round(data.daily.temperature_2m_max[0]),
+            low: Math.round(data.daily.temperature_2m_min[0]),
+          });
+        }
+      })
+      .catch(error => console.error('Unable to load current weather:', error));
+    return () => { active = false; };
+  }, [t]);
 
   const latestSermon = useMemo(
     () => [...sermons].sort((a, b) => new Date(b.date) - new Date(a.date))[0] || null,
@@ -53,7 +110,7 @@ function Home() {
   const upcomingEvents = useMemo(() => events
     .filter(event => new Date(event.start_datetime) >= new Date())
     .sort((a, b) => new Date(a.start_datetime) - new Date(b.start_datetime))
-    .slice(0, 3), [events]);
+    .slice(0, 5), [events]);
   const sermonWatchUrl = getSermonWatchUrl(latestSermon);
   const ministries = [
     { title: t('childrenMinistryTitle'), image: childrenImage, path: '/ministries/children' },
@@ -102,6 +159,28 @@ function Home() {
               <MapPin aria-hidden="true" />
               <div><strong>{t('ourLocation')}</strong><span>1955 Geary Rd, Walnut Creek, CA 94597</span></div>
             </div>
+            <a
+              className="home-hero-visit-item home-weather-item"
+              href={WEATHER_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${t('todaysWeather')}: ${weather === null ? t('weatherLoading') : `${weather.condition}, ${weather.temperature}°F, ${t('weatherHigh')} ${weather.high}°, ${t('weatherLow')} ${weather.low}°`}`}
+            >
+              <CloudSun aria-hidden="true" />
+              <div>
+                <strong>{t('todaysWeather')}</strong>
+                {weather === null ? (
+                  <span>{t('weatherLoading')}</span>
+                ) : (
+                  <>
+                    <span className="home-weather-current">{weather.condition} · {weather.temperature}°F</span>
+                    <span className="home-weather-range">
+                      {t('weatherHigh')} {weather.high}° / {t('weatherLow')} {weather.low}°
+                    </span>
+                  </>
+                )}
+              </div>
+            </a>
           </div>
         </div>
       </section>
@@ -115,7 +194,7 @@ function Home() {
             </div>
             <div className="home-feature-card">
             <div className="home-feature-media">
-              <img src={youngAdultsImage} alt="" loading="lazy" />
+              <img src={preacherImage} alt="" loading="lazy" />
               <span className="home-feature-play" aria-hidden="true"><Play /></span>
             </div>
             <div className="home-feature-content">

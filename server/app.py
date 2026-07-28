@@ -754,7 +754,9 @@ api.add_resource(SermonByID, '/sermons/<int:sermon_id>')
 
 
 _youtube_video_cache = {'videos': [], 'fetched_at': None}
+_youtube_search_cache = {}
 YOUTUBE_CACHE_INTERVAL = timedelta(minutes=10)
+EXCLUDED_YOUTUBE_TITLES = {'graceland bible church live stream'}
 
 
 def _youtube_api_get(resource, params):
@@ -791,14 +793,15 @@ def _get_latest_youtube_videos():
     playlist_data = _youtube_api_get('playlistItems', {
         'part': 'snippet,contentDetails',
         'playlistId': uploads_playlist_id,
-        'maxResults': 6,
+        'maxResults': 10,
     })
 
     videos = []
     for item in playlist_data.get('items', []):
         snippet = item.get('snippet', {})
         video_id = item.get('contentDetails', {}).get('videoId')
-        if not video_id:
+        title = (snippet.get('title') or 'YouTube video').strip()
+        if not video_id or title.lower() in EXCLUDED_YOUTUBE_TITLES:
             continue
         thumbnails = snippet.get('thumbnails', {})
         thumbnail = (
@@ -811,14 +814,63 @@ def _get_latest_youtube_videos():
         )
         videos.append({
             'id': video_id,
-            'title': snippet.get('title') or 'YouTube video',
+            'title': title,
             'thumbnail_url': thumbnail.get('url'),
             'published_at': snippet.get('publishedAt'),
             'embed_url': f'https://www.youtube-nocookie.com/embed/{video_id}',
         })
+        if len(videos) == 9:
+            break
 
     _youtube_video_cache['videos'] = videos
     _youtube_video_cache['fetched_at'] = now
+    return videos
+
+
+def _search_youtube_videos(query):
+    normalized_query = query.strip().lower()
+    cached = _youtube_search_cache.get(normalized_query)
+    now = datetime.now()
+    if cached and now - cached['fetched_at'] < YOUTUBE_CACHE_INTERVAL:
+        return cached['videos']
+
+    search_data = _youtube_api_get('search', {
+        'part': 'snippet',
+        'channelId': YOUTUBE_CHANNEL_ID,
+        'q': query,
+        'type': 'video',
+        'order': 'date',
+        'maxResults': 10,
+    })
+
+    videos = []
+    for item in search_data.get('items', []):
+        snippet = item.get('snippet', {})
+        video_id = item.get('id', {}).get('videoId')
+        title = (snippet.get('title') or 'YouTube video').strip()
+        if not video_id or title.lower() in EXCLUDED_YOUTUBE_TITLES:
+            continue
+        thumbnails = snippet.get('thumbnails', {})
+        thumbnail = (
+            thumbnails.get('high')
+            or thumbnails.get('medium')
+            or thumbnails.get('default')
+            or {}
+        )
+        videos.append({
+            'id': video_id,
+            'title': title,
+            'thumbnail_url': thumbnail.get('url'),
+            'published_at': snippet.get('publishedAt'),
+            'embed_url': f'https://www.youtube-nocookie.com/embed/{video_id}',
+        })
+        if len(videos) == 9:
+            break
+
+    _youtube_search_cache[normalized_query] = {
+        'videos': videos,
+        'fetched_at': now,
+    }
     return videos
 
 
@@ -827,7 +879,9 @@ class LatestYouTubeVideos(Resource):
         if not YOUTUBE_API_KEY:
             return {'error': 'Latest videos are temporarily unavailable.'}, 503
         try:
-            return {'videos': _get_latest_youtube_videos()}, 200
+            query = request.args.get('q', '').strip()
+            videos = _search_youtube_videos(query) if query else _get_latest_youtube_videos()
+            return {'videos': videos}, 200
         except (HTTPError, URLError, TimeoutError, ValueError, json.JSONDecodeError) as error:
             app.logger.warning('Unable to load latest YouTube videos: %s', error)
             return {'error': 'Latest videos are temporarily unavailable.'}, 503

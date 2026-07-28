@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Play, Search } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../services/api';
 import LatestVideos from './LatestVideos';
@@ -50,17 +50,6 @@ function Sermons() {
       })
       .finally(() => setYoutubeLoading(false));
   }, []);
-
-  const filteredSermons = useMemo(() => {
-    if (!searchQuery.trim()) return sermons;
-    const q = searchQuery.toLowerCase().trim();
-    return sermons.filter(
-      s =>
-        (s.title && s.title.toLowerCase().includes(q)) ||
-        (s.speaker_name && s.speaker_name.toLowerCase().includes(q)) ||
-        (s.scripture_reference && s.scripture_reference.toLowerCase().includes(q))
-    );
-  }, [sermons, searchQuery]);
 
   const selectedSermon = useMemo(() => {
     if (!sermons.length) return null;
@@ -147,38 +136,20 @@ function Sermons() {
         )}
       </section>
 
-      <LatestVideos onSelectVideo={handleYouTubeVideoSelect} />
+      <LatestVideos
+        onSelectVideo={handleYouTubeVideoSelect}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
 
-      <section className="sermons-content">
-        <div className="sermons-content-inner">
-          <h1 className="sermons-page-title">{t('sermonsPageTitle')}</h1>
-
-          <div className="sermons-search-row">
-            <div className="sermons-search-wrap">
-              <input
-                type="search"
-                className="sermons-search-input"
-                placeholder={t('searchPlaceholder')}
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                aria-label={t('search')}
-              />
-              <button type="button" className="sermons-search-btn" aria-label={t('search')}>
-                <Search className="sermons-search-icon" />
-              </button>
-            </div>
-          </div>
-
-          {error ? (
-            <p className="sermons-error">Error: {error}</p>
-          ) : sermons.length === 0 ? (
-            <p className="sermons-list-empty">{t('noSermonsYet')}</p>
-          ) : (
+      {(error || sermons.length > 0) && (
+        <section className="sermons-content">
+          <div className="sermons-content-inner">
+            {error ? (
+              <p className="sermons-error">Error: {error}</p>
+            ) : (
             <ul className="sermons-list">
-              {filteredSermons.length === 0 ? (
-                <li className="sermons-list-empty">{t('noSermonsMatchSearch')}</li>
-              ) : (
-                filteredSermons.map(sermon => {
+              {sermons.map(sermon => {
                   const watchUrl = getSermonWatchUrl(sermon);
                   const isSelected = selectedSermon?.id === sermon.id;
 
@@ -224,12 +195,12 @@ function Sermons() {
                       )}
                     </li>
                   );
-                })
-              )}
+                })}
             </ul>
-          )}
-        </div>
-      </section>
+            )}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

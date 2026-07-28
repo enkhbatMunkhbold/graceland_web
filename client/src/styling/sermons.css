@@ -307,6 +307,13 @@
   color: #6b7280;
 }
 
+.latest-videos-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
 @media (max-width: 640px) {
   .sermons-hero {
     padding: 1rem 0.75rem;
@@ -322,6 +329,12 @@
 
   .sermons-search-wrap {
     max-width: none;
+  }
+
+  .latest-videos-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 1.5rem;
   }
 
   .sermon-list-item {
