@@ -72,13 +72,9 @@ function Home() {
           <h1 id="home-hero-title" className="home-hero-title">{t('homeSlogan')}</h1>
           <p className="home-hero-copy">{t('homeSloganSupport')}</p>
           <div className="home-hero-actions">
-            <button
-              type="button"
-              className="home-button home-button--primary"
-              onClick={() => document.getElementById('plan-your-visit')?.scrollIntoView({ behavior: 'smooth' })}
-            >
+            <Link className="home-button home-button--primary" to="/events">
               {t('planYourVisit')} <ArrowRight aria-hidden="true" />
-            </button>
+            </Link>
             <Link className="home-button home-button--ghost" to="/sermons">
               <Play aria-hidden="true" /> {t('watchLatestSermon')}
             </Link>

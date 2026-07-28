@@ -29,14 +29,7 @@ import '../styling/events.css';
 const WEEKDAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const WEEKDAYS_MN = ['Ня', 'Да', 'Мя', 'Лх', 'Пү', 'Ба', 'Бя'];
 const HOUR_SLOTS = Array.from({ length: 24 }, (_, hour) => hour);
-
-function formatHourLabel(hour, language) {
-  const date = new Date(2000, 0, 1, hour, 0);
-  return date.toLocaleTimeString(language === 'mn' ? 'mn-MN' : 'en-US', {
-    hour: 'numeric',
-    hour12: true,
-  });
-}
+const CALENDAR_REFRESH_INTERVAL = 15 * 60 * 1000;
 
 const HOLIDAY_ICONS = {
   newYearsDay: Sparkles,
@@ -52,12 +45,34 @@ const HOLIDAY_ICONS = {
   christmas: TreePine,
 };
 
-function EventLabel({ event, className = '' }) {
+function formatHourLabel(hour, language) {
+  const date = new Date(2000, 0, 1, hour, 0);
+  return date.toLocaleTimeString(language === 'mn' ? 'mn-MN' : 'en-US', {
+    hour: 'numeric',
+    hour12: true,
+  });
+}
+
+function formatEventStartTime(event, language) {
+  if (event.isAllDay || !event.start_datetime) return null;
+
+  return new Date(event.start_datetime).toLocaleTimeString(
+    language === 'mn' ? 'mn-MN' : 'en-US',
+    {
+      hour: 'numeric',
+      minute: '2-digit',
+    }
+  );
+}
+
+function EventLabel({ event, className = '', showTime = false, language = 'en' }) {
   const Icon = event.holidayKey ? HOLIDAY_ICONS[event.holidayKey] : null;
+  const startTime = showTime ? formatEventStartTime(event, language) : null;
 
   return (
     <span className={`events-event-label ${className}`.trim()}>
       {Icon && <Icon className="events-event-icon" aria-hidden="true" />}
+      {startTime && <span className="events-event-label-time">{startTime}</span>}
       <span className="events-event-label-text">{event.title}</span>
     </span>
   );
@@ -117,18 +132,6 @@ function getCalendarDays(year, month) {
   return cells;
 }
 
-function buildSundayServiceEvent(date, title) {
-  const dateKey = toDateKey(date);
-  return {
-    id: `sunday-service-${dateKey}`,
-    title,
-    start_datetime: `${dateKey}T15:30:00`,
-    end_datetime: null,
-    location: null,
-    isRecurring: true,
-  };
-}
-
 function buildHolidayEvent(date, holidayKey, title) {
   const dateKey = toDateKey(date);
   return {
@@ -185,6 +188,7 @@ function formFromEvent(event) {
 
 function Events() {
   const [events, setEvents] = useState([]);
+  const [googleCalendarError, setGoogleCalendarError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [viewDate, setViewDate] = useState(() => {
@@ -209,19 +213,36 @@ function Events() {
   const loadEvents = useCallback(async () => {
     setLoading(true);
     setError(null);
-    try {
-      const data = await api.getEvents(viewYear, viewMonth + 1);
-      setEvents(data);
-    } catch (err) {
-      console.error('Error fetching events:', err);
-      setError(err.message);
-    } finally {
+    const [localResult, googleResult] = await Promise.allSettled([
+      api.getEvents(viewYear, viewMonth + 1),
+      api.getGoogleCalendarEvents(viewYear, viewMonth + 1),
+    ]);
+
+    if (localResult.status === 'rejected') {
+      console.error('Error fetching events:', localResult.reason);
+      setError(localResult.reason.message);
       setLoading(false);
+      return;
     }
+
+    const calendarEvents = googleResult.status === 'fulfilled'
+      ? googleResult.value
+      : [];
+    if (googleResult.status === 'rejected') {
+      console.error('Error fetching Google Calendar events:', googleResult.reason);
+    }
+    setGoogleCalendarError(googleResult.status === 'rejected');
+    setEvents([...localResult.value, ...calendarEvents]);
+    setLoading(false);
   }, [viewYear, viewMonth]);
 
   useEffect(() => {
     loadEvents();
+  }, [loadEvents]);
+
+  useEffect(() => {
+    const refreshTimer = window.setInterval(loadEvents, CALENDAR_REFRESH_INTERVAL);
+    return () => window.clearInterval(refreshTimer);
   }, [loadEvents]);
 
   const calendarDays = useMemo(
@@ -251,10 +272,6 @@ function Events() {
         map[key].push(buildHolidayEvent(day.date, holidayKey, t(HOLIDAY_TRANSLATION_KEYS[holidayKey])));
       }
 
-      if (day.date.getDay() === 0) {
-        if (!map[key]) map[key] = [];
-        map[key].push(buildSundayServiceEvent(day.date, t('sundayService')));
-      }
     });
 
     Object.keys(map).forEach(key => {
@@ -264,7 +281,10 @@ function Events() {
   }, [events, calendarDays, holidayMap, t]);
 
   const selectedDateKey = toDateKey(selectedDate);
-  const selectedDayEvents = eventsByDate[selectedDateKey] || [];
+  const selectedDayEvents = useMemo(
+    () => eventsByDate[selectedDateKey] || [],
+    [eventsByDate, selectedDateKey]
+  );
 
   const monthLabel = formatMonthYear(viewDate, language);
 
@@ -278,7 +298,7 @@ function Events() {
     const allDay = [];
 
     selectedDayEvents.forEach(event => {
-      if (event.isHoliday) {
+      if (event.isHoliday || event.isAllDay) {
         allDay.push(event);
         return;
       }
@@ -296,6 +316,7 @@ function Events() {
         'events-slot-event',
         event.isHoliday && 'events-slot-event--holiday',
         event.isRecurring && !event.isHoliday && 'events-slot-event--recurring',
+        event.isGoogleCalendar && 'events-slot-event--google',
       ].filter(Boolean).join(' ')}
     >
       <div className="events-slot-event-title">
@@ -327,7 +348,7 @@ function Events() {
           {event.location}
         </p>
       )}
-      {isAdmin && !event.isRecurring && !event.isHoliday && (
+      {isAdmin && !event.isRecurring && !event.isHoliday && !event.isReadOnly && (
         <button
           type="button"
           className="event-edit-btn events-slot-event-edit"
@@ -487,6 +508,9 @@ function Events() {
                     )}
                   </div>
                 </div>
+                {googleCalendarError && (
+                  <p className="events-google-fallback">{t('calendarEventsUnavailable')}</p>
+                )}
                 <div className="events-calendar">
                 <div className="events-calendar-weekdays">
                   {weekdays.map(label => (
@@ -523,10 +547,19 @@ function Events() {
                                   'events-calendar-event-pill',
                                   event.isHoliday && 'events-calendar-event-pill--holiday',
                                   event.isRecurring && !event.isHoliday && 'events-calendar-event-pill--recurring',
+                                  event.isGoogleCalendar && 'events-calendar-event-pill--google',
                                 ].filter(Boolean).join(' ')}
-                                title={event.title}
+                                title={
+                                  event.isGoogleCalendar
+                                    ? `${formatEventStartTime(event, language) || ''} ${event.title}`.trim()
+                                    : event.title
+                                }
                               >
-                                <EventLabel event={event} />
+                                <EventLabel
+                                  event={event}
+                                  showTime={event.isGoogleCalendar}
+                                  language={language}
+                                />
                               </span>
                             ))}
                             {dayEvents.length > 3 && (

@@ -1,4 +1,14 @@
-from config import app, db, api, FACEBOOK_PAGE_ID, FACEBOOK_PAGE_ACCESS_TOKEN
+from config import (
+    app,
+    db,
+    api,
+    FACEBOOK_PAGE_ID,
+    FACEBOOK_PAGE_ACCESS_TOKEN,
+    YOUTUBE_API_KEY,
+    YOUTUBE_CHANNEL_ID,
+    GOOGLE_CALENDAR_API_KEY,
+    GOOGLE_CALENDAR_ID,
+)
 from flask import session, request, send_from_directory
 from flask_restful import Resource
 from flask_migrate import Migrate
@@ -7,7 +17,7 @@ from marshmallow.exceptions import ValidationError
 from datetime import datetime, date, timedelta
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
 import json
 import os
 import models  # Import models to register them with SQLAlchemy
@@ -741,6 +751,178 @@ class SermonByID(Resource):
             return {'error': str(e)}, 500
         
 api.add_resource(SermonByID, '/sermons/<int:sermon_id>')
+
+
+_youtube_video_cache = {'videos': [], 'fetched_at': None}
+YOUTUBE_CACHE_INTERVAL = timedelta(minutes=10)
+
+
+def _youtube_api_get(resource, params):
+    query = urlencode({**params, 'key': YOUTUBE_API_KEY})
+    request_url = f'https://www.googleapis.com/youtube/v3/{resource}?{query}'
+    req = Request(request_url, headers={'User-Agent': 'GracelandChurchWebsite/1.0'})
+    with urlopen(req, timeout=10) as response:
+        return json.loads(response.read().decode('utf-8'))
+
+
+def _get_latest_youtube_videos():
+    now = datetime.now()
+    fetched_at = _youtube_video_cache['fetched_at']
+    if fetched_at and now - fetched_at < YOUTUBE_CACHE_INTERVAL:
+        return _youtube_video_cache['videos']
+
+    channel_data = _youtube_api_get('channels', {
+        'part': 'contentDetails',
+        'id': YOUTUBE_CHANNEL_ID,
+    })
+    channel_items = channel_data.get('items', [])
+    if not channel_items:
+        raise ValueError('YouTube channel was not found')
+
+    uploads_playlist_id = (
+        channel_items[0]
+        .get('contentDetails', {})
+        .get('relatedPlaylists', {})
+        .get('uploads')
+    )
+    if not uploads_playlist_id:
+        raise ValueError('YouTube uploads playlist was not found')
+
+    playlist_data = _youtube_api_get('playlistItems', {
+        'part': 'snippet,contentDetails',
+        'playlistId': uploads_playlist_id,
+        'maxResults': 6,
+    })
+
+    videos = []
+    for item in playlist_data.get('items', []):
+        snippet = item.get('snippet', {})
+        video_id = item.get('contentDetails', {}).get('videoId')
+        if not video_id:
+            continue
+        thumbnails = snippet.get('thumbnails', {})
+        thumbnail = (
+            thumbnails.get('maxres')
+            or thumbnails.get('standard')
+            or thumbnails.get('high')
+            or thumbnails.get('medium')
+            or thumbnails.get('default')
+            or {}
+        )
+        videos.append({
+            'id': video_id,
+            'title': snippet.get('title') or 'YouTube video',
+            'thumbnail_url': thumbnail.get('url'),
+            'published_at': snippet.get('publishedAt'),
+            'embed_url': f'https://www.youtube-nocookie.com/embed/{video_id}',
+        })
+
+    _youtube_video_cache['videos'] = videos
+    _youtube_video_cache['fetched_at'] = now
+    return videos
+
+
+class LatestYouTubeVideos(Resource):
+    def get(self):
+        if not YOUTUBE_API_KEY:
+            return {'error': 'Latest videos are temporarily unavailable.'}, 503
+        try:
+            return {'videos': _get_latest_youtube_videos()}, 200
+        except (HTTPError, URLError, TimeoutError, ValueError, json.JSONDecodeError) as error:
+            app.logger.warning('Unable to load latest YouTube videos: %s', error)
+            return {'error': 'Latest videos are temporarily unavailable.'}, 503
+
+
+api.add_resource(LatestYouTubeVideos, '/youtube/videos')
+
+
+_google_calendar_cache = {}
+GOOGLE_CALENDAR_CACHE_INTERVAL = timedelta(minutes=15)
+
+
+def _get_google_calendar_events(year, month):
+    now = datetime.now()
+    cache_key = f'{year:04d}-{month:02d}'
+    cached = _google_calendar_cache.get(cache_key)
+    if cached and now - cached['fetched_at'] < GOOGLE_CALENDAR_CACHE_INTERVAL:
+        return cached['events']
+
+    window_start = datetime(year, month, 1) - timedelta(days=7)
+    if month == 12:
+        next_month = datetime(year + 1, 1, 1)
+    else:
+        next_month = datetime(year, month + 1, 1)
+    window_end = next_month + timedelta(days=7)
+
+    params = urlencode({
+        'key': GOOGLE_CALENDAR_API_KEY,
+        'timeMin': window_start.isoformat() + 'Z',
+        'timeMax': window_end.isoformat() + 'Z',
+        'singleEvents': 'true',
+        'orderBy': 'startTime',
+        'showDeleted': 'false',
+        'maxResults': 250,
+    })
+    calendar_id = quote(GOOGLE_CALENDAR_ID, safe='')
+    request_url = (
+        f'https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events?{params}'
+    )
+    req = Request(request_url, headers={'User-Agent': 'GracelandChurchWebsite/1.0'})
+    with urlopen(req, timeout=10) as response:
+        data = json.loads(response.read().decode('utf-8'))
+
+    events = []
+    for item in data.get('items', []):
+        start = item.get('start', {})
+        end = item.get('end', {})
+        start_value = start.get('dateTime') or start.get('date')
+        if not start_value:
+            continue
+        is_all_day = bool(start.get('date') and not start.get('dateTime'))
+        start_datetime = f'{start_value}T00:00:00' if is_all_day else start_value
+        end_value = end.get('dateTime') or end.get('date')
+        end_datetime = (
+            f'{end_value}T00:00:00'
+            if is_all_day and end_value
+            else end_value
+        )
+        events.append({
+            'id': f"google-{item.get('id', start_value)}",
+            'title': item.get('summary') or 'Calendar event',
+            'description': item.get('description') or None,
+            'start_datetime': start_datetime,
+            'end_datetime': end_datetime,
+            'location': item.get('location') or None,
+            'html_link': item.get('htmlLink') or None,
+            'isGoogleCalendar': True,
+            'isReadOnly': True,
+            'isAllDay': is_all_day,
+        })
+
+    _google_calendar_cache[cache_key] = {
+        'events': events,
+        'fetched_at': now,
+    }
+    return events
+
+
+class GoogleCalendarEvents(Resource):
+    def get(self):
+        if not GOOGLE_CALENDAR_API_KEY or not GOOGLE_CALENDAR_ID:
+            return {'error': 'Calendar events are temporarily unavailable.'}, 503
+        try:
+            now = datetime.now()
+            year = request.args.get('year', default=now.year, type=int)
+            month = request.args.get('month', default=now.month, type=int)
+            if not 1 <= month <= 12 or not 1970 <= year <= 2100:
+                return {'error': 'Invalid calendar range.'}, 400
+            return {'events': _get_google_calendar_events(year, month)}, 200
+        except (HTTPError, URLError, TimeoutError, ValueError, json.JSONDecodeError) as error:
+            app.logger.warning('Unable to load Google Calendar events: %s', error)
+            return {'error': 'Calendar events are temporarily unavailable.'}, 503
+
+
+api.add_resource(GoogleCalendarEvents, '/google-calendar/events')
 
 
 def _facebook_video_embed_url(permalink_url):

@@ -18,6 +18,19 @@ export const api = {
     return response.json();
   },
 
+  getGoogleCalendarEvents: async (year, month) => {
+    const params = new URLSearchParams();
+    if (year) params.set('year', String(year));
+    if (month) params.set('month', String(month));
+    const query = params.toString();
+    const response = await fetch(
+      `${API_BASE_URL}/google-calendar/events${query ? `?${query}` : ''}`
+    );
+    if (!response.ok) throw new Error('Calendar events are temporarily unavailable.');
+    const data = await response.json();
+    return data.events || [];
+  },
+
   createEvent: async (data) => {
     const response = await fetch(`${API_BASE_URL}/events`, {
       method: 'POST',
@@ -79,6 +92,13 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/sermons/${id}`);
     if (!response.ok) throw new Error('Failed to fetch sermon');
     return response.json();
+  },
+
+  getLatestYouTubeVideos: async () => {
+    const response = await fetch(`${API_BASE_URL}/youtube/videos`);
+    if (!response.ok) throw new Error('Latest videos are temporarily unavailable.');
+    const data = await response.json();
+    return data.videos || [];
   },
 
   // Ministries

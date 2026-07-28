@@ -69,6 +69,19 @@ src/
 
 The app connects to the Flask backend at `http://localhost:5555`. Make sure your Flask server is running before starting the React app.
 
+## YouTube Video Feed
+
+The Sermons page loads the six latest uploads through the Flask backend. Copy
+`server/.env.example` to `server/.env`, then set:
+
+```env
+YOUTUBE_API_KEY=your_youtube_data_api_key
+YOUTUBE_CHANNEL_ID=UCXU8MsZmF7S2H-jfEecfs9w
+```
+
+Install backend dependencies with `pipenv install`. The `.env` file is ignored
+by Git and the API key is never sent to the React client.
+
 ## Customization
 
 To customize the church information:

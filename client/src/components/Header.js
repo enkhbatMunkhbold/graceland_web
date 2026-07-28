@@ -146,7 +146,12 @@ function Header() {
                 {t('logout')}
               </button>
             )}
-            <a className="donate-button" href={GIVING_URL}>
+            <a
+              className="donate-button"
+              href={GIVING_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               {t('give')}
             </a>
 

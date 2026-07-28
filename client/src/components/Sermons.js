@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Search } from 'lucide-react';
+import { Play, Search } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../services/api';
+import LatestVideos from './LatestVideos';
 import '../styling/sermons.css';
 
 function getSermonWatchUrl(sermon) {
@@ -14,7 +15,11 @@ function getSermonWatchUrl(sermon) {
 function Sermons() {
   const [sermons, setSermons] = useState([]);
   const [selectedSermonId, setSelectedSermonId] = useState(null);
+  const [latestYouTubeVideo, setLatestYouTubeVideo] = useState(null);
+  const [featuredSource, setFeaturedSource] = useState('youtube');
+  const [isLatestVideoPlaying, setIsLatestVideoPlaying] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [youtubeLoading, setYoutubeLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const { t } = useLanguage();
@@ -35,6 +40,17 @@ function Sermons() {
       });
   }, []);
 
+  useEffect(() => {
+    api.getLatestYouTubeVideos()
+      .then(videos => {
+        setLatestYouTubeVideo(videos[0] || null);
+      })
+      .catch(err => {
+        console.error('Error fetching latest YouTube video:', err);
+      })
+      .finally(() => setYoutubeLoading(false));
+  }, []);
+
   const filteredSermons = useMemo(() => {
     if (!searchQuery.trim()) return sermons;
     const q = searchQuery.toLowerCase().trim();
@@ -51,9 +67,25 @@ function Sermons() {
     return sermons.find(s => s.id === selectedSermonId) || sermons[0];
   }, [sermons, selectedSermonId]);
 
-  const featuredVideoUrl = selectedSermon?.video_url || null;
+  const showLatestYouTubeVideo = featuredSource === 'youtube' && latestYouTubeVideo;
+  const featuredVideoUrl = showLatestYouTubeVideo
+    ? latestYouTubeVideo.embed_url
+    : selectedSermon?.video_url || null;
+  const featuredTitle = showLatestYouTubeVideo
+    ? latestYouTubeVideo.title
+    : selectedSermon?.title;
+  const featuredDate = showLatestYouTubeVideo
+    ? latestYouTubeVideo.published_at
+    : selectedSermon?.date;
 
-  if (loading) {
+  const handleYouTubeVideoSelect = video => {
+    setLatestYouTubeVideo(video);
+    setFeaturedSource('youtube');
+    setIsLatestVideoPlaying(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  if (loading || youtubeLoading) {
     return (
       <div className="sermons-page">
         <section className="sermons-hero">
@@ -71,11 +103,23 @@ function Sermons() {
     <div className="sermons-page">
       <section className="sermons-hero">
         <div className="sermons-hero-video-wrap">
-          {featuredVideoUrl ? (
+          {showLatestYouTubeVideo && !isLatestVideoPlaying ? (
+            <button
+              type="button"
+              className="sermons-latest-video-preview"
+              onClick={() => setIsLatestVideoPlaying(true)}
+              aria-label={`${t('playVideo')}: ${latestYouTubeVideo.title}`}
+            >
+              <img src={latestYouTubeVideo.thumbnail_url} alt="" />
+              <span className="sermons-latest-play" aria-hidden="true">
+                <Play />
+              </span>
+            </button>
+          ) : featuredVideoUrl ? (
             <div className="sermons-video-window">
               <iframe
-                src={featuredVideoUrl}
-                title={selectedSermon?.title || 'Sermon video'}
+                src={showLatestYouTubeVideo ? `${featuredVideoUrl}?autoplay=1&rel=0` : featuredVideoUrl}
+                title={featuredTitle || 'Sermon video'}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 className="sermons-video-iframe"
@@ -87,12 +131,12 @@ function Sermons() {
             </div>
           )}
         </div>
-        {selectedSermon && (
+        {featuredTitle && (
           <div className="sermons-hero-caption">
-            <h2 className="sermons-hero-title">{selectedSermon.title}</h2>
-            {selectedSermon.date && (
+            <h2 className="sermons-hero-title">{featuredTitle}</h2>
+            {featuredDate && (
               <p className="sermons-hero-date">
-                {new Date(selectedSermon.date).toLocaleDateString(undefined, {
+                {new Date(featuredDate).toLocaleDateString(undefined, {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric',
@@ -102,6 +146,8 @@ function Sermons() {
           </div>
         )}
       </section>
+
+      <LatestVideos onSelectVideo={handleYouTubeVideoSelect} />
 
       <section className="sermons-content">
         <div className="sermons-content-inner">
@@ -146,6 +192,8 @@ function Sermons() {
                         className="sermon-list-main sermon-list-select"
                         onClick={() => {
                           setSelectedSermonId(sermon.id);
+                          setFeaturedSource('sermon');
+                          setIsLatestVideoPlaying(false);
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
                       >

@@ -15,6 +15,7 @@ marshmallow = "*"
 flask-serializer = "*"
 sqlalchemy = "*"
 marshmallow-sqlalchemy = "*"
+python-dotenv = "*"
 
 [dev-packages]
 
