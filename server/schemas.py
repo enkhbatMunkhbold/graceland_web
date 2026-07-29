@@ -349,6 +349,7 @@ class DailyJobSchema(ma.SQLAlchemyAutoSchema):
     title = fields.String(required=True, validate=validate.Length(min=1, max=255))
     job_date = fields.Date(required=True)
     start_time = fields.Time(required=True)
+    location = fields.String(allow_none=True, validate=validate.Length(max=255))
     notes = fields.String(allow_none=True)
     created_by_id = fields.Integer(dump_only=True)
 

@@ -197,6 +197,7 @@ class DailyJob(db.Model):
   job_date = db.Column(db.Date, nullable=False, index=True)
   start_time = db.Column(db.Time, nullable=False)
   title = db.Column(db.String(255), nullable=False)
+  location = db.Column(db.String(255))
   notes = db.Column(db.Text)
   created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
   created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)

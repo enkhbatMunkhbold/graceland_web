@@ -696,6 +696,12 @@
   gap: 1rem;
 }
 
+.events-jobs-title-row .events-day-panel-title {
+  min-width: 0;
+  font-size: 1.05rem;
+  white-space: normal;
+}
+
 .events-job-add {
   display: inline-flex;
   align-items: center;
@@ -816,6 +822,22 @@
 .events-job-copy h4,
 .events-job-copy p {
   margin: 0;
+}
+
+.events-job-copy .events-job-location {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.3rem;
+  color: #475569;
+  font-weight: 650;
+}
+
+.events-job-location svg {
+  flex: 0 0 auto;
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-top: 0.12rem;
+  color: #2563eb;
 }
 
 .events-job-copy h4 {

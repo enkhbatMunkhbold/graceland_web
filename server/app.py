@@ -573,8 +573,8 @@ class Events(Resource):
         return schemas.events_schema.dump(events), 200
             
     def post(self):
-        if not _require_admin():
-            return {'error': 'Admin access required'}, 403
+        if not _require_admin_or_staff():
+            return {'error': 'Admin or staff access required'}, 403
 
         try:
             data = request.get_json()
@@ -599,8 +599,8 @@ class EventByID(Resource):
         return schemas.event_schema.dump(event)
     
     def patch(self, event_id):
-        if not _require_admin():
-            return {'error': 'Admin access required'}, 403
+        if not _require_admin_or_staff():
+            return {'error': 'Admin or staff access required'}, 403
 
         event = db.session.get(models.Event, event_id)
         if not event:
@@ -624,8 +624,8 @@ class EventByID(Resource):
             return {'error': str(e)}, 500
         
     def delete(self, event_id):
-        if not _require_admin():
-            return {'error': 'Admin access required'}, 403
+        if not _require_admin_or_staff():
+            return {'error': 'Admin or staff access required'}, 403
 
         event = db.session.get(models.Event, event_id)
         if not event:

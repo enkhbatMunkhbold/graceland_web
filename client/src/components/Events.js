@@ -7,6 +7,7 @@ import {
   HardHat,
   Heart,
   Landmark,
+  MapPin,
   Plus,
   Ship,
   Sparkles,
@@ -195,15 +196,19 @@ function Events() {
   const [jobsLoading, setJobsLoading] = useState(true);
   const [jobEditorOpen, setJobEditorOpen] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
-  const [jobForm, setJobForm] = useState({ start_time: '09:00', title: '', notes: '' });
+  const [jobForm, setJobForm] = useState({
+    start_time: '09:00',
+    title: '',
+    location: '',
+    notes: '',
+  });
   const [jobError, setJobError] = useState('');
   const [jobSaving, setJobSaving] = useState(false);
 
   const { t, language } = useLanguage();
   const { user } = useContext(UserContext);
-  const isAdmin = Boolean(user?.is_admin);
   const canManageJobs = Boolean(user?.is_admin || user?.is_staff);
-  const todayDateKey = toDateKey(new Date());
+  const selectedDateKey = toDateKey(selectedDate);
 
   const viewYear = viewDate.getFullYear();
   const viewMonth = viewDate.getMonth();
@@ -243,13 +248,13 @@ function Events() {
     setJobsLoading(true);
     setJobError('');
     try {
-      setDailyJobs(await api.getDailyJobs(todayDateKey));
+      setDailyJobs(await api.getDailyJobs(selectedDateKey));
     } catch (loadError) {
       setJobError(loadError.message);
     } finally {
       setJobsLoading(false);
     }
-  }, [todayDateKey]);
+  }, [selectedDateKey]);
 
   useEffect(() => {
     loadDailyJobs();
@@ -295,8 +300,36 @@ function Events() {
     return map;
   }, [events, calendarDays, holidayMap, t]);
 
-  const selectedDateKey = toDateKey(selectedDate);
   const monthLabel = formatMonthYear(viewDate, language);
+  const selectedSchedule = useMemo(
+    () => (eventsByDate[selectedDateKey] || []).filter(event => !event.isHoliday),
+    [eventsByDate, selectedDateKey]
+  );
+  const selectedTodoItems = useMemo(() => [
+    ...selectedSchedule.map(event => ({
+      ...event,
+      itemType: 'event',
+      sortTime: event.start_datetime,
+      displayTime: formatEventStartTime(event, language),
+      notes: event.description,
+      canEdit: !event.isRecurring && !event.isReadOnly && !event.isGoogleCalendar,
+    })),
+    ...dailyJobs.map(job => ({
+      ...job,
+      itemType: 'job',
+      sortTime: `${selectedDateKey}T${job.start_time}`,
+      displayTime: new Date(`${selectedDateKey}T${job.start_time}`).toLocaleTimeString(
+        language === 'mn' ? 'mn-MN' : 'en-US',
+        { hour: 'numeric', minute: '2-digit' }
+      ),
+      canEdit: true,
+    })),
+  ].sort((a, b) => new Date(a.sortTime) - new Date(b.sortTime)), [
+    dailyJobs,
+    language,
+    selectedDateKey,
+    selectedSchedule,
+  ]);
 
   /*
     <article
@@ -357,9 +390,10 @@ function Events() {
       ? {
           start_time: String(job.start_time).slice(0, 5),
           title: job.title || '',
+          location: job.location || '',
           notes: job.notes || '',
         }
-      : { start_time: '09:00', title: '', notes: '' });
+      : { start_time: '09:00', title: '', location: '', notes: '' });
     setJobError('');
     setJobEditorOpen(true);
   };
@@ -376,9 +410,10 @@ function Events() {
     setJobSaving(true);
     setJobError('');
     const payload = {
-      job_date: todayDateKey,
+      job_date: selectedDateKey,
       start_time: jobForm.start_time,
       title: jobForm.title.trim(),
+      location: jobForm.location.trim() || null,
       notes: jobForm.notes.trim() || null,
     };
     try {
@@ -497,7 +532,7 @@ function Events() {
   };
 
   const handleDayDoubleClick = (day) => {
-    if (!isAdmin) return;
+    if (!canManageJobs) return;
     setSelectedDate(day.date);
     openCreateModal(day.date);
   };
@@ -534,7 +569,7 @@ function Events() {
                     </button>
                   </div>
                   <div className="events-calendar-actions">
-                    {isAdmin && (
+                    {canManageJobs && (
                       <button
                         type="button"
                         className="events-add-btn"
@@ -615,7 +650,7 @@ function Events() {
               <div className="events-day-column">
                 <div className="events-jobs-title-row">
                   <h3 className={`events-day-panel-title${language === 'mn' ? ' events-date-title--mn' : ''}`}>
-                    {t('today')}
+                    {formatFullDate(selectedDate, language)}
                   </h3>
                   {canManageJobs && (
                     <button type="button" className="events-job-add" onClick={() => openJobEditor()}>
@@ -625,7 +660,6 @@ function Events() {
                   )}
                 </div>
                 <aside className="events-day-panel events-jobs-panel">
-                  <p className="events-jobs-date">{formatFullDate(new Date(), language)}</p>
                   {jobError && <p className="events-jobs-error">{jobError}</p>}
                   {jobEditorOpen && canManageJobs && (
                     <form className="events-job-form" onSubmit={handleJobSave}>
@@ -648,6 +682,15 @@ function Events() {
                         />
                       </label>
                       <label>
+                        {t('jobLocation')}
+                        <input
+                          type="text"
+                          placeholder={t('jobLocation')}
+                          value={jobForm.location}
+                          onChange={event => setJobForm(current => ({ ...current, location: event.target.value }))}
+                        />
+                      </label>
+                      <label>
                         {t('jobNotes')}
                         <textarea
                           value={jobForm.notes}
@@ -663,26 +706,38 @@ function Events() {
                       </div>
                     </form>
                   )}
-                  {jobsLoading ? (
+                  {jobsLoading && selectedSchedule.length === 0 ? (
                     <p className="events-jobs-empty">{t('jobsLoading')}</p>
-                  ) : dailyJobs.length === 0 ? (
+                  ) : selectedTodoItems.length === 0 ? (
                     <p className="events-jobs-empty">{t('noJobsToday')}</p>
                   ) : (
                     <ol className="events-jobs-list">
-                      {dailyJobs.map(job => (
-                        <li className="events-job-item" key={job.id}>
-                          <time>{new Date(`${todayDateKey}T${job.start_time}`).toLocaleTimeString(
-                            language === 'mn' ? 'mn-MN' : 'en-US',
-                            { hour: 'numeric', minute: '2-digit' }
-                          )}</time>
+                      {selectedTodoItems.map(item => (
+                        <li className="events-job-item" key={`${item.itemType}-${item.id}`}>
+                          <time>{item.displayTime || t('allDay')}</time>
                           <div className="events-job-copy">
-                            <h4>{job.title}</h4>
-                            {job.notes && <p>{job.notes}</p>}
+                            <h4>{item.title}</h4>
+                            {item.location && (
+                              <p className="events-job-location">
+                                <MapPin aria-hidden="true" />
+                                {item.location}
+                              </p>
+                            )}
+                            {item.notes && <p>{item.notes}</p>}
                           </div>
-                          {canManageJobs && (
+                          {canManageJobs && item.canEdit && (
                             <div className="events-job-actions">
-                              <button type="button" onClick={() => openJobEditor(job)}>{t('editEvent')}</button>
-                              <button type="button" onClick={() => handleJobDelete(job)}>{t('deleteEvent')}</button>
+                              <button
+                                type="button"
+                                onClick={() => item.itemType === 'job' ? openJobEditor(item) : openEditModal(item)}
+                              >
+                                {t('editEvent')}
+                              </button>
+                              {item.itemType === 'job' && (
+                                <button type="button" onClick={() => handleJobDelete(item)}>
+                                  {t('deleteEvent')}
+                                </button>
+                              )}
                             </div>
                           )}
                         </li>
@@ -696,7 +751,7 @@ function Events() {
         )}
       </div>
 
-      {modalOpen && isAdmin && (
+      {modalOpen && canManageJobs && (
         <div className="events-modal-overlay" onClick={closeModal}>
           <div className="events-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
             <div className="events-modal-header">
