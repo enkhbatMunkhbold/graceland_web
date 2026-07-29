@@ -74,7 +74,7 @@ function Sermons() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  if (loading || youtubeLoading) {
+  if (youtubeLoading || (loading && !latestYouTubeVideo)) {
     return (
       <div className="sermons-page">
         <section className="sermons-hero">

@@ -7,7 +7,6 @@ import {
   HardHat,
   Heart,
   Landmark,
-  MapPin,
   Plus,
   Ship,
   Sparkles,
@@ -28,7 +27,6 @@ import '../styling/events.css';
 
 const WEEKDAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const WEEKDAYS_MN = ['Ня', 'Да', 'Мя', 'Лх', 'Пү', 'Ба', 'Бя'];
-const HOUR_SLOTS = Array.from({ length: 24 }, (_, hour) => hour);
 const CALENDAR_REFRESH_INTERVAL = 15 * 60 * 1000;
 
 const HOLIDAY_ICONS = {
@@ -44,14 +42,6 @@ const HOLIDAY_ICONS = {
   thanksgiving: UtensilsCrossed,
   christmas: TreePine,
 };
-
-function formatHourLabel(hour, language) {
-  const date = new Date(2000, 0, 1, hour, 0);
-  return date.toLocaleTimeString(language === 'mn' ? 'mn-MN' : 'en-US', {
-    hour: 'numeric',
-    hour12: true,
-  });
-}
 
 function formatEventStartTime(event, language) {
   if (event.isAllDay || !event.start_datetime) return null;
@@ -201,10 +191,19 @@ function Events() {
   const [form, setForm] = useState(emptyForm());
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [dailyJobs, setDailyJobs] = useState([]);
+  const [jobsLoading, setJobsLoading] = useState(true);
+  const [jobEditorOpen, setJobEditorOpen] = useState(false);
+  const [editingJob, setEditingJob] = useState(null);
+  const [jobForm, setJobForm] = useState({ start_time: '09:00', title: '', notes: '' });
+  const [jobError, setJobError] = useState('');
+  const [jobSaving, setJobSaving] = useState(false);
 
   const { t, language } = useLanguage();
   const { user } = useContext(UserContext);
   const isAdmin = Boolean(user?.is_admin);
+  const canManageJobs = Boolean(user?.is_admin || user?.is_staff);
+  const todayDateKey = toDateKey(new Date());
 
   const viewYear = viewDate.getFullYear();
   const viewMonth = viewDate.getMonth();
@@ -239,6 +238,22 @@ function Events() {
   useEffect(() => {
     loadEvents();
   }, [loadEvents]);
+
+  const loadDailyJobs = useCallback(async () => {
+    setJobsLoading(true);
+    setJobError('');
+    try {
+      setDailyJobs(await api.getDailyJobs(todayDateKey));
+    } catch (loadError) {
+      setJobError(loadError.message);
+    } finally {
+      setJobsLoading(false);
+    }
+  }, [todayDateKey]);
+
+  useEffect(() => {
+    loadDailyJobs();
+  }, [loadDailyJobs]);
 
   useEffect(() => {
     const refreshTimer = window.setInterval(loadEvents, CALENDAR_REFRESH_INTERVAL);
@@ -281,35 +296,9 @@ function Events() {
   }, [events, calendarDays, holidayMap, t]);
 
   const selectedDateKey = toDateKey(selectedDate);
-  const selectedDayEvents = useMemo(
-    () => eventsByDate[selectedDateKey] || [],
-    [eventsByDate, selectedDateKey]
-  );
-
   const monthLabel = formatMonthYear(viewDate, language);
 
-  const selectedDateLabel = formatFullDate(selectedDate, language);
-
-  const { allDayEvents, eventsByHour } = useMemo(() => {
-    const byHour = HOUR_SLOTS.reduce((acc, hour) => {
-      acc[hour] = [];
-      return acc;
-    }, {});
-    const allDay = [];
-
-    selectedDayEvents.forEach(event => {
-      if (event.isHoliday || event.isAllDay) {
-        allDay.push(event);
-        return;
-      }
-      const hour = new Date(event.start_datetime).getHours();
-      byHour[hour].push(event);
-    });
-
-    return { allDayEvents: allDay, eventsByHour: byHour };
-  }, [selectedDayEvents]);
-
-  const renderSlotEvent = (event) => (
+  /*
     <article
       key={event.id}
       className={[
@@ -359,6 +348,64 @@ function Events() {
       )}
     </article>
   );
+
+  */
+
+  const openJobEditor = (job = null) => {
+    setEditingJob(job);
+    setJobForm(job
+      ? {
+          start_time: String(job.start_time).slice(0, 5),
+          title: job.title || '',
+          notes: job.notes || '',
+        }
+      : { start_time: '09:00', title: '', notes: '' });
+    setJobError('');
+    setJobEditorOpen(true);
+  };
+
+  const closeJobEditor = () => {
+    setJobEditorOpen(false);
+    setEditingJob(null);
+    setJobError('');
+  };
+
+  const handleJobSave = async event => {
+    event.preventDefault();
+    if (!jobForm.title.trim()) return;
+    setJobSaving(true);
+    setJobError('');
+    const payload = {
+      job_date: todayDateKey,
+      start_time: jobForm.start_time,
+      title: jobForm.title.trim(),
+      notes: jobForm.notes.trim() || null,
+    };
+    try {
+      if (editingJob) {
+        await api.updateDailyJob(editingJob.id, payload);
+      } else {
+        await api.createDailyJob(payload);
+      }
+      closeJobEditor();
+      await loadDailyJobs();
+    } catch (saveError) {
+      setJobError(saveError.message);
+    } finally {
+      setJobSaving(false);
+    }
+  };
+
+  const handleJobDelete = async job => {
+    if (!window.confirm(t('confirmDeleteJob'))) return;
+    setJobError('');
+    try {
+      await api.deleteDailyJob(job.id);
+      await loadDailyJobs();
+    } catch (deleteError) {
+      setJobError(deleteError.message);
+    }
+  };
 
   const openCreateModal = (date) => {
     setEditingEvent(null);
@@ -442,12 +489,6 @@ function Events() {
     setViewDate(new Date(viewYear, viewMonth + 1, 1));
   };
 
-  const goToToday = () => {
-    const now = new Date();
-    setViewDate(new Date(now.getFullYear(), now.getMonth(), 1));
-    setSelectedDate(now);
-  };
-
   const handleDayClick = (day) => {
     setSelectedDate(day.date);
     if (!day.isCurrentMonth) {
@@ -480,7 +521,7 @@ function Events() {
           <div className="error">Error: {error}</div>
         ) : (
           <>
-            <div className={`events-layout-columns${user ? '' : ' events-layout-columns--calendar-only'}`}>
+            <div className="events-layout-columns">
               <div className="events-calendar-column">
                 <div className="events-calendar-toolbar">
                   <div className="events-calendar-nav">
@@ -493,9 +534,6 @@ function Events() {
                     </button>
                   </div>
                   <div className="events-calendar-actions">
-                    <button type="button" className="events-today-btn" onClick={goToToday}>
-                      {t('today')}
-                    </button>
                     {isAdmin && (
                       <button
                         type="button"
@@ -574,33 +612,85 @@ function Events() {
               </div>
               </div>
 
-              {user && (
               <div className="events-day-column">
-                <h3 className={`events-day-panel-title${language === 'mn' ? ' events-date-title--mn' : ''}`}>{selectedDateLabel}</h3>
-                <aside className="events-day-panel">
-                  <div className="events-day-panel-content">
-                    <div className="events-time-slots">
-                      {allDayEvents.length > 0 && (
-                        <div className="events-time-slot events-time-slot--allday">
-                          <div className="events-time-slot-label">{t('allDay')}</div>
-                          <div className="events-time-slot-body">
-                            {allDayEvents.map(renderSlotEvent)}
+                <div className="events-jobs-title-row">
+                  <h3 className={`events-day-panel-title${language === 'mn' ? ' events-date-title--mn' : ''}`}>
+                    {t('today')}
+                  </h3>
+                  {canManageJobs && (
+                    <button type="button" className="events-job-add" onClick={() => openJobEditor()}>
+                      <Plus aria-hidden="true" />
+                      {t('addJob')}
+                    </button>
+                  )}
+                </div>
+                <aside className="events-day-panel events-jobs-panel">
+                  <p className="events-jobs-date">{formatFullDate(new Date(), language)}</p>
+                  {jobError && <p className="events-jobs-error">{jobError}</p>}
+                  {jobEditorOpen && canManageJobs && (
+                    <form className="events-job-form" onSubmit={handleJobSave}>
+                      <label>
+                        {t('jobTime')}
+                        <input
+                          type="time"
+                          value={jobForm.start_time}
+                          onChange={event => setJobForm(current => ({ ...current, start_time: event.target.value }))}
+                          required
+                        />
+                      </label>
+                      <label>
+                        {t('jobTitle')}
+                        <input
+                          type="text"
+                          value={jobForm.title}
+                          onChange={event => setJobForm(current => ({ ...current, title: event.target.value }))}
+                          required
+                        />
+                      </label>
+                      <label>
+                        {t('jobNotes')}
+                        <textarea
+                          value={jobForm.notes}
+                          onChange={event => setJobForm(current => ({ ...current, notes: event.target.value }))}
+                          rows={3}
+                        />
+                      </label>
+                      <div className="events-job-form-actions">
+                        <button type="button" onClick={closeJobEditor}>{t('cancel')}</button>
+                        <button type="submit" disabled={jobSaving}>
+                          {jobSaving ? t('saving') : t('saveJob')}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                  {jobsLoading ? (
+                    <p className="events-jobs-empty">{t('jobsLoading')}</p>
+                  ) : dailyJobs.length === 0 ? (
+                    <p className="events-jobs-empty">{t('noJobsToday')}</p>
+                  ) : (
+                    <ol className="events-jobs-list">
+                      {dailyJobs.map(job => (
+                        <li className="events-job-item" key={job.id}>
+                          <time>{new Date(`${todayDateKey}T${job.start_time}`).toLocaleTimeString(
+                            language === 'mn' ? 'mn-MN' : 'en-US',
+                            { hour: 'numeric', minute: '2-digit' }
+                          )}</time>
+                          <div className="events-job-copy">
+                            <h4>{job.title}</h4>
+                            {job.notes && <p>{job.notes}</p>}
                           </div>
-                        </div>
-                      )}
-                      {HOUR_SLOTS.map(hour => (
-                        <div key={hour} className="events-time-slot">
-                          <div className="events-time-slot-label">{formatHourLabel(hour, language)}</div>
-                          <div className="events-time-slot-body">
-                            {eventsByHour[hour].map(renderSlotEvent)}
-                          </div>
-                        </div>
+                          {canManageJobs && (
+                            <div className="events-job-actions">
+                              <button type="button" onClick={() => openJobEditor(job)}>{t('editEvent')}</button>
+                              <button type="button" onClick={() => handleJobDelete(job)}>{t('deleteEvent')}</button>
+                            </div>
+                          )}
+                        </li>
                       ))}
-                    </div>
-                  </div>
+                    </ol>
+                  )}
                 </aside>
               </div>
-              )}
             </div>
           </>
         )}

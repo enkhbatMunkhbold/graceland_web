@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo, useContext } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import UserContext from '../context/UserContext';
 import { api } from '../services/api';
 import '../styling/ministries.css';
 
@@ -14,11 +13,29 @@ import marriageImage from '../assets/Marriage.jpg';
 import khuushuurImage from '../assets/ministries-khuushuur.jpg';
 import storageImage from '../assets/ministries-storage.jpg';
 import praiseImage from '../assets/ministries-praise.jpg';
+import exhibitionImage from '../assets/ministries-exhibition.jpg';
+import choirImage from '../assets/ministries-choir.jpg';
+import internationalImage from '../assets/ministries-international.jpg';
+import jordanBaptismImage from '../assets/ministries-jordan-baptism.jpg';
+import jennessParkImage from '../assets/ministries-jenness-park.jpg';
+import goldenGateImage from '../assets/ministries-golden-gate.jpg';
+import sfImmigrationImage from '../assets/ministries-sf-immigration.jpg';
+import chicagoChurchImage from '../assets/ministries-chicago-church.jpg';
+import gatewayGraduationImage from '../assets/ministries-gateway-graduation.jpg';
 import fireFestivalImage from '../assets/ministries-fire-festival.jpg';
 
 const heroSlides = [
   { image: khuushuurImage, label: 'Хуушуур' },
   { image: praiseImage, label: 'Магтаал' },
+  { image: exhibitionImage, label: 'Үзэсгэлэн' },
+  { image: choirImage, label: 'Хоор дуу' },
+  { image: internationalImage, label: 'International' },
+  { image: jordanBaptismImage, label: 'Jordan Baptism' },
+  { image: jennessParkImage, label: 'Jenness Park' },
+  { image: goldenGateImage, label: 'Golden Gate' },
+  { image: sfImmigrationImage, label: 'SF Immigration' },
+  { image: chicagoChurchImage, label: 'Чикаго Цуглаан' },
+  { image: gatewayGraduationImage, label: 'Gateway Graduation' },
   { image: storageImage, label: 'Агуулахад' },
   { image: fireFestivalImage, label: 'Галын наадам' },
 ];
@@ -54,13 +71,10 @@ function Ministries() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { t } = useLanguage();
-  const { user } = useContext(UserContext);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  const learnMorePath = (path) => (user ? path : '/login');
 
   const childrenMinistry = useMemo(() => ({
     id: 'children',
@@ -180,7 +194,7 @@ function Ministries() {
                   <p>{t('childrenMinistryPara1')}</p>
                   <p>{t('childrenMinistryPara2')}</p>
                 </div>
-                <Link to={learnMorePath('/ministries/children')} className="ministry-block-cta" onClick={scrollToTop}>
+                <Link to="/ministries/children" className="ministry-block-cta" onClick={scrollToTop}>
                   {t('learnMore').toUpperCase()}
                 </Link>
               </div>
@@ -197,7 +211,7 @@ function Ministries() {
                 <div className="ministry-block-description">
                   <p>{t('youthMinistryPara1')}</p>
                 </div>
-                <Link to={learnMorePath('/ministries/youth')} className="ministry-block-cta" onClick={scrollToTop}>
+                <Link to="/ministries/youth" className="ministry-block-cta" onClick={scrollToTop}>
                   {t('learnMore').toUpperCase()}
                 </Link>
               </div>
@@ -214,7 +228,7 @@ function Ministries() {
                 <div className="ministry-block-description">
                   <p>{t('youngAdultsMinistryPara1')}</p>
                 </div>
-                <Link to={learnMorePath('/ministries/young-adult')} className="ministry-block-cta" onClick={scrollToTop}>
+                <Link to="/ministries/young-adult" className="ministry-block-cta" onClick={scrollToTop}>
                   {t('learnMore').toUpperCase()}
                 </Link>
               </div>
@@ -231,7 +245,7 @@ function Ministries() {
                 <div className="ministry-block-description">
                   <p>{t('womenMinistryPara1')}</p>
                 </div>
-                <Link to={learnMorePath('/ministries/women')} className="ministry-block-cta" onClick={scrollToTop}>
+                <Link to="/ministries/women" className="ministry-block-cta" onClick={scrollToTop}>
                   {t('learnMore').toUpperCase()}
                 </Link>
               </div>
@@ -248,7 +262,7 @@ function Ministries() {
                 <div className="ministry-block-description">
                   <p>{t('menMinistryPara1')}</p>
                 </div>
-                <Link to={learnMorePath('/ministries/men')} className="ministry-block-cta" onClick={scrollToTop}>
+                <Link to="/ministries/men" className="ministry-block-cta" onClick={scrollToTop}>
                   {t('learnMore').toUpperCase()}
                 </Link>
               </div>
@@ -265,7 +279,7 @@ function Ministries() {
                 <div className="ministry-block-description">
                   <p>{t('marriageMinistryPara1')}</p>
                 </div>
-                <Link to={learnMorePath('/ministries/marriage')} className="ministry-block-cta" onClick={scrollToTop}>
+                <Link to="/ministries/marriage" className="ministry-block-cta" onClick={scrollToTop}>
                   {t('learnMore').toUpperCase()}
                 </Link>
               </div>

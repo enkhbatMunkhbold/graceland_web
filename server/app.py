@@ -46,6 +46,12 @@ def _require_admin():
         return None
     return user
 
+def _require_admin_or_staff():
+    user = _get_current_user()
+    if not user or not (user_is_admin(user) or getattr(user, 'is_staff', False)):
+        return None
+    return user
+
 class CheckSession(Resource):
     def get(self):
         user_id = session.get('user_id')
@@ -633,6 +639,71 @@ class EventByID(Resource):
             return {'error': str(e)}, 500
         
 api.add_resource(EventByID, '/events/<int:event_id>')
+
+class DailyJobs(Resource):
+    def get(self):
+        date_value = request.args.get('date', '').strip()
+        query = models.DailyJob.query
+        if date_value:
+            try:
+                query = query.filter_by(job_date=date.fromisoformat(date_value))
+            except ValueError:
+                return {'error': 'Date must use YYYY-MM-DD format'}, 400
+        jobs = query.order_by(
+            models.DailyJob.job_date.asc(),
+            models.DailyJob.start_time.asc(),
+        ).all()
+        return schemas.daily_jobs_schema.dump(jobs), 200
+
+    def post(self):
+        user = _require_admin_or_staff()
+        if not user:
+            return {'error': 'Admin or staff access required'}, 403
+        try:
+            job = schemas.daily_job_schema.load(request.get_json() or {})
+            job.created_by_id = user.id
+            db.session.add(job)
+            db.session.commit()
+            return schemas.daily_job_schema.dump(job), 201
+        except ValidationError as error:
+            db.session.rollback()
+            return {'error': error.messages}, 400
+
+
+class DailyJobByID(Resource):
+    def patch(self, job_id):
+        user = _require_admin_or_staff()
+        if not user:
+            return {'error': 'Admin or staff access required'}, 403
+        job = db.session.get(models.DailyJob, job_id)
+        if not job:
+            return {'error': 'Daily job not found'}, 404
+        try:
+            updated = schemas.daily_job_schema.load(
+                request.get_json() or {},
+                instance=job,
+                partial=True,
+            )
+            db.session.add(updated)
+            db.session.commit()
+            return schemas.daily_job_schema.dump(updated), 200
+        except ValidationError as error:
+            db.session.rollback()
+            return {'error': error.messages}, 400
+
+    def delete(self, job_id):
+        if not _require_admin_or_staff():
+            return {'error': 'Admin or staff access required'}, 403
+        job = db.session.get(models.DailyJob, job_id)
+        if not job:
+            return {'error': 'Daily job not found'}, 404
+        db.session.delete(job)
+        db.session.commit()
+        return {'message': 'Daily job deleted'}, 200
+
+
+api.add_resource(DailyJobs, '/daily-jobs')
+api.add_resource(DailyJobByID, '/daily-jobs/<int:job_id>')
 
 class EventRegistrations(Resource):
     def get(self, event_id):

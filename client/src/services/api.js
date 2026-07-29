@@ -1,4 +1,6 @@
 const API_BASE_URL = 'http://localhost:5555';
+let latestYouTubeVideosCache = null;
+let latestYouTubeVideosRequest = null;
 
 export const api = {
   // Events
@@ -29,6 +31,52 @@ export const api = {
     if (!response.ok) throw new Error('Calendar events are temporarily unavailable.');
     const data = await response.json();
     return data.events || [];
+  },
+
+  getDailyJobs: async (date) => {
+    const params = new URLSearchParams({ date });
+    const response = await fetch(`${API_BASE_URL}/daily-jobs?${params}`);
+    if (!response.ok) throw new Error('Failed to load today’s jobs.');
+    return response.json();
+  },
+
+  createDailyJob: async (data) => {
+    const response = await fetch(`${API_BASE_URL}/daily-jobs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to create job.');
+    }
+    return response.json();
+  },
+
+  updateDailyJob: async (id, data) => {
+    const response = await fetch(`${API_BASE_URL}/daily-jobs/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to update job.');
+    }
+    return response.json();
+  },
+
+  deleteDailyJob: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/daily-jobs/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to delete job.');
+    }
   },
 
   createEvent: async (data) => {
@@ -95,14 +143,36 @@ export const api = {
   },
 
   getLatestYouTubeVideos: async (query = '') => {
-    const params = new URLSearchParams({ limit: '9' });
-    if (query.trim()) params.set('q', query.trim());
-    const response = await fetch(`${API_BASE_URL}/youtube/videos?${params}`, {
-      cache: 'no-store',
-    });
-    if (!response.ok) throw new Error('Latest videos are temporarily unavailable.');
-    const data = await response.json();
-    return (data.videos || []).slice(0, 9);
+    const normalizedQuery = query.trim();
+    if (!normalizedQuery && latestYouTubeVideosCache) {
+      return latestYouTubeVideosCache;
+    }
+    if (!normalizedQuery && latestYouTubeVideosRequest) {
+      return latestYouTubeVideosRequest;
+    }
+
+    const loadVideos = async () => {
+      const params = new URLSearchParams({ limit: '9' });
+      if (normalizedQuery) params.set('q', normalizedQuery);
+      const response = await fetch(`${API_BASE_URL}/youtube/videos?${params}`, {
+        cache: 'no-store',
+      });
+      if (!response.ok) throw new Error('Latest videos are temporarily unavailable.');
+      const data = await response.json();
+      return (data.videos || []).slice(0, 9);
+    };
+
+    if (normalizedQuery) return loadVideos();
+
+    latestYouTubeVideosRequest = loadVideos()
+      .then(videos => {
+        latestYouTubeVideosCache = videos;
+        return videos;
+      })
+      .finally(() => {
+        latestYouTubeVideosRequest = null;
+      });
+    return latestYouTubeVideosRequest;
   },
 
   // Ministries

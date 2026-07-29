@@ -10,6 +10,7 @@ class User(db.Model):
   email = db.Column(db.String(255), unique=True, nullable=False)
   _password_hash = db.Column(db.String(255), nullable=False)
   is_admin = db.Column(db.Boolean, default=False, nullable=False)
+  is_staff = db.Column(db.Boolean, default=False, nullable=False)
   created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
   member = db.relationship('Member', backref='user', uselist=False, cascade='all, delete')
@@ -188,6 +189,28 @@ class Event(db.Model):
 
   def __repr__(self):
     return f'<Event {self.title}>'
+
+class DailyJob(db.Model):
+  __tablename__ = 'daily_jobs'
+
+  id = db.Column(db.Integer, primary_key=True)
+  job_date = db.Column(db.Date, nullable=False, index=True)
+  start_time = db.Column(db.Time, nullable=False)
+  title = db.Column(db.String(255), nullable=False)
+  notes = db.Column(db.Text)
+  created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+  created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+  updated_at = db.Column(
+    db.DateTime,
+    default=lambda: datetime.now(timezone.utc),
+    onupdate=lambda: datetime.now(timezone.utc),
+    nullable=False,
+  )
+
+  created_by = db.relationship('User', backref='daily_jobs')
+
+  def __repr__(self):
+    return f'<DailyJob {self.job_date} {self.start_time}: {self.title}>'
 
 class EventRegistration(db.Model):
   __tablename__ = 'event_registrations'

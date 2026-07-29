@@ -28,7 +28,7 @@
   width: max-content;
   height: 100%;
   display: flex;
-  animation: ministries-hero-flow 72s linear infinite;
+  animation: ministries-hero-flow 144s linear infinite;
   will-change: transform;
 }
 

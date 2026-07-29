@@ -1,7 +1,7 @@
 # schemas.py
 from config import ma
 from auth_utils import user_is_admin
-from models import (User, Member, Ministry, MinistryLeader, MinistryMember, Group, GroupMember, Event,        EventRegistration,
+from models import (User, Member, Ministry, MinistryLeader, MinistryMember, Group, GroupMember, Event, DailyJob, EventRegistration,
                    Sermon, Donation, PrayerRequest, Page, MinistryPageContent, Announcement,
                    Media, ContactMessage, NavigationMenu, NavigationItem)
 from marshmallow import fields, validate, validates, validates_schema, ValidationError
@@ -49,6 +49,7 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     email = fields.Email(required=True)
     full_name = fields.Method("get_full_name")
     is_admin = fields.Method("get_is_admin")
+    is_staff = fields.Boolean(dump_only=True)
     
     def get_full_name(self, obj):
         if obj.member:
@@ -338,6 +339,18 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
         if 'start_datetime' in data and 'end_datetime' in data:
             if data['end_datetime'] and data['start_datetime'] >= data['end_datetime']:
                 raise ValidationError({'end_datetime': ['End time must be after start time']})
+
+class DailyJobSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = DailyJob
+        load_instance = True
+        include_fk = True
+
+    title = fields.String(required=True, validate=validate.Length(min=1, max=255))
+    job_date = fields.Date(required=True)
+    start_time = fields.Time(required=True)
+    notes = fields.String(allow_none=True)
+    created_by_id = fields.Integer(dump_only=True)
 
 # ============================================
 # SERMON SCHEMA WITH VALIDATION
@@ -688,6 +701,8 @@ group_members_schema = GroupMemberSchema(many=True)
 
 event_schema = EventSchema()
 events_schema = EventSchema(many=True)
+daily_job_schema = DailyJobSchema()
+daily_jobs_schema = DailyJobSchema(many=True)
 
 event_registration_schema = EventRegistrationSchema()
 event_registrations_schema = EventRegistrationSchema(many=True)
