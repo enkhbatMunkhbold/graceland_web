@@ -9,7 +9,7 @@ function Prayer() {
   const [formData, setFormData] = useState({
     name: '',
     requestText: '',
-    publicationConsent: false,
+    keepPrivate: false,
   });
   const [wallRequests, setWallRequests] = useState([]);
   const [wallLoading, setWallLoading] = useState(true);
@@ -52,14 +52,21 @@ function Prayer() {
       await api.submitPrayerRequest({
         name,
         request_text: requestText,
-        publication_consent: formData.publicationConsent,
+        publication_consent: !formData.keepPrivate,
       });
+      if (!formData.keepPrivate) {
+        await loadPrayerWall();
+      }
       setFormData({
         name: '',
         requestText: '',
-        publicationConsent: false,
+        keepPrivate: false,
       });
-      setSubmitMessage(t('prayerRequestSuccess'));
+      setSubmitMessage(t(
+        formData.keepPrivate
+          ? 'prayerRequestPrivateSuccess'
+          : 'prayerRequestSuccess'
+      ));
     } catch (error) {
       setSubmitMessage(t('prayerRequestError'));
       setSubmitError(true);
@@ -123,10 +130,10 @@ function Prayer() {
               <label className="prayer-consent">
                 <input
                   type="checkbox"
-                  checked={formData.publicationConsent}
+                  checked={formData.keepPrivate}
                   onChange={event => setFormData({
                     ...formData,
-                    publicationConsent: event.target.checked,
+                    keepPrivate: event.target.checked,
                   })}
                 />
                 <span>{t('prayerPublicationConsent')}</span>

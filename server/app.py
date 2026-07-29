@@ -1276,9 +1276,8 @@ class PrayerRequests(Resource):
             user_id=None,
             name=name,
             request_text=request_text,
-            # Consent permits later review; it never publishes automatically.
             is_public=publication_consent,
-            status='new',
+            status='approved_public' if publication_consent else 'private',
         )
 
         try:
@@ -1300,7 +1299,6 @@ class PrayerWall(Resource):
                 models.PrayerRequest.query
                 .filter(
                     models.PrayerRequest.status == 'approved_public',
-                    # is_public is consent; approved_public is staff approval.
                     models.PrayerRequest.is_public.is_(True),
                 )
                 .order_by(

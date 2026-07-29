@@ -62,7 +62,7 @@ class PrayerRequestAPITest(unittest.TestCase):
         self.assertEqual(saved.name, 'Anonymous')
         self.assertEqual(saved.request_text, 'Please pray for peace.')
         self.assertFalse(saved.is_public)
-        self.assertEqual(saved.status, 'new')
+        self.assertEqual(saved.status, 'private')
         self.assertIsNone(saved.user_id)
 
         named = self.client.post('/prayer-requests', json={
@@ -73,7 +73,12 @@ class PrayerRequestAPITest(unittest.TestCase):
         self.assertEqual(named.status_code, 201)
         saved_named = PrayerRequest.query.filter_by(name='Grace').one()
         self.assertTrue(saved_named.is_public)
-        self.assertEqual(saved_named.status, 'new')
+        self.assertEqual(saved_named.status, 'approved_public')
+
+        wall = self.client.get('/prayer-wall')
+        self.assertEqual(wall.status_code, 200)
+        self.assertEqual(len(wall.get_json()), 1)
+        self.assertEqual(wall.get_json()[0]['name'], 'Grace')
 
         empty = self.client.post('/prayer-requests', json={
             'request_text': '   ',
