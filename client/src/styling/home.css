@@ -6,7 +6,7 @@
 
 /* Graceland leaf-green accent palette */
 .home-page{--gold:#91cf62;--pale:#cce9b7}.home-kicker,.home-text-link{color:#477d2e}.home-service-card>svg,.home-empty-card svg{color:#62a83f}.home-button--primary{background:#91cf62;color:#14251a}.home-button--primary:hover{background:#b8e394}.home-button:focus-visible,.home-text-link:focus-visible,.home-ministry-card:focus-visible{outline-color:#72bd4b}
-.home-weather-item{color:inherit;text-decoration:none;transition:background .2s}.home-weather-item:hover{background:rgba(255,255,255,.07)}.home-weather-item:focus-visible{outline:3px solid var(--gold);outline-offset:-3px}
+.home-location-item,.home-weather-item{color:inherit;text-decoration:none;transition:background .2s}.home-location-item:hover,.home-weather-item:hover{background:rgba(255,255,255,.07)}.home-location-item:focus-visible,.home-weather-item:focus-visible{outline:3px solid var(--gold);outline-offset:-3px}
 .home-weather-item .home-weather-current{color:#fff;font-weight:700}.home-weather-item .home-weather-range{margin-top:.12rem;color:rgba(255,255,255,.62);font-size:.76rem}
 .home-events-column .home-event-grid{gap:.5rem}.home-events-column .home-event-card{grid-template-columns:3.1rem 1fr;gap:.75rem;padding:.7rem}.home-events-column .home-event-date{min-height:3.1rem}.home-events-column .home-event-date strong{font-size:1.25rem}.home-events-column .home-event-card h3{margin-bottom:.15rem;font-size:.9rem;line-height:1.25}.home-events-column .home-event-card p{margin:.05rem 0;font-size:.8rem;line-height:1.35}
 

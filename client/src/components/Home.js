@@ -13,6 +13,8 @@ import '../styling/home.css';
 
 const GIVING_URL = 'https://gracelandbible.breezechms.com/give/online';
 const YOUTUBE_URL = 'https://www.youtube.com/@gracelandbiblechurch7040';
+const ADDRESS = '1955 Geary Rd, Walnut Creek, CA 94597';
+const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ADDRESS)}`;
 const WEATHER_URL = 'https://weather.com/en-MH/weather/today/l/Walnut%2BCreek%2BCA%2BUnited%2BStates?canonicalCityId=68b6dc922062f6664354084b9d9807b0f335a2a92ddb85ba01b164546cdd2068';
 const WEATHER_API_URL = 'https://api.open-meteo.com/v1/forecast?latitude=37.92626&longitude=-122.07590&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=America%2FLos_Angeles&forecast_days=1';
 
@@ -155,10 +157,15 @@ function Home() {
               <Clock3 aria-hidden="true" />
               <div><strong>{t('sundayWorship')}</strong><span>{t('sundayWorshipTime')}</span></div>
             </div>
-            <div className="home-hero-visit-item">
+            <a
+              className="home-hero-visit-item home-location-item"
+              href={MAPS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <MapPin aria-hidden="true" />
-              <div><strong>{t('ourLocation')}</strong><span>1955 Geary Rd, Walnut Creek, CA 94597</span></div>
-            </div>
+              <div><strong>{t('ourLocation')}</strong><span>{ADDRESS}</span></div>
+            </a>
             <a
               className="home-hero-visit-item home-weather-item"
               href={WEATHER_URL}
