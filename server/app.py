@@ -826,7 +826,7 @@ api.add_resource(SermonByID, '/sermons/<int:sermon_id>')
 
 _youtube_video_cache = {'videos': [], 'fetched_at': None}
 _youtube_search_cache = {}
-YOUTUBE_CACHE_INTERVAL = timedelta(minutes=10)
+YOUTUBE_CACHE_INTERVAL = timedelta(seconds=30)
 EXCLUDED_YOUTUBE_TITLES = {'graceland bible church live stream'}
 
 

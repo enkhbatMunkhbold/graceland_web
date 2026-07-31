@@ -1,38 +1,62 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Play, Search, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../services/api';
 import '../styling/latest-videos.css';
+
+const YOUTUBE_REFRESH_INTERVAL = 30 * 1000;
 
 function LatestVideos({ onSelectVideo, searchQuery = '', onSearchChange }) {
   const [videos, setVideos] = useState([]);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const hasVideosRef = useRef(false);
   const { t } = useLanguage();
 
   useEffect(() => {
     let active = true;
+    let refreshTimer;
     setLoading(true);
     setFailed(false);
 
-    const searchTimer = window.setTimeout(() => {
+    const loadVideos = () => {
       api.getLatestYouTubeVideos(searchQuery)
         .then(data => {
-          if (active) setVideos(data);
+          if (active) {
+            setVideos(data);
+            hasVideosRef.current = data.length > 0;
+            setFailed(false);
+          }
         })
         .catch(error => {
           console.error('Unable to load YouTube videos:', error);
-          if (active) setFailed(true);
+          if (active && !hasVideosRef.current) setFailed(true);
         })
         .finally(() => {
           if (active) setLoading(false);
         });
+    };
+
+    const searchTimer = window.setTimeout(() => {
+      loadVideos();
+      if (!searchQuery.trim()) {
+        refreshTimer = window.setInterval(loadVideos, YOUTUBE_REFRESH_INTERVAL);
+      }
     }, searchQuery.trim() ? 350 : 0);
+
+    const refreshWhenVisible = () => {
+      if (!searchQuery.trim() && document.visibilityState === 'visible') loadVideos();
+    };
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    window.addEventListener('focus', refreshWhenVisible);
 
     return () => {
       active = false;
       window.clearTimeout(searchTimer);
+      window.clearInterval(refreshTimer);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+      window.removeEventListener('focus', refreshWhenVisible);
     };
   }, [searchQuery]);
 

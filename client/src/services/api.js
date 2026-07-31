@@ -1,6 +1,8 @@
 const API_BASE_URL = 'http://localhost:5555';
 let latestYouTubeVideosCache = null;
+let latestYouTubeVideosCachedAt = 0;
 let latestYouTubeVideosRequest = null;
+const LATEST_YOUTUBE_VIDEOS_CACHE_TTL = 30 * 1000;
 
 export const api = {
   // Events
@@ -144,7 +146,8 @@ export const api = {
 
   getLatestYouTubeVideos: async (query = '') => {
     const normalizedQuery = query.trim();
-    if (!normalizedQuery && latestYouTubeVideosCache) {
+    const cacheIsFresh = Date.now() - latestYouTubeVideosCachedAt < LATEST_YOUTUBE_VIDEOS_CACHE_TTL;
+    if (!normalizedQuery && latestYouTubeVideosCache && cacheIsFresh) {
       return latestYouTubeVideosCache;
     }
     if (!normalizedQuery && latestYouTubeVideosRequest) {
@@ -167,6 +170,7 @@ export const api = {
     latestYouTubeVideosRequest = loadVideos()
       .then(videos => {
         latestYouTubeVideosCache = videos;
+        latestYouTubeVideosCachedAt = Date.now();
         return videos;
       })
       .finally(() => {
