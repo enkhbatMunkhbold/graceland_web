@@ -215,7 +215,6 @@ function Events() {
   const weekdays = language === 'mn' ? WEEKDAYS_MN : WEEKDAYS_EN;
 
   const loadEvents = useCallback(async () => {
-    setLoading(true);
     setError(null);
     const [localResult, googleResult] = await Promise.allSettled([
       api.getEvents(viewYear, viewMonth + 1),
