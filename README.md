@@ -82,10 +82,6 @@ YOUTUBE_CHANNEL_ID=UCXU8MsZmF7S2H-jfEecfs9w
 Install backend dependencies with `pipenv install`. The `.env` file is ignored
 by Git and the API key is never sent to the React client.
 
-## Media Credits
-
-- Home hero video: [Christians Worship at the Church](https://www.pexels.com/video/christians-worship-at-the-church-7411164/) by Stephen Pierce, used under the Pexels license.
-
 ## Customization
 
 To customize the church information:
