@@ -133,6 +133,7 @@ function Home() {
           playsInline
           poster={heroImage}
           aria-hidden="true"
+          onLoadedMetadata={event => { event.currentTarget.playbackRate = 0.5; }}
         >
           <source src={heroVideo} type="video/mp4" />
         </video>
