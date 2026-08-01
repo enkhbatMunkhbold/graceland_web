@@ -5,7 +5,6 @@ import { useLanguage } from '../context/LanguageContext';
 import UserContext from '../context/UserContext';
 import { api } from '../services/api';
 import heroImage from '../assets/Worship God.jpg';
-import heroVideo from '../assets/home-worship.mp4';
 import childrenImage from '../assets/Children.jpg';
 import youthImage from '../assets/Interhigh.jpg';
 import youngAdultsImage from '../assets/Young Adults.jpg';
@@ -125,18 +124,6 @@ function Home() {
     <main className="home-page">
       <section className="home-hero" aria-labelledby="home-hero-title">
         <img className="home-hero-image" src={heroImage} alt="" fetchPriority="high" />
-        <video
-          className="home-hero-video"
-          autoPlay
-          muted
-          loop
-          playsInline
-          poster={heroImage}
-          aria-hidden="true"
-          onLoadedMetadata={event => { event.currentTarget.playbackRate = 1 / 3; }}
-        >
-          <source src={heroVideo} type="video/mp4" />
-        </video>
         <div className="home-hero-overlay" />
         <div className="home-shell home-hero-content">
           {user && <p className="home-user-greeting">{t('welcomeUser')}, {user.username}!</p>}
