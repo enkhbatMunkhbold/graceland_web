@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useContext } from 'react';
+import { useState, useEffect, useMemo, useCallback, useContext, useRef } from 'react';
 import {
   Award,
   ChevronLeft,
@@ -204,6 +204,7 @@ function Events() {
   });
   const [jobError, setJobError] = useState('');
   const [jobSaving, setJobSaving] = useState(false);
+  const eventsRequestId = useRef(0);
 
   const { t, language } = useLanguage();
   const { user } = useContext(UserContext);
@@ -215,27 +216,36 @@ function Events() {
   const weekdays = language === 'mn' ? WEEKDAYS_MN : WEEKDAYS_EN;
 
   const loadEvents = useCallback(async () => {
+    const requestId = eventsRequestId.current + 1;
+    eventsRequestId.current = requestId;
+    setLoading(true);
     setError(null);
+    setGoogleCalendarError(false);
+
     const [localResult, googleResult] = await Promise.allSettled([
       api.getEvents(viewYear, viewMonth + 1),
       api.getGoogleCalendarEvents(viewYear, viewMonth + 1),
     ]);
 
-    if (localResult.status === 'rejected') {
-      console.error('Error fetching events:', localResult.reason);
-      setError(localResult.reason.message);
-      setLoading(false);
-      return;
-    }
+    if (requestId !== eventsRequestId.current) return;
 
+    const localEvents = localResult.status === 'fulfilled'
+      ? localResult.value
+      : [];
     const calendarEvents = googleResult.status === 'fulfilled'
       ? googleResult.value
       : [];
+
+    if (localResult.status === 'rejected') {
+      console.error('Error fetching events:', localResult.reason);
+      setError(localResult.reason.message || 'Events are temporarily unavailable.');
+    }
     if (googleResult.status === 'rejected') {
       console.error('Error fetching Google Calendar events:', googleResult.reason);
     }
+
     setGoogleCalendarError(googleResult.status === 'rejected');
-    setEvents([...localResult.value, ...calendarEvents]);
+    setEvents([...localEvents, ...calendarEvents]);
     setLoading(false);
   }, [viewYear, viewMonth]);
 
@@ -516,16 +526,19 @@ function Events() {
   };
 
   const goToPreviousMonth = () => {
+    setLoading(true);
     setViewDate(new Date(viewYear, viewMonth - 1, 1));
   };
 
   const goToNextMonth = () => {
+    setLoading(true);
     setViewDate(new Date(viewYear, viewMonth + 1, 1));
   };
 
   const handleDayClick = (day) => {
     setSelectedDate(day.date);
     if (!day.isCurrentMonth) {
+      setLoading(true);
       setViewDate(new Date(day.date.getFullYear(), day.date.getMonth(), 1));
     }
   };
@@ -549,20 +562,24 @@ function Events() {
           </h2>
         </div>
 
-        {loading ? (
-          <div className="loading">Loading...</div>
-        ) : error ? (
-          <div className="error">Error: {error}</div>
-        ) : (
-          <>
-            <div className="events-layout-columns">
-              <div className="events-calendar-column">
+        <div className="events-layout-columns">
+          <div className="events-calendar-column">
                 <div className="events-calendar-toolbar">
                   <div className="events-calendar-nav">
                     <button type="button" className="events-calendar-nav-btn" onClick={goToPreviousMonth} aria-label={t('previousMonth')}>
                       <ChevronLeft />
                     </button>
-                    <h3 className={`events-calendar-month${language === 'mn' ? ' events-date-title--mn' : ''}`}>{monthLabel}</h3>
+                    <div className="events-calendar-month-status">
+                      <h3 className={`events-calendar-month${language === 'mn' ? ' events-date-title--mn' : ''}`}>{monthLabel}</h3>
+                      <span
+                        className="events-calendar-loading"
+                        role="status"
+                        aria-label={loading ? 'Loading events' : undefined}
+                        aria-hidden={!loading}
+                      >
+                        {loading && <span className="events-calendar-loading-spinner" aria-hidden="true" />}
+                      </span>
+                    </div>
                     <button type="button" className="events-calendar-nav-btn" onClick={goToNextMonth} aria-label={t('nextMonth')}>
                       <ChevronRight />
                     </button>
@@ -580,6 +597,9 @@ function Events() {
                     )}
                   </div>
                 </div>
+                {error && (
+                  <p className="events-calendar-error" role="alert">Error loading events: {error}</p>
+                )}
                 {googleCalendarError && (
                   <p className="events-google-fallback">{t('calendarEventsUnavailable')}</p>
                 )}
@@ -589,7 +609,7 @@ function Events() {
                     <div key={label} className="events-calendar-weekday">{label}</div>
                   ))}
                 </div>
-                <div className="events-calendar-grid">
+                <div className={`events-calendar-grid${loading ? ' events-calendar-grid--loading' : ''}`} aria-busy={loading}>
                   {calendarDays.map(day => {
                     const dateKey = toDateKey(day.date);
                     const dayEvents = eventsByDate[dateKey] || [];
@@ -659,6 +679,7 @@ function Events() {
                   )}
                 </div>
                 <aside className="events-day-panel events-jobs-panel">
+                  {error && <p className="events-jobs-error">Error loading events: {error}</p>}
                   {jobError && <p className="events-jobs-error">{jobError}</p>}
                   {jobEditorOpen && canManageJobs && (
                     <form className="events-job-form" onSubmit={handleJobSave}>
@@ -705,8 +726,8 @@ function Events() {
                       </div>
                     </form>
                   )}
-                  {jobsLoading && selectedSchedule.length === 0 ? (
-                    <p className="events-jobs-empty">{t('jobsLoading')}</p>
+                  {(loading || jobsLoading) && selectedTodoItems.length === 0 ? (
+                    <p className="events-jobs-empty">{loading ? 'Loading events...' : t('jobsLoading')}</p>
                   ) : selectedTodoItems.length === 0 ? (
                     <p className="events-jobs-empty">{t('noJobsToday')}</p>
                   ) : (
@@ -745,9 +766,7 @@ function Events() {
                   )}
                 </aside>
               </div>
-            </div>
-          </>
-        )}
+        </div>
       </div>
 
       {modalOpen && canManageJobs && (

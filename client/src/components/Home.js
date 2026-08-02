@@ -5,7 +5,6 @@ import { useLanguage } from '../context/LanguageContext';
 import UserContext from '../context/UserContext';
 import { api } from '../services/api';
 import heroImage from '../assets/Worship God.jpg';
-import heroVideo from '../assets/home-worship.mp4';
 import childrenImage from '../assets/Children.jpg';
 import youthImage from '../assets/Interhigh.jpg';
 import youngAdultsImage from '../assets/Young Adults.jpg';
@@ -53,6 +52,7 @@ function Home() {
   const [events, setEvents] = useState([]);
   const [weather, setWeather] = useState(null);
   const [contentLoading, setContentLoading] = useState(true);
+  const [isHeroVideoReady, setIsHeroVideoReady] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -126,15 +126,18 @@ function Home() {
       <section className="home-hero" aria-labelledby="home-hero-title">
         <img className="home-hero-image" src={heroImage} alt="" fetchPriority="high" />
         <video
-          className="home-hero-video"
+          className={`home-hero-video${isHeroVideoReady ? ' home-hero-video--ready' : ''}`}
           autoPlay
           muted
           loop
           playsInline
+          preload="auto"
+          onLoadedMetadata={event => { event.currentTarget.playbackRate = 0.5; }}
+          onPlaying={() => setIsHeroVideoReady(true)}
           poster={heroImage}
           aria-hidden="true"
         >
-          <source src={heroVideo} type="video/mp4" />
+          <source src={`${process.env.PUBLIC_URL}/media/magtan-duu.mp4`} type="video/mp4" />
         </video>
         <div className="home-hero-overlay" />
         <div className="home-shell home-hero-content">

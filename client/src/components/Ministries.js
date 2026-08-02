@@ -10,34 +10,23 @@ import youngAdultsImage from '../assets/Young Adults.jpg';
 import womenImage from '../assets/Women.jpg';
 import menImage from '../assets/Men.jpg';
 import marriageImage from '../assets/Marriage.jpg';
-import khuushuurImage from '../assets/ministries-khuushuur.jpg';
-import storageImage from '../assets/ministries-storage.jpg';
-import praiseImage from '../assets/ministries-praise.jpg';
-import exhibitionImage from '../assets/ministries-exhibition.jpg';
-import choirImage from '../assets/ministries-choir.jpg';
-import internationalImage from '../assets/ministries-international.jpg';
-import jordanBaptismImage from '../assets/ministries-jordan-baptism.jpg';
-import jennessParkImage from '../assets/ministries-jenness-park.jpg';
-import goldenGateImage from '../assets/ministries-golden-gate.jpg';
-import sfImmigrationImage from '../assets/ministries-sf-immigration.jpg';
-import chicagoChurchImage from '../assets/ministries-chicago-church.jpg';
-import gatewayGraduationImage from '../assets/ministries-gateway-graduation.jpg';
-import fireFestivalImage from '../assets/ministries-fire-festival.jpg';
+
+const ministryHeroImage = filename => `${process.env.PUBLIC_URL}/images/ministries/${filename}.webp`;
 
 const heroSlides = [
-  { image: khuushuurImage, label: 'Хуушуур' },
-  { image: praiseImage, label: 'Магтаал' },
-  { image: exhibitionImage, label: 'Үзэсгэлэн' },
-  { image: choirImage, label: 'Хоор дуу' },
-  { image: internationalImage, label: 'International' },
-  { image: jordanBaptismImage, label: 'Jordan Baptism' },
-  { image: jennessParkImage, label: 'Jenness Park' },
-  { image: goldenGateImage, label: 'Golden Gate' },
-  { image: sfImmigrationImage, label: 'SF Immigration' },
-  { image: chicagoChurchImage, label: 'Чикаго Цуглаан' },
-  { image: gatewayGraduationImage, label: 'Gateway Graduation' },
-  { image: storageImage, label: 'Агуулахад' },
-  { image: fireFestivalImage, label: 'Галын наадам' },
+  { image: ministryHeroImage('ministries-khuushuur'), label: 'Хуушуур' },
+  { image: ministryHeroImage('ministries-praise'), label: 'Магтаал' },
+  { image: ministryHeroImage('ministries-exhibition'), label: 'Үзэсгэлэн' },
+  { image: ministryHeroImage('ministries-choir'), label: 'Хоор дуу' },
+  { image: ministryHeroImage('ministries-international'), label: 'International' },
+  { image: ministryHeroImage('ministries-jordan-baptism'), label: 'Jordan Baptism' },
+  { image: ministryHeroImage('ministries-jenness-park'), label: 'Jenness Park' },
+  { image: ministryHeroImage('ministries-golden-gate'), label: 'Golden Gate' },
+  { image: ministryHeroImage('ministries-sf-immigration'), label: 'SF Immigration' },
+  { image: ministryHeroImage('ministries-chicago-church'), label: 'Чикаго Цуглаан' },
+  { image: ministryHeroImage('ministries-gateway-graduation'), label: 'Gateway Graduation' },
+  { image: ministryHeroImage('ministries-storage'), label: 'Агуулахад' },
+  { image: ministryHeroImage('ministries-fire-festival'), label: 'Галын наадам' },
 ];
 
 function MinistriesHero({ title }) {
@@ -53,6 +42,9 @@ function MinistriesHero({ title }) {
               alt=""
               key={`${slide.label}-${index}`}
               className="ministries-hero-photo"
+              loading={index < 6 ? 'eager' : 'lazy'}
+              decoding={index < 6 ? 'sync' : 'async'}
+              fetchPriority={index < 6 ? 'high' : 'auto'}
             />
           ))}
         </div>
