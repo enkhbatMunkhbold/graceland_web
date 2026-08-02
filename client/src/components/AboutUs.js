@@ -1,24 +1,78 @@
 import { useLanguage } from '../context/LanguageContext';
-import '../styling/about.css';
+import tamirImage from '../assets/leadership/tamir-lkhamsuren.webp';
+import munkhErdeneImage from '../assets/leadership/munkh-erdene-baldandorj.webp';
+import dejidsurenImage from '../assets/leadership/dejidsuren-gonchigbal.webp';
+import enkhbatBoardImage from '../assets/leadership/enkhbat-munkhbold-board.webp';
+import temuujinImage from '../assets/leadership/temuujin-ganbaatar.webp';
+import boldbayarImage from '../assets/leadership/boldbayar-purevdorj.webp';
+import '../styling/about-us.css';
+
+const boardMembers = [
+  { name: 'Tamir Lkhamsuren', role: 'Chairman of Board', image: tamirImage },
+  { name: 'Munkh-Erdene Baldandorj', role: 'Board Member', image: munkhErdeneImage, photoClass: 'leadership-photo--munkh-erdene' },
+  { name: 'Dejidsuren Gonchigbal', role: 'Board Member', image: dejidsurenImage, photoClass: 'leadership-photo--dejidsuren' },
+  { name: 'Enkhbat Munkhbold', role: 'Board Member', image: enkhbatBoardImage },
+  { name: 'Temuujin Ganbaatar', role: 'Board Member', image: temuujinImage },
+];
+
+const ministryLeaders = [
+  { name: 'Munkh-Erdene Baldandorj', role: 'Pastor', image: munkhErdeneImage, photoClass: 'leadership-photo--munkh-erdene' },
+  { name: 'Tamir Lkhamsuren', role: 'Ministry Leader', image: tamirImage },
+  { name: 'Temuujin Ganbaatar', role: 'Ministry Leader', image: temuujinImage },
+  { name: 'Enkhbat Munkhbold', role: 'Ministry Leader', image: enkhbatBoardImage },
+  { name: 'Boldbayar Purevdorj', role: 'Ministry Leader', image: boldbayarImage },
+];
+
+function LeadershipCard({ person }) {
+  return (
+    <article className="leadership-card">
+      <div className="leadership-photo-frame">
+        <img
+          className={`leadership-photo ${person.photoClass || ''}`.trim()}
+          src={person.image}
+          alt={person.name}
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+      <h3>{person.name}</h3>
+      <p>{person.role}</p>
+    </article>
+  );
+}
+
+function LeadershipSection({ title, people }) {
+  return (
+    <section className="leadership-group" aria-labelledby={`leadership-${title.toLowerCase().replace(/\s+/g, '-')}`}>
+      <header className="leadership-group-heading">
+        <span aria-hidden="true" />
+        <h2 id={`leadership-${title.toLowerCase().replace(/\s+/g, '-')}`}>{title}</h2>
+      </header>
+      <div className="leadership-grid">
+        {people.map(person => <LeadershipCard key={`${title}-${person.name}`} person={person} />)}
+      </div>
+    </section>
+  );
+}
 
 function AboutUs() {
   const { t } = useLanguage();
 
   return (
-    <section id="about-us" className="about-section">
-      <div className="about-container">
-        <div className="section-header">
-          <h2 className="section-title">
-            {t('aboutUs').split(' ').map((word, index) => (
-              <span key={index} className="word">{word}</span>
-            ))}
-          </h2>
+    <main id="about-us" className="leadership-page">
+      <section className="leadership-hero" aria-labelledby="about-us-title">
+        <div className="leadership-shell leadership-hero-content">
+          <p className="leadership-eyebrow">Graceland Bible Church</p>
+          <h1 id="about-us-title">{t('aboutUs')}</h1>
+          <p className="leadership-intro">{t('aboutUsContent')}</p>
         </div>
-        <div className="about-content">
-          <p className="about-text">{t('aboutUsContent')}</p>
-        </div>
+      </section>
+
+      <div className="leadership-shell leadership-content">
+        <LeadershipSection title="Board" people={boardMembers} />
+        <LeadershipSection title="Ministry Leaders" people={ministryLeaders} />
       </div>
-    </section>
+    </main>
   );
 }
 

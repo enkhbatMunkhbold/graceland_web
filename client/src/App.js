@@ -4,7 +4,6 @@ import UserContext, { UserProvider} from './context/UserContext';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Home from './components/Home';
-import About from './components/About';
 import AboutUs from './components/AboutUs';
 import OurStory from './components/OurStory';
 import OurBeliefs from './components/OurBeliefs';
@@ -39,8 +38,8 @@ function AppContent() {
         {user ? (
           <Routes>
             <Route path="/home" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/about/us" element={<AboutUs />} />
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/about/us" element={<Navigate to="/about" replace />} />
             <Route path="/about/story" element={<OurStory />} />
             <Route path="/about/beliefs" element={<OurBeliefs />} />
             <Route path="/events" element={<Events />} />
@@ -63,8 +62,8 @@ function AppContent() {
           <Routes>
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/home" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/about/us" element={<AboutUs />} />
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/about/us" element={<Navigate to="/about" replace />} />
             <Route path="/about/story" element={<OurStory />} />
             <Route path="/about/beliefs" element={<OurBeliefs />} />
             <Route path="/events" element={<Events />} />

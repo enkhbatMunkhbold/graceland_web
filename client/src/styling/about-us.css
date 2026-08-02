@@ -1,0 +1,199 @@
+.leadership-page {
+  --leadership-ink: #17211a;
+  --leadership-forest: #263b2c;
+  --leadership-green: #72bd4b;
+  --leadership-pale: #dff1d2;
+  --leadership-paper: #fffdf8;
+  min-height: 100vh;
+  background: var(--leadership-paper);
+  color: var(--leadership-ink);
+}
+
+.leadership-shell {
+  width: min(calc(100% - 2rem), 1120px);
+  margin-inline: auto;
+}
+
+.leadership-hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(2.5rem, 4.5vw, 3.75rem) 0 clamp(2rem, 3.5vw, 3rem);
+  background:
+    radial-gradient(circle at 82% 20%, rgba(145, 207, 98, 0.25), transparent 32%),
+    linear-gradient(125deg, #14251a, var(--leadership-forest));
+  color: #fff;
+}
+
+.leadership-hero::after {
+  content: '';
+  position: absolute;
+  right: -7rem;
+  bottom: -12rem;
+  width: 30rem;
+  height: 30rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4rem rgba(255, 255, 255, 0.025), 0 0 0 8rem rgba(255, 255, 255, 0.02);
+}
+
+.leadership-hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+.leadership-eyebrow {
+  margin: 0 0 0.8rem;
+  color: #b8e394;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.leadership-hero h1 {
+  margin: 0;
+  font-size: clamp(3.25rem, 9vw, 6.5rem);
+  font-weight: 850;
+  letter-spacing: -0.055em;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.leadership-intro {
+  max-width: 650px;
+  margin: 1.35rem 0 0;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  line-height: 1.7;
+}
+
+.leadership-content {
+  padding-block: clamp(4.5rem, 9vw, 8rem);
+}
+
+.leadership-group + .leadership-group {
+  margin-top: clamp(7rem, 13vw, 11rem);
+}
+
+.leadership-group-heading {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: clamp(3.5rem, 7vw, 5.5rem);
+}
+
+.leadership-group-heading span {
+  width: 3rem;
+  height: 0.28rem;
+  background: var(--leadership-green);
+}
+
+.leadership-group-heading h2 {
+  margin: 0;
+  color: var(--leadership-forest);
+  font-size: clamp(1.75rem, 4vw, 2.6rem);
+  font-weight: 850;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.leadership-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  column-gap: clamp(2.5rem, 6vw, 5.5rem);
+  row-gap: clamp(4.5rem, 9vw, 7rem);
+  align-items: start;
+}
+
+.leadership-card {
+  min-width: 0;
+  text-align: center;
+}
+
+.leadership-photo-frame {
+  width: min(100%, 240px);
+  aspect-ratio: 1;
+  margin-inline: auto;
+  overflow: hidden;
+  border: 6px solid #fff;
+  border-radius: 50%;
+  background: var(--leadership-pale);
+  box-shadow: 0 18px 45px rgba(20, 37, 26, 0.14), 0 0 0 1px rgba(38, 59, 44, 0.08);
+}
+
+.leadership-photo {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center 28%;
+  transform: scale(1.01);
+}
+
+.leadership-photo--munkh-erdene,
+.leadership-photo--dejidsuren {
+  object-fit: contain;
+  transform: none;
+}
+
+.leadership-photo--munkh-erdene {
+  background: #fff;
+}
+
+.leadership-photo--dejidsuren {
+  background: #e2e3e5;
+}
+
+.leadership-card h3 {
+  margin: 1.6rem 0 0;
+  color: var(--leadership-ink);
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  font-weight: 850;
+  letter-spacing: 0.045em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.leadership-card p {
+  margin: 0.55rem 0 0;
+  color: #657067;
+  font-size: 0.98rem;
+  line-height: 1.5;
+}
+
+@media (min-width: 600px) {
+  .leadership-shell {
+    width: min(calc(100% - 4rem), 1120px);
+  }
+
+  .leadership-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 960px) {
+  .leadership-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 599px) {
+  .leadership-photo-frame {
+    width: min(68vw, 230px);
+  }
+
+  .leadership-group-heading {
+    gap: 0.75rem;
+  }
+
+  .leadership-group-heading span {
+    width: 2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leadership-photo {
+    transform: none;
+  }
+}

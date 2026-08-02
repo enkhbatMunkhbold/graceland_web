@@ -47,7 +47,7 @@ function Header() {
   };
 
   const aboutSubItems = [
-    { label: t('aboutUs'), href: '/about/us', isRoute: true },
+    { label: t('aboutUs'), href: '/about', isRoute: true },
     { label: t('ourStory'), href: '/about/story', isRoute: true },
     { label: t('ourBeliefs'), href: '/about/beliefs', isRoute: true },
   ];
