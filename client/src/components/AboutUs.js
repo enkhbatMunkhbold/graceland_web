@@ -18,9 +18,9 @@ const boardMembers = [
 const ministryLeaders = [
   { name: 'Munkh-Erdene Baldandorj', role: 'Pastor', image: munkhErdeneImage, photoClass: 'leadership-photo--munkh-erdene' },
   { name: 'Tamir Lkhamsuren', role: 'Ministry Leader', image: tamirImage },
-  { name: 'Temuujin Ganbaatar', role: 'Ministry Leader', image: temuujinImage },
-  { name: 'Enkhbat Munkhbold', role: 'Ministry Leader', image: enkhbatBoardImage },
-  { name: 'Boldbayar Purevdorj', role: 'Ministry Leader', image: boldbayarImage },
+  { name: 'Temuujin Ganbaatar', role: 'Worship Team', image: temuujinImage },
+  { name: 'Enkhbat Munkhbold', role: "Men's Fellowship", image: enkhbatBoardImage },
+  { name: 'Boldbayar Purevdorj', role: 'Youth Fellowship', image: boldbayarImage },
 ];
 
 function LeadershipCard({ person }) {
