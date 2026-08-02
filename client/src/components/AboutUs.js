@@ -5,6 +5,9 @@ import dejidsurenImage from '../assets/leadership/dejidsuren-gonchigbal.webp';
 import enkhbatBoardImage from '../assets/leadership/enkhbat-munkhbold-board.webp';
 import temuujinImage from '../assets/leadership/temuujin-ganbaatar.webp';
 import boldbayarImage from '../assets/leadership/boldbayar-purevdorj.webp';
+import goyotsetsegImage from '../assets/leadership/goyotsetseg-davgadorj.webp';
+import bolorImage from '../assets/leadership/bolor-ganbold.webp';
+import munkhchuluunImage from '../assets/leadership/munkhchuluun-chuluunkhuu.webp';
 import '../styling/about-us.css';
 
 const boardMembers = [
@@ -17,10 +20,12 @@ const boardMembers = [
 
 const ministryLeaders = [
   { name: 'Munkh-Erdene Baldandorj', role: 'Pastor', image: munkhErdeneImage, photoClass: 'leadership-photo--munkh-erdene' },
-  { name: 'Tamir Lkhamsuren', role: 'Ministry Leader', image: tamirImage },
   { name: 'Temuujin Ganbaatar', role: 'Worship Team', image: temuujinImage },
   { name: 'Enkhbat Munkhbold', role: "Men's Fellowship", image: enkhbatBoardImage },
-  { name: 'Boldbayar Purevdorj', role: 'Youth Fellowship', image: boldbayarImage },
+  { name: 'Boldbayar Purevdorj', role: 'Youth Fellowship', image: boldbayarImage, photoClass: 'leadership-photo--boldbayar' },
+  { name: 'Goyotsetseg Davgadorj', role: 'Women Fellowship', image: goyotsetsegImage },
+  { name: 'Bolor Ganbold', role: "Children's Ministry", image: bolorImage },
+  { name: 'Munkhchuluun Chuluunkhuu', role: 'Choir Ministry', image: munkhchuluunImage, photoClass: 'leadership-photo--munkhchuluun' },
 ];
 
 function LeadershipCard({ person }) {
@@ -42,11 +47,13 @@ function LeadershipCard({ person }) {
 }
 
 function LeadershipSection({ title, people }) {
+  const sectionSlug = title.toLowerCase().replace(/\s+/g, '-');
+
   return (
-    <section className="leadership-group" aria-labelledby={`leadership-${title.toLowerCase().replace(/\s+/g, '-')}`}>
+    <section className={`leadership-group leadership-group--${sectionSlug}`} aria-labelledby={`leadership-${sectionSlug}`}>
       <header className="leadership-group-heading">
         <span aria-hidden="true" />
-        <h2 id={`leadership-${title.toLowerCase().replace(/\s+/g, '-')}`}>{title}</h2>
+        <h2 id={`leadership-${sectionSlug}`}>{title}</h2>
       </header>
       <div className="leadership-grid">
         {people.map(person => <LeadershipCard key={`${title}-${person.name}`} person={person} />)}
