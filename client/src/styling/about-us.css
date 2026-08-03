@@ -165,6 +165,10 @@
   text-transform: uppercase;
 }
 
+.leadership-name-line {
+  display: block;
+}
+
 .leadership-card p {
   margin: 0.55rem 0 0;
   color: #657067;

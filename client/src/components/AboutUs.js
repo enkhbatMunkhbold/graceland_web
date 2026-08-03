@@ -24,7 +24,7 @@ const ministryLeaders = [
   { name: 'Enkhbat Munkhbold', role: "Men's Fellowship", image: enkhbatBoardImage },
   { name: 'Boldbayar Purevdorj', role: 'Youth Fellowship', image: boldbayarImage, photoClass: 'leadership-photo--boldbayar' },
   { name: 'Goyotsetseg Davgadorj', role: 'Women Fellowship', image: goyotsetsegImage },
-  { name: 'Bolor Ganbold', role: "Children's Ministry", image: bolorImage },
+  { name: 'Bolor Ganbold', role: "Children's Ministry", image: bolorImage, splitName: true },
   { name: 'Munkhchuluun Chuluunkhuu', role: 'Choir Ministry', image: munkhchuluunImage, photoClass: 'leadership-photo--munkhchuluun' },
 ];
 
@@ -40,7 +40,11 @@ function LeadershipCard({ person }) {
           decoding="async"
         />
       </div>
-      <h3>{person.name}</h3>
+      <h3>
+        {person.splitName
+          ? person.name.split(' ').map(namePart => <span className="leadership-name-line" key={namePart}>{namePart}</span>)
+          : person.name}
+      </h3>
       <p>{person.role}</p>
     </article>
   );
