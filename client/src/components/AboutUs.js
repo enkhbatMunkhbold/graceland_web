@@ -8,6 +8,7 @@ import boldbayarImage from '../assets/leadership/boldbayar-purevdorj.webp';
 import goyotsetsegImage from '../assets/leadership/goyotsetseg-davgadorj.webp';
 import bolorImage from '../assets/leadership/bolor-ganbold.webp';
 import munkhchuluunImage from '../assets/leadership/munkhchuluun-chuluunkhuu.webp';
+import zunbilegImage from '../assets/leadership/zunbileg-purevdorj.png';
 import '../styling/about-us.css';
 
 const boardMembers = [
@@ -18,8 +19,12 @@ const boardMembers = [
   { name: 'Temuujin Ganbaatar', role: 'Board Member', image: temuujinImage },
 ];
 
-const ministryLeaders = [
+const administration = [
   { name: 'Munkh-Erdene Baldandorj', role: 'Pastor', image: munkhErdeneImage, photoClass: 'leadership-photo--munkh-erdene' },
+  { name: 'Zunbileg Purevdorj', role: 'Secretary', image: zunbilegImage, splitName: true },
+];
+
+const ministryLeaders = [
   { name: 'Temuujin Ganbaatar', role: 'Worship Team', image: temuujinImage },
   { name: 'Enkhbat Munkhbold', role: "Men's Fellowship", image: enkhbatBoardImage },
   { name: 'Boldbayar Purevdorj', role: 'Youth Fellowship', image: boldbayarImage, photoClass: 'leadership-photo--boldbayar' },
@@ -81,6 +86,7 @@ function AboutUs() {
 
       <div className="leadership-shell leadership-content">
         <LeadershipSection title="Board" people={boardMembers} />
+        <LeadershipSection title="Administration" people={administration} />
         <LeadershipSection title="Ministry Leaders" people={ministryLeaders} />
       </div>
     </main>
