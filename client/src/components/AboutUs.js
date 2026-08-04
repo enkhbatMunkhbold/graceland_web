@@ -9,14 +9,16 @@ import goyotsetsegImage from '../assets/leadership/goyotsetseg-davgadorj.webp';
 import bolorImage from '../assets/leadership/bolor-ganbold.webp';
 import munkhchuluunImage from '../assets/leadership/munkhchuluun-chuluunkhuu.webp';
 import zunbilegImage from '../assets/leadership/zunbileg-purevdorj.png';
+import tsendAuyshImage from '../assets/leadership/tsend-auysh-buyanbat.png';
+import bayarbayasgalanImage from '../assets/leadership/bayarbayasgalan-dorjgochoo.png';
 import '../styling/about-us.css';
 
 const boardMembers = [
-  { name: 'Tamir Lkhamsuren', role: 'Chairman of Board', image: tamirImage },
-  { name: 'Munkh-Erdene Baldandorj', role: 'Board Member', image: munkhErdeneImage, photoClass: 'leadership-photo--munkh-erdene' },
-  { name: 'Dejidsuren Gonchigbal', role: 'Board Member', image: dejidsurenImage, photoClass: 'leadership-photo--dejidsuren' },
-  { name: 'Enkhbat Munkhbold', role: 'Board Member', image: enkhbatBoardImage },
-  { name: 'Temuujin Ganbaatar', role: 'Board Member', image: temuujinImage },
+  { name: 'Tamir Lkhamsuren', role: 'Chairman of Board', image: tamirImage, splitName: true },
+  { name: 'Munkh-Erdene Baldandorj', role: 'Board Member', image: munkhErdeneImage, photoClass: 'leadership-photo--munkh-erdene', splitName: true },
+  { name: 'Dejidsuren Gonchigbal', role: 'Board Member', image: dejidsurenImage, photoClass: 'leadership-photo--dejidsuren', splitName: true },
+  { name: 'Enkhbat Munkhbold', role: 'Board Member', image: enkhbatBoardImage, splitName: true },
+  { name: 'Temuujin Ganbaatar', role: 'Board Member', image: temuujinImage, splitName: true },
 ];
 
 const administration = [
@@ -31,6 +33,8 @@ const ministryLeaders = [
   { name: 'Goyotsetseg Davgadorj', role: 'Women Fellowship', image: goyotsetsegImage },
   { name: 'Bolor Ganbold', role: "Children's Ministry", image: bolorImage, splitName: true },
   { name: 'Munkhchuluun Chuluunkhuu', role: 'Choir Ministry', image: munkhchuluunImage, photoClass: 'leadership-photo--munkhchuluun' },
+  { name: 'Tsend-Auysh Buyanbat', role: 'Fellowship Ministry', image: tsendAuyshImage },
+  { name: 'Bayarbayasgalan Dorjgochoo', role: 'Fellowship Ministry', image: bayarbayasgalanImage },
 ];
 
 function LeadershipCard({ person }) {

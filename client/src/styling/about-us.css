@@ -10,14 +10,14 @@
 }
 
 .leadership-shell {
-  width: min(calc(100% - 2rem), 1120px);
+  width: min(calc(100% - 1.3rem), 728px);
   margin-inline: auto;
 }
 
 .leadership-hero {
   position: relative;
   overflow: hidden;
-  padding: clamp(2.5rem, 4.5vw, 3.75rem) 0 clamp(2rem, 3.5vw, 3rem);
+  padding: clamp(1.625rem, 2.925vw, 2.4375rem) 0 clamp(1.3rem, 2.275vw, 1.95rem);
   background:
     radial-gradient(circle at 82% 20%, rgba(145, 207, 98, 0.25), transparent 32%),
     linear-gradient(125deg, #14251a, var(--leadership-forest));
@@ -27,13 +27,13 @@
 .leadership-hero::after {
   content: '';
   position: absolute;
-  right: -7rem;
-  bottom: -12rem;
-  width: 30rem;
-  height: 30rem;
+  right: -4.55rem;
+  bottom: -7.8rem;
+  width: 19.5rem;
+  height: 19.5rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 50%;
-  box-shadow: 0 0 0 4rem rgba(255, 255, 255, 0.025), 0 0 0 8rem rgba(255, 255, 255, 0.02);
+  box-shadow: 0 0 0 2.6rem rgba(255, 255, 255, 0.025), 0 0 0 5.2rem rgba(255, 255, 255, 0.02);
 }
 
 .leadership-hero-content {
@@ -42,9 +42,9 @@
 }
 
 .leadership-eyebrow {
-  margin: 0 0 0.8rem;
+  margin: 0 0 0.52rem;
   color: #b8e394;
-  font-size: 0.72rem;
+  font-size: 0.468rem;
   font-weight: 800;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -52,7 +52,7 @@
 
 .leadership-hero h1 {
   margin: 0;
-  font-size: clamp(3.25rem, 9vw, 6.5rem);
+  font-size: clamp(2.1125rem, 5.85vw, 4.225rem);
   font-weight: 850;
   letter-spacing: -0.055em;
   line-height: 0.95;
@@ -60,38 +60,38 @@
 }
 
 .leadership-intro {
-  max-width: 650px;
-  margin: 1.35rem 0 0;
+  max-width: 422.5px;
+  margin: 0.8775rem 0 0;
   color: rgba(255, 255, 255, 0.76);
-  font-size: clamp(1rem, 2vw, 1.15rem);
+  font-size: clamp(0.65rem, 1.3vw, 0.7475rem);
   line-height: 1.7;
 }
 
 .leadership-content {
-  padding-block: clamp(4.5rem, 9vw, 8rem);
+  padding-block: clamp(2.925rem, 5.85vw, 5.2rem);
 }
 
 .leadership-group + .leadership-group {
-  margin-top: clamp(7rem, 13vw, 11rem);
+  margin-top: clamp(4.55rem, 8.45vw, 7.15rem);
 }
 
 .leadership-group-heading {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: clamp(3.5rem, 7vw, 5.5rem);
+  gap: 0.65rem;
+  margin-bottom: clamp(2.275rem, 4.55vw, 3.575rem);
 }
 
 .leadership-group-heading span {
-  width: 3rem;
-  height: 0.28rem;
+  width: 1.95rem;
+  height: 0.182rem;
   background: var(--leadership-green);
 }
 
 .leadership-group-heading h2 {
   margin: 0;
   color: var(--leadership-forest);
-  font-size: clamp(1.75rem, 4vw, 2.6rem);
+  font-size: clamp(1.1375rem, 2.6vw, 1.69rem);
   font-weight: 850;
   letter-spacing: -0.025em;
   line-height: 1;
@@ -101,8 +101,8 @@
 .leadership-grid {
   display: grid;
   grid-template-columns: 1fr;
-  column-gap: clamp(2.5rem, 6vw, 5.5rem);
-  row-gap: clamp(4.5rem, 9vw, 7rem);
+  column-gap: clamp(1.625rem, 3.9vw, 3.575rem);
+  row-gap: clamp(2.925rem, 5.85vw, 4.55rem);
   align-items: start;
 }
 
@@ -112,14 +112,14 @@
 }
 
 .leadership-photo-frame {
-  width: min(100%, 240px);
+  width: min(100%, 156px);
   aspect-ratio: 1;
   margin-inline: auto;
   overflow: hidden;
-  border: 6px solid #fff;
+  border: 4px solid #fff;
   border-radius: 50%;
   background: var(--leadership-pale);
-  box-shadow: 0 18px 45px rgba(20, 37, 26, 0.14), 0 0 0 1px rgba(38, 59, 44, 0.08);
+  box-shadow: 0 12px 29px rgba(20, 37, 26, 0.14), 0 0 0 1px rgba(38, 59, 44, 0.08);
 }
 
 .leadership-photo {
@@ -156,9 +156,9 @@
 }
 
 .leadership-card h3 {
-  margin: 1.6rem 0 0;
+  margin: 1.04rem 0 0;
   color: var(--leadership-ink);
-  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  font-size: clamp(0.65rem, 1.43vw, 0.78rem);
   font-weight: 850;
   letter-spacing: 0.045em;
   line-height: 1.3;
@@ -170,15 +170,15 @@
 }
 
 .leadership-card p {
-  margin: 0.55rem 0 0;
+  margin: 0.3575rem 0 0;
   color: #657067;
-  font-size: 0.98rem;
+  font-size: 0.637rem;
   line-height: 1.5;
 }
 
 @media (min-width: 600px) {
   .leadership-shell {
-    width: min(calc(100% - 4rem), 1120px);
+    width: min(calc(100% - 2.6rem), 728px);
   }
 
   .leadership-grid {
@@ -191,6 +191,22 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .leadership-group--board .leadership-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .leadership-group--board .leadership-card {
+    grid-column: span 2;
+  }
+
+  .leadership-group--board .leadership-card:nth-child(4) {
+    grid-column: 2 / span 2;
+  }
+
+  .leadership-group--board .leadership-card:nth-child(5) {
+    grid-column: 4 / span 2;
+  }
+
   .leadership-group--ministry-leaders .leadership-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
@@ -198,15 +214,15 @@
 
 @media (max-width: 599px) {
   .leadership-photo-frame {
-    width: min(68vw, 230px);
+    width: min(44.2vw, 150px);
   }
 
   .leadership-group-heading {
-    gap: 0.75rem;
+    gap: 0.4875rem;
   }
 
   .leadership-group-heading span {
-    width: 2rem;
+    width: 1.3rem;
   }
 }
 
