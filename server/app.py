@@ -24,6 +24,7 @@ import models  # Import models to register them with SQLAlchemy
 import schemas
 from auth_utils import user_is_admin
 from ministry_upload import ministry_upload_allowed, save_ministry_upload
+from google_calendar_sync import start_hourly_sync, sync_google_calendar
 
 # Initialize Flask-Migrate
 migrate = Migrate(app, db)
@@ -554,6 +555,10 @@ api.add_resource(GroupMembers, '/groups/<int:group_id>/members')
 
 class Events(Resource):
     def get(self):
+        try:
+            sync_google_calendar()
+        except Exception as error:
+            app.logger.warning('Unable to refresh Google Calendar events: %s', error)
         month = request.args.get('month', type=int)
         year = request.args.get('year', type=int)
         query = models.Event.query
@@ -605,6 +610,8 @@ class EventByID(Resource):
         event = db.session.get(models.Event, event_id)
         if not event:
             return {'error': 'Event not found'}, 404
+        if event.is_read_only:
+            return {'error': 'Synchronized calendar events are read-only'}, 403
         
         try:
             data = request.get_json()
@@ -630,6 +637,8 @@ class EventByID(Resource):
         event = db.session.get(models.Event, event_id)
         if not event:
             return {'error': 'Event not found'}, 404
+        if event.is_read_only:
+            return {'error': 'Synchronized calendar events are read-only'}, 403
         try:
           db.session.delete(event)
           db.session.commit()
@@ -1033,17 +1042,23 @@ def _get_google_calendar_events(year, month):
 
 class GoogleCalendarEvents(Resource):
     def get(self):
-        if not GOOGLE_CALENDAR_API_KEY or not GOOGLE_CALENDAR_ID:
-            return {'error': 'Calendar events are temporarily unavailable.'}, 503
         try:
             now = datetime.now()
             year = request.args.get('year', default=now.year, type=int)
             month = request.args.get('month', default=now.month, type=int)
             if not 1 <= month <= 12 or not 1970 <= year <= 2100:
                 return {'error': 'Invalid calendar range.'}, 400
-            return {'events': _get_google_calendar_events(year, month)}, 200
-        except (HTTPError, URLError, TimeoutError, ValueError, json.JSONDecodeError) as error:
-            app.logger.warning('Unable to load Google Calendar events: %s', error)
+            sync_google_calendar()
+            month_start = datetime(year, month, 1)
+            month_end = datetime(year + (month == 12), 1 if month == 12 else month + 1, 1)
+            events = models.Event.query.filter(
+                models.Event.source == 'google_calendar',
+                models.Event.start_datetime >= month_start,
+                models.Event.start_datetime < month_end,
+            ).order_by(models.Event.start_datetime.asc()).all()
+            return {'events': schemas.events_schema.dump(events)}, 200
+        except Exception as error:
+            app.logger.warning('Unable to load stored Google Calendar events: %s', error)
             return {'error': 'Calendar events are temporarily unavailable.'}, 503
 
 
@@ -1525,6 +1540,9 @@ def serve_ministry_upload(slug, filename):
         return {'error': 'Not found'}, 404
 
     return send_from_directory(directory, filename)
+
+
+start_hourly_sync(app)
 
 
 if __name__ == '__main__':

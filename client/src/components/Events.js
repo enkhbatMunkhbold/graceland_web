@@ -28,7 +28,7 @@ import '../styling/events.css';
 
 const WEEKDAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const WEEKDAYS_MN = ['Ня', 'Да', 'Мя', 'Лх', 'Пү', 'Ба', 'Бя'];
-const CALENDAR_REFRESH_INTERVAL = 15 * 60 * 1000;
+const CALENDAR_REFRESH_INTERVAL = 60 * 60 * 1000;
 
 const HOLIDAY_ICONS = {
   newYearsDay: Sparkles,
@@ -179,7 +179,6 @@ function formFromEvent(event) {
 
 function Events() {
   const [events, setEvents] = useState([]);
-  const [googleCalendarError, setGoogleCalendarError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [viewDate, setViewDate] = useState(() => {
@@ -220,33 +219,17 @@ function Events() {
     eventsRequestId.current = requestId;
     setLoading(true);
     setError(null);
-    setGoogleCalendarError(false);
-
-    const [localResult, googleResult] = await Promise.allSettled([
-      api.getEvents(viewYear, viewMonth + 1),
-      api.getGoogleCalendarEvents(viewYear, viewMonth + 1),
-    ]);
-
-    if (requestId !== eventsRequestId.current) return;
-
-    const localEvents = localResult.status === 'fulfilled'
-      ? localResult.value
-      : [];
-    const calendarEvents = googleResult.status === 'fulfilled'
-      ? googleResult.value
-      : [];
-
-    if (localResult.status === 'rejected') {
-      console.error('Error fetching events:', localResult.reason);
-      setError(localResult.reason.message || 'Events are temporarily unavailable.');
+    try {
+      const loadedEvents = await api.getEvents(viewYear, viewMonth + 1);
+      if (requestId !== eventsRequestId.current) return;
+      setEvents(loadedEvents);
+    } catch (loadError) {
+      if (requestId !== eventsRequestId.current) return;
+      console.error('Error fetching events:', loadError);
+      setError(loadError.message || 'Events are temporarily unavailable.');
+    } finally {
+      if (requestId === eventsRequestId.current) setLoading(false);
     }
-    if (googleResult.status === 'rejected') {
-      console.error('Error fetching Google Calendar events:', googleResult.reason);
-    }
-
-    setGoogleCalendarError(googleResult.status === 'rejected');
-    setEvents([...localEvents, ...calendarEvents]);
-    setLoading(false);
   }, [viewYear, viewMonth]);
 
   useEffect(() => {
@@ -599,9 +582,6 @@ function Events() {
                 </div>
                 {error && (
                   <p className="events-calendar-error" role="alert">Error loading events: {error}</p>
-                )}
-                {googleCalendarError && (
-                  <p className="events-google-fallback">{t('calendarEventsUnavailable')}</p>
                 )}
                 <div className="events-calendar">
                 <div className="events-calendar-weekdays">

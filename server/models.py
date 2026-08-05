@@ -184,11 +184,31 @@ class Event(db.Model):
   end_datetime = db.Column(db.DateTime)
   location = db.Column(db.Text)
   max_attendees = db.Column(db.Integer)
+  source = db.Column(db.String(50))
+  external_id = db.Column(db.String(255), unique=True)
+  external_updated_at = db.Column(db.DateTime)
+  external_link = db.Column(db.String(1000))
+  is_all_day = db.Column(db.Boolean, nullable=False, default=False)
+  is_read_only = db.Column(db.Boolean, nullable=False, default=False)
 
   registrations = db.relationship('EventRegistration', backref='event', cascade='all, delete-orphan')
 
   def __repr__(self):
     return f'<Event {self.title}>'
+
+class GoogleCalendarSyncState(db.Model):
+  __tablename__ = 'google_calendar_sync_states'
+
+  id = db.Column(db.Integer, primary_key=True)
+  calendar_id = db.Column(db.String(255), unique=True, nullable=False)
+  sync_token = db.Column(db.Text)
+  window_start = db.Column(db.DateTime)
+  window_end = db.Column(db.DateTime)
+  last_success_at = db.Column(db.DateTime)
+  last_error = db.Column(db.Text)
+
+  def __repr__(self):
+    return f'<GoogleCalendarSyncState {self.calendar_id}>'
 
 class DailyJob(db.Model):
   __tablename__ = 'daily_jobs'

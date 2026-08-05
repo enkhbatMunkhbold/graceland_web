@@ -315,6 +315,9 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
     end_datetime = fields.DateTime()
     location = fields.String(validate=validate.Length(max=255))
     max_attendees = fields.Integer(validate=validate.Range(min=1))
+    isGoogleCalendar = fields.Method('get_is_google_calendar', dump_only=True)
+    isReadOnly = fields.Method('get_is_read_only', dump_only=True)
+    isAllDay = fields.Method('get_is_all_day', dump_only=True)
     
     registration_count = fields.Method("get_registration_count")
     is_full = fields.Method("check_if_full")
@@ -326,6 +329,15 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
         if obj.max_attendees:
             return len(obj.registrations) >= obj.max_attendees
         return False
+
+    def get_is_google_calendar(self, obj):
+        return obj.source == 'google_calendar'
+
+    def get_is_read_only(self, obj):
+        return bool(obj.is_read_only)
+
+    def get_is_all_day(self, obj):
+        return bool(obj.is_all_day)
     
     @validates('start_datetime')
     def validate_start_datetime(self, value):
