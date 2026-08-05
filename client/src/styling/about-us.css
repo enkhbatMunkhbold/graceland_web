@@ -145,14 +145,16 @@
   background: #e2e3e5;
 }
 
-.leadership-photo--boldbayar {
-  box-sizing: border-box;
-  padding: 3%;
-  background: #fff;
-}
-
 .leadership-photo--munkhchuluun {
   transform: scale(1.08);
+}
+
+.leadership-photo--bolor {
+  transform: scale(1.18) translateY(3%);
+}
+
+.leadership-photo--enkhbat {
+  filter: brightness(1.22) contrast(0.94);
 }
 
 .leadership-card h3 {
@@ -208,7 +210,7 @@
   }
 
   .leadership-group--ministry-leaders .leadership-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

@@ -2,22 +2,23 @@ import { useLanguage } from '../context/LanguageContext';
 import tamirImage from '../assets/leadership/tamir-lkhamsuren.webp';
 import munkhErdeneImage from '../assets/leadership/munkh-erdene-baldandorj.webp';
 import dejidsurenImage from '../assets/leadership/dejidsuren-gonchigbal.webp';
-import enkhbatBoardImage from '../assets/leadership/enkhbat-munkhbold-board.webp';
+import enkhbatBoardImage from '../assets/leadership/enkhbat-munkhbold.webp';
 import temuujinImage from '../assets/leadership/temuujin-ganbaatar.webp';
 import boldbayarImage from '../assets/leadership/boldbayar-purevdorj.webp';
 import goyotsetsegImage from '../assets/leadership/goyotsetseg-davgadorj.webp';
 import bolorImage from '../assets/leadership/bolor-ganbold.webp';
 import munkhchuluunImage from '../assets/leadership/munkhchuluun-chuluunkhuu.webp';
-import zunbilegImage from '../assets/leadership/zunbileg-purevdorj.png';
-import tsendAuyshImage from '../assets/leadership/tsend-auysh-buyanbat.png';
-import bayarbayasgalanImage from '../assets/leadership/bayarbayasgalan-dorjgochoo.png';
+import zunbilegImage from '../assets/leadership/zunbileg-purevdorj.webp';
+import tsendAuyshImage from '../assets/leadership/tsend-auysh-buyanbat.webp';
+import bayarbayasgalanImage from '../assets/leadership/bayarbayasgalan-dorjgochoo.webp';
+import edwardLeeImage from '../assets/leadership/edward-lee.webp';
 import '../styling/about-us.css';
 
 const boardMembers = [
   { name: 'Tamir Lkhamsuren', role: 'Chairman of Board', image: tamirImage, splitName: true },
   { name: 'Munkh-Erdene Baldandorj', role: 'Board Member', image: munkhErdeneImage, photoClass: 'leadership-photo--munkh-erdene', splitName: true },
   { name: 'Dejidsuren Gonchigbal', role: 'Board Member', image: dejidsurenImage, photoClass: 'leadership-photo--dejidsuren', splitName: true },
-  { name: 'Enkhbat Munkhbold', role: 'Board Member', image: enkhbatBoardImage, splitName: true },
+  { name: 'Enkhbat Munkhbold', role: 'Board Member', image: enkhbatBoardImage, photoClass: 'leadership-photo--enkhbat', splitName: true },
   { name: 'Temuujin Ganbaatar', role: 'Board Member', image: temuujinImage, splitName: true },
 ];
 
@@ -27,14 +28,15 @@ const administration = [
 ];
 
 const ministryLeaders = [
-  { name: 'Temuujin Ganbaatar', role: 'Worship Team', image: temuujinImage },
-  { name: 'Enkhbat Munkhbold', role: "Men's Fellowship", image: enkhbatBoardImage },
-  { name: 'Boldbayar Purevdorj', role: 'Youth Fellowship', image: boldbayarImage, photoClass: 'leadership-photo--boldbayar' },
-  { name: 'Goyotsetseg Davgadorj', role: 'Women Fellowship', image: goyotsetsegImage },
-  { name: 'Bolor Ganbold', role: "Children's Ministry", image: bolorImage, splitName: true },
-  { name: 'Munkhchuluun Chuluunkhuu', role: 'Choir Ministry', image: munkhchuluunImage, photoClass: 'leadership-photo--munkhchuluun' },
-  { name: 'Tsend-Auysh Buyanbat', role: 'Fellowship Ministry', image: tsendAuyshImage },
-  { name: 'Bayarbayasgalan Dorjgochoo', role: 'Fellowship Ministry', image: bayarbayasgalanImage },
+  { name: 'Temuujin Ganbaatar', role: 'Worship Team', image: temuujinImage, splitName: true },
+  { name: 'Enkhbat Munkhbold', role: "Men's Fellowship", image: enkhbatBoardImage, photoClass: 'leadership-photo--enkhbat', splitName: true },
+  { name: 'Tsend-Auysh Buyanbat', role: 'Fellowship Ministry', image: tsendAuyshImage, splitName: true },
+  { name: 'Goyotsetseg Davgadorj', role: 'Women Fellowship', image: goyotsetsegImage, splitName: true },
+  { name: 'Bolor Ganbold', role: "Children's Ministry", image: bolorImage, photoClass: 'leadership-photo--bolor', splitName: true },
+  { name: 'Munkhchuluun Chuluunkhuu', role: 'Choir Ministry', image: munkhchuluunImage, photoClass: 'leadership-photo--munkhchuluun', splitName: true },
+  { name: 'Boldbayar Purevdorj', role: 'Youth Fellowship', image: boldbayarImage, splitName: true },
+  { name: 'Bayarbayasgalan Dorjgochoo', role: 'Fellowship Ministry', image: bayarbayasgalanImage, splitName: true },
+  { name: 'Edward Lee', role: 'Interhigh Ministry', image: edwardLeeImage, splitName: true },
 ];
 
 function LeadershipCard({ person }) {
