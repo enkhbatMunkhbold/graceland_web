@@ -190,24 +190,6 @@ class Event(db.Model):
   def __repr__(self):
     return f'<Event {self.title}>'
 
-class RecurringEvent(db.Model):
-  __tablename__ = 'recurring_events'
-
-  id = db.Column(db.Integer, primary_key=True)
-  slug = db.Column(db.String(100), unique=True, nullable=False)
-  title = db.Column(db.String(255), nullable=False)
-  recurrence_type = db.Column(db.String(20), nullable=False, default='weekly')
-  weekdays = db.Column(db.String(20), nullable=False)
-  start_time = db.Column(db.Time, nullable=False)
-  end_time = db.Column(db.Time)
-  location = db.Column(db.String(255))
-  description = db.Column(db.Text)
-  skip_last_match = db.Column(db.Boolean, nullable=False, default=False)
-  active = db.Column(db.Boolean, nullable=False, default=True)
-
-  def __repr__(self):
-    return f'<RecurringEvent {self.slug}>'
-
 class DailyJob(db.Model):
   __tablename__ = 'daily_jobs'
 

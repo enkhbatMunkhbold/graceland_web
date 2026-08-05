@@ -552,58 +552,6 @@ class GroupMembers(Resource):
         
 api.add_resource(GroupMembers, '/groups/<int:group_id>/members')
 
-
-def _expand_recurring_events(year, month, rules=None):
-    """Expand stored recurrence rules into read-only events for one month."""
-    month_start = date(year, month, 1)
-    if month == 12:
-        month_end = date(year + 1, 1, 1)
-    else:
-        month_end = date(year, month + 1, 1)
-
-    if rules is None:
-        rules = models.RecurringEvent.query.filter_by(active=True).all()
-    occurrences = []
-    current_date = month_start
-    while current_date < month_end:
-        for rule in rules:
-            weekdays = {
-                int(weekday)
-                for weekday in rule.weekdays.split(',')
-                if weekday.strip()
-            }
-            if current_date.weekday() not in weekdays:
-                continue
-
-            next_matching_date = current_date + timedelta(days=7)
-            is_last_match = next_matching_date >= month_end
-            if rule.recurrence_type == 'last_weekday' and not is_last_match:
-                continue
-            if rule.skip_last_match and is_last_match:
-                continue
-
-            start_datetime = datetime.combine(current_date, rule.start_time)
-            end_datetime = (
-                datetime.combine(current_date, rule.end_time)
-                if rule.end_time
-                else None
-            )
-            occurrences.append({
-                'id': f'recurring-{rule.slug}-{current_date.isoformat()}',
-                'title': rule.title,
-                'description': rule.description,
-                'start_datetime': start_datetime.isoformat(),
-                'end_datetime': end_datetime.isoformat() if end_datetime else None,
-                'location': rule.location,
-                'max_attendees': None,
-                'registration_count': 0,
-                'is_full': False,
-                'isRecurring': True,
-                'isReadOnly': True,
-            })
-        current_date += timedelta(days=1)
-    return occurrences
-
 class Events(Resource):
     def get(self):
         month = request.args.get('month', type=int)
@@ -622,11 +570,7 @@ class Events(Resource):
             )
 
         events = query.order_by(models.Event.start_datetime.asc()).all()
-        serialized_events = schemas.events_schema.dump(events)
-        if month and year:
-            serialized_events.extend(_expand_recurring_events(year, month))
-            serialized_events.sort(key=lambda event: event['start_datetime'])
-        return serialized_events, 200
+        return schemas.events_schema.dump(events), 200
             
     def post(self):
         if not _require_admin_or_staff():
