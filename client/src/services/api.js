@@ -5,6 +5,27 @@ let latestYouTubeVideosRequest = null;
 const LATEST_YOUTUBE_VIDEOS_CACHE_TTL = 30 * 1000;
 
 export const api = {
+  getSiteTextOverrides: async (pagePath, language) => {
+    const params = new URLSearchParams({ page_path: pagePath, language });
+    const response = await fetch(`${API_BASE_URL}/site-text-overrides?${params}`);
+    if (!response.ok) throw new Error('Failed to load editable site text');
+    return response.json();
+  },
+
+  updateSiteTextOverride: async (data) => {
+    const response = await fetch(`${API_BASE_URL}/site-text-overrides`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to save site text');
+    }
+    return response.json();
+  },
+
   // Events
   getEvents: async (year, month) => {
     const params = new URLSearchParams();

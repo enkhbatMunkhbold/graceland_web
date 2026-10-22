@@ -1495,6 +1495,86 @@ class MinistryPageUpload(Resource):
 api.add_resource(MinistryPageUpload, '/ministry-pages/<string:slug>/upload')
 
 
+class SiteTextOverrides(Resource):
+    def get(self):
+        page_path = str(request.args.get('page_path', '')).strip()
+        language = str(request.args.get('language', 'en')).strip()[:10]
+        if not page_path or len(page_path) > 255:
+            return {'error': 'A valid page_path is required'}, 400
+
+        overrides = models.SiteTextOverride.query.filter_by(
+            page_path=page_path,
+            language=language,
+        ).all()
+        return {
+            'overrides': {
+                item.element_key: item.content
+                for item in overrides
+            }
+        }, 200
+
+    def put(self):
+        user = _get_current_user()
+        if not user:
+            return {'error': 'Login required'}, 401
+
+        data = request.get_json(silent=True) or {}
+        page_path = str(data.get('page_path', '')).strip()
+        element_key = str(data.get('element_key', '')).strip()
+        language = str(data.get('language', 'en')).strip()[:10]
+        content = data.get('content')
+
+        if not page_path or len(page_path) > 255:
+            return {'error': 'A valid page_path is required'}, 400
+        if not element_key or len(element_key) > 1000:
+            return {'error': 'A valid element_key is required'}, 400
+        if not isinstance(content, str) or len(content) > 20000:
+            return {'error': 'Content must be text with at most 20,000 characters'}, 400
+
+        item = models.SiteTextOverride.query.filter_by(
+            page_path=page_path,
+            element_key=element_key,
+            language=language,
+        ).first()
+        if item:
+            item.content = content
+            item.updated_by_id = user.id
+        else:
+            item = models.SiteTextOverride(
+                page_path=page_path,
+                element_key=element_key,
+                language=language,
+                content=content,
+                updated_by_id=user.id,
+            )
+            db.session.add(item)
+
+        try:
+            db.session.commit()
+            return {'element_key': element_key, 'content': item.content}, 200
+        except Exception:
+            db.session.rollback()
+            return {'error': 'Unable to save site text'}, 500
+
+    def delete(self):
+        if not _get_current_user():
+            return {'error': 'Login required'}, 401
+
+        data = request.get_json(silent=True) or {}
+        item = models.SiteTextOverride.query.filter_by(
+            page_path=str(data.get('page_path', '')).strip(),
+            element_key=str(data.get('element_key', '')).strip(),
+            language=str(data.get('language', 'en')).strip()[:10],
+        ).first()
+        if item:
+            db.session.delete(item)
+            db.session.commit()
+        return '', 204
+
+
+api.add_resource(SiteTextOverrides, '/site-text-overrides')
+
+
 class AnonymousFeedback(Resource):
     def post(self):
         data = request.get_json(silent=True) or {}

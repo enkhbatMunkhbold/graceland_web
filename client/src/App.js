@@ -22,6 +22,7 @@ import Login from './components/Login';
 import SignUp from './components/SignUp';
 import Prayer from './components/Prayer';
 import AdminDashboard from './components/AdminDashboard';
+import SiteTextEditor from './components/SiteTextEditor';
 import './styling/global.css';
 
 function AppContent() {
@@ -84,6 +85,7 @@ function AppContent() {
       </div>
       <Contact />
       <Footer />
+      <SiteTextEditor />
     </Router>
   )
 }

@@ -1,0 +1,52 @@
+.site-text-editor {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  max-width: calc(100vw - 2rem);
+  padding: 0.7rem;
+  color: #fff;
+  background: #172033;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 0.7rem;
+  box-shadow: 0 0.8rem 2rem rgba(0, 0, 0, 0.28);
+  font-size: 0.9rem;
+}
+
+.site-text-editor button {
+  padding: 0.55rem 0.85rem;
+  border: 0;
+  border-radius: 0.45rem;
+  color: #172033;
+  background: #f0c75e;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.site-text-editor .site-text-editor-cancel {
+  color: #fff;
+  background: #566176;
+}
+
+.site-text-editable {
+  outline: 2px dashed #d39b13 !important;
+  outline-offset: 3px;
+  cursor: text !important;
+}
+
+.site-text-editable:focus {
+  outline-style: solid !important;
+  background: rgba(255, 235, 170, 0.18);
+}
+
+@media (max-width: 640px) {
+  .site-text-editor {
+    left: 0.65rem;
+    right: 0.65rem;
+    bottom: 0.65rem;
+    flex-wrap: wrap;
+  }
+}

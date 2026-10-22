@@ -306,6 +306,32 @@ class Page(db.Model):
     return f'<Page {self.title}>'
 
 
+class SiteTextOverride(db.Model):
+  __tablename__ = 'site_text_overrides'
+
+  id = db.Column(db.Integer, primary_key=True)
+  page_path = db.Column(db.String(255), nullable=False)
+  element_key = db.Column(db.String(1000), nullable=False)
+  language = db.Column(db.String(10), nullable=False, default='en')
+  content = db.Column(db.Text, nullable=False, default='')
+  updated_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+  updated_at = db.Column(
+    db.DateTime,
+    default=lambda: datetime.now(timezone.utc),
+    onupdate=lambda: datetime.now(timezone.utc),
+    nullable=False,
+  )
+
+  updated_by = db.relationship('User')
+
+  __table_args__ = (
+    db.UniqueConstraint('page_path', 'element_key', 'language', name='uq_site_text_location'),
+  )
+
+  def __repr__(self):
+    return f'<SiteTextOverride {self.page_path} {self.element_key}>'
+
+
 class MinistryPageContent(db.Model):
   __tablename__ = 'ministry_page_contents'
 
