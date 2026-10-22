@@ -9,7 +9,7 @@ import interhighImage from '../assets/Interhigh.jpg';
 import youngAdultsImage from '../assets/Young Adults.jpg';
 import womenImage from '../assets/Women.jpg';
 import menImage from '../assets/Men.jpg';
-import marriageImage from '../assets/Marriage.jpg';
+import worshipImage from '../assets/Worship Ministry.jpg';
 
 const ministryHeroImage = filename => `${process.env.PUBLIC_URL}/images/ministries/${filename}.webp`;
 
@@ -107,7 +107,7 @@ function Ministries() {
     id: 'marriage',
     name: t('marriageMinistryTitle'),
     description: t('marriageMinistryPara1'),
-    staticImage: marriageImage,
+    staticImage: worshipImage,
   }), [t]);
 
   useEffect(() => {
