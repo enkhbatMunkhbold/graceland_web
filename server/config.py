@@ -12,6 +12,8 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 app = Flask(__name__)
 
+is_production = os.environ.get('FLASK_ENV', '').lower() == 'production'
+
 # Facebook Page integration (optional): set in env for sermon sync
 FACEBOOK_PAGE_ID = os.environ.get('FACEBOOK_PAGE_ID', 'AzFmAomvrf9Pj1QbBf2CDIg').strip()
 FACEBOOK_PAGE_ACCESS_TOKEN = os.environ.get('FACEBOOK_PAGE_ACCESS_TOKEN', '').strip()
@@ -25,11 +27,20 @@ GOOGLE_CALENDAR_HISTORY_DAYS = int(os.environ.get('GOOGLE_CALENDAR_HISTORY_DAYS'
 GOOGLE_CALENDAR_FUTURE_DAYS = int(os.environ.get('GOOGLE_CALENDAR_FUTURE_DAYS', '730'))
 # Comma-separated usernames treated as admins (in addition to users.is_admin)
 ADMIN_USERNAMES = os.environ.get('ADMIN_USERNAMES', '').strip()
-app.secret_key = b'Y\xf1Xz\x00\xad|eQ\x80t \xca\x1a\x10K'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATION'] = False
+app.secret_key = os.environ.get('SECRET_KEY', 'local-development-only-change-me')
+
+database_url = os.environ.get('DATABASE_URL', 'sqlite:///app.db')
+# SQLAlchemy no longer accepts the legacy postgres:// scheme used by some hosts.
+if database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'uploads')
+app.config['SESSION_COOKIE_SECURE'] = is_production
+app.config['SESSION_COOKIE_SAMESITE'] = 'None' if is_production else 'Lax'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.json.compact = False
 
 metadata = MetaData(naming_convention={
@@ -40,7 +51,12 @@ db = SQLAlchemy(metadata=metadata)
 db.init_app(app)
 
 api = Api(app)
-CORS(app, supports_credentials=True, origins=['http://localhost:3000'])
+cors_origins = [
+    origin.strip()
+    for origin in os.environ.get('CORS_ORIGINS', 'http://localhost:3000').split(',')
+    if origin.strip()
+]
+CORS(app, supports_credentials=True, origins=cors_origins)
 bcrypt = Bcrypt(app)
 
 ma = Marshmallow(app)

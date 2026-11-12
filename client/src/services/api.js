@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:5555';
+const API_BASE_URL = (
+  process.env.REACT_APP_API_BASE_URL || 'http://localhost:5555'
+).replace(/\/+$/, '');
 let latestYouTubeVideosCache = null;
 let latestYouTubeVideosCachedAt = 0;
 let latestYouTubeVideosRequest = null;
