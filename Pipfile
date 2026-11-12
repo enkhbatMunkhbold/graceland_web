@@ -16,6 +16,7 @@ flask-serializer = "*"
 sqlalchemy = "*"
 marshmallow-sqlalchemy = "*"
 python-dotenv = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 
