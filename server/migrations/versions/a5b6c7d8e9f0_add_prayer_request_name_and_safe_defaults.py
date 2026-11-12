@@ -29,8 +29,14 @@ def upgrade():
         "WHEN status = 'answered' THEN 'answered' "
         "ELSE 'new' END"
     )
+    prayer_requests = sa.table(
+        'prayer_requests',
+        sa.column('is_public', sa.Boolean()),
+    )
     op.execute(
-        "UPDATE prayer_requests SET is_public = 0 WHERE is_public IS NULL"
+        prayer_requests.update()
+        .where(prayer_requests.c.is_public.is_(None))
+        .values(is_public=sa.false())
     )
 
     with op.batch_alter_table('prayer_requests') as batch_op:
