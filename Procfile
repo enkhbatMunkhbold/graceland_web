@@ -1,1 +1,1 @@
-web: gunicorn --chdir server --bind 0.0.0.0:$PORT app:app
+web: cd server && flask --app app db upgrade && gunicorn --bind 0.0.0.0:$PORT app:app
