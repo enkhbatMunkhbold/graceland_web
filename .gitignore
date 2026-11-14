@@ -5,3 +5,4 @@ __pycache__/
 node_modules/
 client/build/
 backups/
+server/instance/app.db
