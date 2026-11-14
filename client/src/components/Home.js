@@ -4,7 +4,6 @@ import { ArrowRight, CalendarDays, CloudSun, Clock3, Gift, HeartHandshake, MapPi
 import { useLanguage } from '../context/LanguageContext';
 import UserContext from '../context/UserContext';
 import { api } from '../services/api';
-import heroImage from '../assets/Worship God.jpg';
 import childrenImage from '../assets/Children.jpg';
 import youthImage from '../assets/Interhigh.jpg';
 import youngAdultsImage from '../assets/Young Adults.jpg';
@@ -152,7 +151,6 @@ function Home() {
   return (
     <main className="home-page">
       <section className="home-hero" aria-labelledby="home-hero-title">
-        <img className="home-hero-image" src={heroImage} alt="" fetchPriority="high" />
         <video
           ref={heroVideoRef}
           className={`home-hero-video${isHeroVideoReady ? ' home-hero-video--ready' : ''}`}
@@ -174,7 +172,6 @@ function Home() {
             setIsHeroVideoPlaying(true);
           }}
           onPause={() => setIsHeroVideoPlaying(false)}
-          poster={heroImage}
           aria-hidden="true"
         >
           <source src={`${process.env.PUBLIC_URL}/media/magtan-duu.mp4`} type="video/mp4" />

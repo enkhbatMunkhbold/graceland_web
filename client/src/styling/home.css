@@ -23,9 +23,9 @@
 @media(min-width:700px) and (max-width:999px){.home-care-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home-care-card--giving{grid-column:1/-1}.home-care-card{min-height:290px}}
 @media(min-width:1000px){.home-care-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.home-care-card{min-height:320px}}
 
-/* Motion background with the original hero image retained as its fallback. */
+/* Motion background with a solid church-green fallback while the video loads. */
+.home-hero{background:var(--deep)}
 .home-hero-video{position:absolute;z-index:-2;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% center;opacity:0;transition:opacity .6s ease}.home-hero-video--ready{opacity:1}
-.home-hero-image{z-index:-3}
 .home-hero-media-toggle{position:absolute;z-index:3;top:1rem;right:1rem;width:44px;height:44px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.55);border-radius:50%;background:rgba(14,31,20,.58);color:#fff;cursor:pointer;backdrop-filter:blur(8px)}.home-hero-media-toggle:hover{background:rgba(14,31,20,.82)}.home-hero-media-toggle:focus-visible{outline:3px solid #91cf62;outline-offset:3px}.home-hero-media-toggle svg{width:1.15rem;height:1.15rem}.home-hero-media-toggle .lucide-play{fill:currentColor}
 @media(min-width:1000px){.home-hero-video{object-position:center 47%}}
 @media(max-width:699px){.home-hero-video{inset:0 0 auto;height:auto;aspect-ratio:1920/823;object-fit:contain;object-position:center top}.home-hero-media-toggle{top:.75rem;right:.75rem}}
