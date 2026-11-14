@@ -1,7 +1,7 @@
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import { LanguageProvider } from './context/LanguageContext';
 import UserContext, { UserProvider} from './context/UserContext';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Home from './components/Home';
 import AboutUs from './components/AboutUs';
@@ -25,6 +25,18 @@ import AdminDashboard from './components/AdminDashboard';
 import SiteTextEditor from './components/SiteTextEditor';
 import './styling/global.css';
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [pathname]);
+
+  return null;
+}
+
 function AppContent() {
   const { user, isLoading } = useContext(UserContext)
 
@@ -34,6 +46,7 @@ function AppContent() {
 
   return (
     <Router>
+      <ScrollToTop />
       <Header />
       <div className="App">
         {user ? (
