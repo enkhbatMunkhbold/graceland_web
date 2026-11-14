@@ -215,6 +215,18 @@
 }
 
 @media (max-width: 599px) {
+  .leadership-shell {
+    width: min(calc(100% - 2rem), 728px);
+  }
+
+  .leadership-eyebrow {
+    font-size: 0.62rem;
+  }
+
+  .leadership-intro {
+    font-size: 0.875rem;
+  }
+
   .leadership-photo-frame {
     width: min(44.2vw, 150px);
   }
@@ -225,6 +237,14 @@
 
   .leadership-group-heading span {
     width: 1.3rem;
+  }
+
+  .leadership-card h3 {
+    font-size: 0.8rem;
+  }
+
+  .leadership-card p {
+    font-size: 0.75rem;
   }
 }
 

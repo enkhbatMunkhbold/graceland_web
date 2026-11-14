@@ -108,6 +108,18 @@
 }
 
 @media (max-width: 768px) {
+  .ministries-hero {
+    min-height: 34vh;
+  }
+
+  .ministries-hero-title {
+    font-size: clamp(2rem, 11vw, 3rem);
+  }
+
+  .ministries-content {
+    padding: 2.25rem 1rem 3rem;
+  }
+
   .ministries-intro {
     max-width: 100%;
     margin-bottom: 2.5rem;

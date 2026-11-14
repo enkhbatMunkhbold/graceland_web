@@ -7,6 +7,7 @@
 /* Public action: giving stays prominent; staff authentication lives in the footer. */
 .donate-button{min-height:42px;display:inline-flex;align-items:center;justify-content:center;padding:.65rem 1rem;border:1px solid #b89243;background:#c8a85e;color:#17271c;font-size:.7rem;font-weight:850;letter-spacing:.08em;text-decoration:none;text-transform:uppercase;transition:background .2s,transform .2s}.donate-button:hover{background:#e5d19f;transform:translateY(-1px)}.donate-button:focus-visible{outline:3px solid #263b2c;outline-offset:2px}.header-actions .logout-button{background:transparent;border-color:transparent;color:#405046;padding-inline:.7rem}.header-actions .logout-button:hover{background:#f5f1e7;color:#17271c}
 @media(max-width:420px){.logo-image{height:40px}.header--scrolled .logo-image{height:36px}.donate-button{min-height:40px;padding:.55rem .7rem;font-size:.62rem}.language-text{display:none}}
+@media(max-width:360px){.header-container{padding-inline:.5rem}.header-content{height:68px}.header--scrolled .header-content{height:60px}.logo-image{height:34px}.header--scrolled .logo-image{height:32px}.header-actions{gap:.1rem}.language-toggle,.mobile-menu-button{min-width:40px;min-height:40px}.donate-button{min-height:38px;padding:.5rem .6rem;font-size:.58rem;letter-spacing:.05em}}
 @media(prefers-reduced-motion:reduce){.donate-button{transition:none}.donate-button:hover{transform:none}}
 
 /* Graceland leaf-green accent palette */
