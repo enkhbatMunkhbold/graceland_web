@@ -1,6 +1,6 @@
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CalendarDays, CloudSun, Clock3, Gift, HeartHandshake, MapPin, MessageCircle, Play } from 'lucide-react';
+import { ArrowRight, CalendarDays, CloudSun, Clock3, Gift, HeartHandshake, MapPin, MessageCircle, Pause, Play } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import UserContext from '../context/UserContext';
 import { api } from '../services/api';
@@ -53,6 +53,34 @@ function Home() {
   const [weather, setWeather] = useState(null);
   const [contentLoading, setContentLoading] = useState(true);
   const [isHeroVideoReady, setIsHeroVideoReady] = useState(false);
+  const [isHeroVideoPlaying, setIsHeroVideoPlaying] = useState(false);
+  const heroVideoRef = useRef(null);
+  const [prefersReducedMotion] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+
+  const playHeroVideo = useCallback(async () => {
+    const video = heroVideoRef.current;
+    if (!video) return;
+    video.muted = true;
+    video.defaultMuted = true;
+    try {
+      await video.play();
+      setIsHeroVideoPlaying(true);
+    } catch (error) {
+      setIsHeroVideoPlaying(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!prefersReducedMotion) playHeroVideo();
+
+    const resumeWhenVisible = () => {
+      if (!document.hidden && !prefersReducedMotion) playHeroVideo();
+    };
+    document.addEventListener('visibilitychange', resumeWhenVisible);
+    return () => document.removeEventListener('visibilitychange', resumeWhenVisible);
+  }, [playHeroVideo, prefersReducedMotion]);
 
   useEffect(() => {
     let active = true;
@@ -126,20 +154,44 @@ function Home() {
       <section className="home-hero" aria-labelledby="home-hero-title">
         <img className="home-hero-image" src={heroImage} alt="" fetchPriority="high" />
         <video
+          ref={heroVideoRef}
           className={`home-hero-video${isHeroVideoReady ? ' home-hero-video--ready' : ''}`}
           autoPlay
           muted
           loop
           playsInline
+          disablePictureInPicture
           preload="auto"
-          onLoadedMetadata={event => { event.currentTarget.playbackRate = 0.5; }}
-          onPlaying={() => setIsHeroVideoReady(true)}
+          onLoadedMetadata={event => {
+            event.currentTarget.playbackRate = 0.5;
+            if (!prefersReducedMotion) playHeroVideo();
+          }}
+          onCanPlay={() => {
+            if (!prefersReducedMotion) playHeroVideo();
+          }}
+          onPlaying={() => {
+            setIsHeroVideoReady(true);
+            setIsHeroVideoPlaying(true);
+          }}
+          onPause={() => setIsHeroVideoPlaying(false)}
           poster={heroImage}
           aria-hidden="true"
         >
           <source src={`${process.env.PUBLIC_URL}/media/magtan-duu.mp4`} type="video/mp4" />
         </video>
         <div className="home-hero-overlay" />
+        <button
+          type="button"
+          className="home-hero-media-toggle"
+          onClick={() => {
+            if (isHeroVideoPlaying) heroVideoRef.current?.pause();
+            else playHeroVideo();
+          }}
+          aria-label={t(isHeroVideoPlaying ? 'pauseBackgroundVideo' : 'playBackgroundVideo')}
+          aria-pressed={isHeroVideoPlaying}
+        >
+          {isHeroVideoPlaying ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
+        </button>
         <div className="home-shell home-hero-content">
           {user && <p className="home-user-greeting">{t('welcomeUser')}, {user.username}!</p>}
           <p className="home-eyebrow">{t('churchName')}</p>

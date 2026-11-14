@@ -32,6 +32,10 @@
   will-change: transform;
 }
 
+.ministries-hero-track--paused {
+  animation-play-state: paused;
+}
+
 .ministries-hero-photo {
   flex: 0 0 auto;
   width: auto;
@@ -74,10 +78,39 @@
   display: block;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .ministries-hero-track {
-    animation: none;
-  }
+.ministries-hero-motion-toggle {
+  position: absolute;
+  z-index: 2;
+  right: 1rem;
+  bottom: 1rem;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  background: rgba(20, 37, 26, 0.68);
+  color: #fff;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
+.ministries-hero-motion-toggle:hover {
+  background: rgba(20, 37, 26, 0.9);
+}
+
+.ministries-hero-motion-toggle:focus-visible {
+  outline: 3px solid #91cf62;
+  outline-offset: 3px;
+}
+
+.ministries-hero-motion-toggle svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.ministries-hero-motion-toggle .lucide-play {
+  fill: currentColor;
 }
 
 /* Content: white background, intro then ministry blocks */
@@ -116,6 +149,10 @@
     font-size: clamp(2rem, 11vw, 3rem);
   }
 
+  .ministries-hero-track {
+    animation-duration: 72s;
+  }
+
   .ministries-content {
     padding: 2.25rem 1rem 3rem;
   }
@@ -123,6 +160,17 @@
   .ministries-intro {
     max-width: 100%;
     margin-bottom: 2.5rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .ministries-hero-track {
+    animation-duration: 56s;
+  }
+
+  .ministries-hero-motion-toggle {
+    right: 0.75rem;
+    bottom: 0.75rem;
   }
 }
 

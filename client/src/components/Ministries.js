@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { Pause, Play } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../services/api';
 import '../styling/ministries.css';
@@ -29,13 +30,23 @@ const heroSlides = [
   { image: ministryHeroImage('ministries-fire-festival'), label: 'Галын наадам' },
 ];
 
-function MinistriesHero({ title }) {
+function MinistriesHero({ title, playLabel, pauseLabel }) {
   const titleWords = title.split(' ');
+  const [isMotionPlaying, setIsMotionPlaying] = useState(() =>
+    typeof window === 'undefined' || !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const handleChange = event => setIsMotionPlaying(!event.matches);
+    mediaQuery.addEventListener?.('change', handleChange);
+    return () => mediaQuery.removeEventListener?.('change', handleChange);
+  }, []);
 
   return (
     <section className="ministries-hero">
       <div className="ministries-hero-collage" aria-hidden="true">
-        <div className="ministries-hero-track">
+        <div className={`ministries-hero-track${isMotionPlaying ? '' : ' ministries-hero-track--paused'}`}>
           {[...heroSlides, ...heroSlides].map((slide, index) => (
             <img
               src={slide.image}
@@ -54,6 +65,15 @@ function MinistriesHero({ title }) {
         <span className="ministries-hero-line">{titleWords[0]}</span>
         <span className="ministries-hero-line">{titleWords.slice(1).join(' ')}</span>
       </h1>
+      <button
+        type="button"
+        className="ministries-hero-motion-toggle"
+        onClick={() => setIsMotionPlaying(current => !current)}
+        aria-label={isMotionPlaying ? pauseLabel : playLabel}
+        aria-pressed={isMotionPlaying}
+      >
+        {isMotionPlaying ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
+      </button>
     </section>
   );
 }
@@ -132,7 +152,7 @@ function Ministries() {
   if (loading) {
     return (
       <main className="ministries-page">
-        <MinistriesHero title={t('ourMinistries')} />
+        <MinistriesHero title={t('ourMinistries')} playLabel={t('playImageCarousel')} pauseLabel={t('pauseImageCarousel')} />
         <section className="ministries-content">
           <div className="ministries-intro">
             <p>{t('ministriesIntro1')}</p>
@@ -147,7 +167,7 @@ function Ministries() {
   if (error) {
     return (
       <main className="ministries-page">
-        <MinistriesHero title={t('ourMinistries')} />
+        <MinistriesHero title={t('ourMinistries')} playLabel={t('playImageCarousel')} pauseLabel={t('pauseImageCarousel')} />
         <section className="ministries-content">
           <div className="ministries-intro">
             <p>{t('ministriesIntro1')}</p>
@@ -161,7 +181,7 @@ function Ministries() {
 
   return (
     <main className="ministries-page">
-      <MinistriesHero title={t('ourMinistries')} />
+      <MinistriesHero title={t('ourMinistries')} playLabel={t('playImageCarousel')} pauseLabel={t('pauseImageCarousel')} />
 
       <section className="ministries-content">
         <div className="ministries-intro">
