@@ -58,11 +58,8 @@ HOME_ANNOUNCEMENT_KEY = 'home_announcement'
 HOME_ANNOUNCEMENT_DEFAULT = {
     'enabled': True,
     'type': 'text',
-    'eyebrow': 'Announcement',
     'title': 'Welcome to Graceland',
     'body': 'Watch this space for church news, special services, and upcoming events.',
-    'linkUrl': '/events',
-    'linkLabel': 'See upcoming events',
     'mediaUrl': '',
     'posterUrl': '',
     'alt': '',
@@ -77,7 +74,10 @@ def _home_announcement_value():
         saved = json.loads(setting.value)
     except (TypeError, json.JSONDecodeError):
         return HOME_ANNOUNCEMENT_DEFAULT.copy()
-    return {**HOME_ANNOUNCEMENT_DEFAULT, **saved}
+    try:
+        return _validate_home_announcement({**HOME_ANNOUNCEMENT_DEFAULT, **saved})
+    except ValueError:
+        return HOME_ANNOUNCEMENT_DEFAULT.copy()
 
 
 def _validate_home_announcement(data):
@@ -93,11 +93,8 @@ def _validate_home_announcement(data):
     result = {
         'enabled': bool(data.get('enabled', True)),
         'type': announcement_type,
-        'eyebrow': text_value('eyebrow', 80),
         'title': text_value('title', 255),
         'body': text_value('body', 5000),
-        'linkUrl': text_value('linkUrl', 2000),
-        'linkLabel': text_value('linkLabel', 120),
         'mediaUrl': text_value('mediaUrl', 2000),
         'posterUrl': text_value('posterUrl', 2000),
         'alt': text_value('alt', 500),
@@ -1670,8 +1667,8 @@ class HomeAnnouncement(Resource):
         return _home_announcement_value(), 200
 
     def put(self):
-        if not _require_admin_or_staff():
-            return {'error': 'Staff access required'}, 403
+        if not _get_current_user():
+            return {'error': 'Login required'}, 401
         try:
             announcement = _validate_home_announcement(request.get_json(silent=True))
         except ValueError as error:
@@ -1691,8 +1688,8 @@ class HomeAnnouncement(Resource):
 
 class HomeAnnouncementUpload(Resource):
     def post(self):
-        if not _require_admin_or_staff():
-            return {'error': 'Staff access required'}, 403
+        if not _get_current_user():
+            return {'error': 'Login required'}, 401
         file = request.files.get('file')
         if not file or not file.filename or '.' not in file.filename:
             return {'error': 'Choose an image or video file'}, 400

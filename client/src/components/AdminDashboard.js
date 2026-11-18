@@ -138,10 +138,6 @@ function AdminDashboard() {
                       <option value="video">Video</option>
                     </select>
                   </label>
-                  <label>
-                    <span>Small heading</span>
-                    <input name="eyebrow" value={announcement.eyebrow} onChange={changeAnnouncement} maxLength="80" />
-                  </label>
                   <label className="admin-field-wide">
                     <span>Title</span>
                     <input name="title" value={announcement.title} onChange={changeAnnouncement} maxLength="255" />
@@ -167,14 +163,6 @@ function AdminDashboard() {
                       </label>
                     </>
                   )}
-                  <label>
-                    <span>Link label</span>
-                    <input name="linkLabel" value={announcement.linkLabel} onChange={changeAnnouncement} maxLength="120" />
-                  </label>
-                  <label>
-                    <span>Link destination</span>
-                    <input name="linkUrl" value={announcement.linkUrl} onChange={changeAnnouncement} placeholder="/events or https://..." />
-                  </label>
                   {announcement.type === 'image' && (
                     <label className="admin-field-wide">
                       <span>Image description</span>

@@ -22,11 +22,8 @@ const WEATHER_API_URL = 'https://api.open-meteo.com/v1/forecast?latitude=37.9262
 const HOME_ANNOUNCEMENT = {
   enabled: true,
   type: 'text',
-  eyebrow: 'Announcement',
   title: 'Welcome to Graceland',
   body: 'Watch this space for church news, special services, and upcoming events.',
-  linkUrl: '/events',
-  linkLabel: 'See upcoming events',
   mediaUrl: '',
   posterUrl: '',
   alt: '',
@@ -78,23 +75,15 @@ function HomeAnnouncement({ announcement }) {
         />
       )}
       <div className="home-announcement-copy">
-        {announcement.eyebrow && <p>{announcement.eyebrow}</p>}
         {announcement.title && <h2>{announcement.title}</h2>}
         {announcement.body && <div>{announcement.body}</div>}
-        {announcement.linkUrl && announcement.linkLabel && <span>{announcement.linkLabel} <ArrowRight aria-hidden="true" /></span>}
       </div>
     </>
   );
 
   return (
-    <aside className={`home-announcement home-announcement--${announcement.type || 'text'}`} aria-label={announcement.eyebrow || 'Announcement'}>
-      {announcement.linkUrl && announcement.type !== 'video' ? (
-        announcement.linkUrl.startsWith('/') ? (
-          <Link className="home-announcement-inner" to={announcement.linkUrl}>{content}</Link>
-        ) : (
-          <a className="home-announcement-inner" href={announcement.linkUrl} target="_blank" rel="noopener noreferrer">{content}</a>
-        )
-      ) : <div className="home-announcement-inner">{content}</div>}
+    <aside className={`home-announcement home-announcement--${announcement.type || 'text'}`} aria-label="Announcement">
+      <div className="home-announcement-inner">{content}</div>
     </aside>
   );
 }
