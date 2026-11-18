@@ -95,23 +95,43 @@ function HomeAnnouncement({ announcement, side = 'left' }) {
   );
 }
 
-function MemberAnnouncements({ announcements, language }) {
-  if (!announcements.length) return null;
+function PrayerWall({ prayers, language }) {
+  const mn = language === 'mn';
   return (
-    <aside className="home-member-announcements" aria-label="Church member announcements">
-      <div className="home-member-announcements-inner">
-        {announcements.map(item => (
-          <article className="home-member-announcement" key={item.id}>
-            <p className="home-member-announcement-meta">
-              <span>{formatDate(item.publish_date, language)}</span>
-              <strong>{item.author_name}</strong>
-            </p>
-            {item.title && <h2>{item.title}</h2>}
-            <div><TextWithLinks>{item.content}</TextWithLinks></div>
-          </article>
-        ))}
-      </div>
+    <aside className="home-prayer-wall" aria-label={mn ? 'Залбирлууд' : 'Prayers'}>
+      <h2 className="home-prayer-wall-title">{mn ? 'Залбирлууд' : 'Prayers'}</h2>
+      <ul className="home-prayer-wall-list">
+        {prayers.length ? prayers.map(item => (
+          <li className="home-prayer-wall-item" key={`${item.number}-${item.date}`}>
+            <div>{item.request_text}</div>
+          </li>
+        )) : <li className="home-prayer-wall-empty">{mn ? 'Одоогоор залбирал алга.' : 'No public prayers yet.'}</li>}
+      </ul>
     </aside>
+  );
+}
+
+function CommunityAnnouncements({ announcements, language }) {
+  const mn = language === 'mn';
+  return (
+    <section className="home-section home-community-announcements" aria-labelledby="community-announcements-title">
+      <div className="home-shell">
+        <div className="home-community-announcements-heading">
+          <div><p className="home-kicker">{mn ? 'Олон нийтийн мэдээлэл' : 'Community board'}</p><h2 id="community-announcements-title">{mn ? 'Зарууд' : 'Announcements'}</h2></div>
+          <Link className="home-button home-button--outline-dark" to="/announcements/new">{mn ? 'Зар оруулах' : 'Insert announcement'}</Link>
+        </div>
+        <div className="home-community-announcements-list">
+          {announcements.length ? announcements.map(item => (
+            <article className="home-community-announcement" key={item.id}>
+              <strong>{mn && item.author_name === 'Anonymous' ? 'Нэргүй' : item.author_name}</strong>
+              {item.title && <h3>{item.title}</h3>}
+              <div><TextWithLinks>{item.content}</TextWithLinks></div>
+              <time dateTime={item.publish_date}>{formatDate(item.publish_date, language)}</time>
+            </article>
+          )) : <p>{mn ? 'Одоогоор зар алга.' : 'No announcements yet.'}</p>}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -124,6 +144,7 @@ function Home() {
   const [contentLoading, setContentLoading] = useState(true);
   const [announcement, setAnnouncement] = useState(HOME_ANNOUNCEMENT);
   const [memberAnnouncements, setMemberAnnouncements] = useState([]);
+  const [prayers, setPrayers] = useState([]);
   const [isHeroVideoReady, setIsHeroVideoReady] = useState(false);
   const [isHeroVideoPlaying, setIsHeroVideoPlaying] = useState(false);
   const heroVideoRef = useRef(null);
@@ -152,6 +173,9 @@ function Home() {
     api.getMemberAnnouncements()
       .then(data => active && setMemberAnnouncements(data))
       .catch(error => console.error('Unable to load member announcements:', error));
+    api.getPrayerWall()
+      .then(data => active && setPrayers(data.slice(0, 12)))
+      .catch(error => console.error('Unable to load prayer wall:', error));
     return () => { active = false; };
   }, []);
 
@@ -288,7 +312,7 @@ function Home() {
           </div>
         </div>
         <HomeAnnouncement announcement={announcement} side="left" />
-        <MemberAnnouncements announcements={memberAnnouncements} language={language} />
+        <PrayerWall prayers={prayers} language={language} />
         <div id="plan-your-visit" className="home-hero-visit">
           <div className="home-shell home-hero-visit-grid">
             <div className="home-hero-visit-item">
@@ -341,6 +365,8 @@ function Home() {
           </div>
         </div>
       </section>
+
+      <CommunityAnnouncements announcements={memberAnnouncements} language={language} />
 
       <section className="home-section home-highlights-section">
         <div className="home-shell home-highlights-grid">

@@ -19,6 +19,19 @@ export const api = {
     return response.json();
   },
 
+  createMemberAnnouncement: async data => {
+    const response = await fetch(`${API_BASE_URL}/announcements`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to post the announcement');
+    }
+    return response.json();
+  },
+
   updateHomeAnnouncement: async data => {
     const response = await fetch(`${API_BASE_URL}/home-announcement`, {
       method: 'PUT',
@@ -342,6 +355,28 @@ export const api = {
   getPrayerWall: async () => {
     const response = await fetch(`${API_BASE_URL}/prayer-wall`);
     if (!response.ok) throw new Error('Failed to load prayer wall');
+    return response.json();
+  },
+
+  updatePublicPrayerRequest: async (id, requestText) => {
+    const response = await fetch(`${API_BASE_URL}/prayer-requests/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ request_text: requestText }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to update prayer request');
+    }
+    return response.json();
+  },
+
+  deletePublicPrayerRequest: async id => {
+    const response = await fetch(`${API_BASE_URL}/prayer-requests/${id}`, { method: 'DELETE' });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to delete prayer request');
+    }
     return response.json();
   },
 

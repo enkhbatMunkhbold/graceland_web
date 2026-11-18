@@ -1355,6 +1355,23 @@ class PrayerRequests(Resource):
 
         try:
             db.session.add(prayer_request)
+            db.session.flush()
+            if publication_consent:
+                older_public_requests = (
+                    models.PrayerRequest.query
+                    .filter(
+                        models.PrayerRequest.status == 'approved_public',
+                        models.PrayerRequest.is_public.is_(True),
+                    )
+                    .order_by(
+                        models.PrayerRequest.date_submitted.desc(),
+                        models.PrayerRequest.id.desc(),
+                    )
+                    .offset(20)
+                    .all()
+                )
+                for older_request in older_public_requests:
+                    db.session.delete(older_request)
             db.session.commit()
             return {'message': 'Prayer request submitted successfully'}, 201
         except Exception:
@@ -1363,6 +1380,40 @@ class PrayerRequests(Resource):
 
 
 api.add_resource(PrayerRequests, '/prayer-requests')
+
+
+class PublicPrayerRequestByID(Resource):
+    def _public_request(self, prayer_request_id):
+        return models.PrayerRequest.query.filter_by(
+            id=prayer_request_id,
+            status='approved_public',
+            is_public=True,
+        ).first()
+
+    def patch(self, prayer_request_id):
+        prayer_request = self._public_request(prayer_request_id)
+        if not prayer_request:
+            return {'error': 'Public prayer request not found'}, 404
+        data = request.get_json(silent=True) or {}
+        request_text = str(data.get('request_text', '') or '').strip()
+        if not request_text:
+            return {'error': 'Prayer request is required'}, 400
+        if len(request_text) > 2000:
+            return {'error': 'Prayer request must be 2,000 characters or fewer'}, 400
+        prayer_request.request_text = request_text
+        db.session.commit()
+        return {'id': prayer_request.id, 'request_text': request_text}, 200
+
+    def delete(self, prayer_request_id):
+        prayer_request = self._public_request(prayer_request_id)
+        if not prayer_request:
+            return {'error': 'Public prayer request not found'}, 404
+        db.session.delete(prayer_request)
+        db.session.commit()
+        return {'message': 'Prayer request deleted'}, 200
+
+
+api.add_resource(PublicPrayerRequestByID, '/prayer-requests/<int:prayer_request_id>')
 
 
 class PrayerWall(Resource):
@@ -1378,11 +1429,12 @@ class PrayerWall(Resource):
                     models.PrayerRequest.date_submitted.desc(),
                     models.PrayerRequest.id.desc(),
                 )
-                .limit(30)
+                .limit(20)
                 .all()
             )
             return [
                 {
+                    'id': prayer_request.id,
                     'number': index,
                     'name': prayer_request.name or 'Anonymous',
                     'request_text': prayer_request.request_text,
@@ -1677,21 +1729,65 @@ class MemberAnnouncements(Resource):
                 models.Announcement.expire_date.is_(None),
                 models.Announcement.expire_date > now,
             ))
-            .order_by(models.Announcement.publish_date.desc())
-            .limit(4)
+            .order_by(
+                models.Announcement.publish_date.desc(),
+                models.Announcement.id.desc(),
+            )
+            .limit(20)
             .all()
         )
         return [{
             'id': item.id,
-            'title': item.title,
+            'title': item.title if item.author_id else '',
             'content': item.content or '',
             'publish_date': item.publish_date.isoformat() if item.publish_date else None,
             'author_name': (
                 f'{item.author.member.first_name} {item.author.member.last_name}'
                 if item.author and item.author.member
-                else item.author.username if item.author else 'Church member'
+                else item.author.username if item.author else item.title or 'Anonymous'
             ),
         } for item in announcements], 200
+
+    def post(self):
+        data = request.get_json(silent=True) or {}
+        name = str(data.get('name', '') or '').strip()[:120] or 'Anonymous'
+        content = str(data.get('content', '') or '').strip()
+        if not content:
+            return {'error': 'Announcement is required'}, 400
+        if len(content) > 5000:
+            return {'error': 'Announcement must be 5,000 characters or fewer'}, 400
+
+        announcement = models.Announcement(
+            title=name,
+            content=content,
+            author_id=None,
+            publish_date=datetime.utcnow(),
+        )
+        try:
+            db.session.add(announcement)
+            db.session.flush()
+            older_announcements = (
+                models.Announcement.query
+                .order_by(
+                    models.Announcement.publish_date.desc(),
+                    models.Announcement.id.desc(),
+                )
+                .offset(20)
+                .all()
+            )
+            for older_announcement in older_announcements:
+                db.session.delete(older_announcement)
+            db.session.commit()
+            return {
+                'id': announcement.id,
+                'title': '',
+                'content': announcement.content,
+                'publish_date': announcement.publish_date.isoformat(),
+                'author_name': name,
+            }, 201
+        except Exception as error:
+            db.session.rollback()
+            return {'error': str(error)}, 500
 
 
 class HomeAnnouncement(Resource):

@@ -22,6 +22,7 @@ import Login from './components/Login';
 import SignUp from './components/SignUp';
 import Prayer from './components/Prayer';
 import AdminDashboard from './components/AdminDashboard';
+import AnnouncementForm from './components/AnnouncementForm';
 import SiteTextEditor from './components/SiteTextEditor';
 import './styling/global.css';
 
@@ -66,6 +67,7 @@ function AppContent() {
             <Route path="/ministries/marriage" element={<Marriage />} />
             <Route path="/sermons" element={<Sermons />} />
             <Route path="/prayer" element={<Prayer />} />
+            <Route path="/announcements/new" element={<AnnouncementForm />} />
             <Route
               path="/admin"
               element={<AdminDashboard />}
@@ -90,6 +92,7 @@ function AppContent() {
             <Route path="/ministries/marriage" element={<Marriage />} />
             <Route path="/sermons" element={<Sermons />} />
             <Route path="/prayer" element={<Prayer />} />
+            <Route path="/announcements/new" element={<AnnouncementForm />} />
             <Route path="/login" element={<Login />} />
             <Route path="/SignUp" element={<SignUp />} />
             <Route path="*" element={<Navigate to="/home" replace />} />

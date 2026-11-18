@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { HeartHandshake } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../services/api';
@@ -17,6 +17,12 @@ function Prayer() {
   const [submitting, setSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
   const [submitError, setSubmitError] = useState(false);
+  const [formHeight, setFormHeight] = useState(0);
+  const [deletingId, setDeletingId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText] = useState('');
+  const [savingId, setSavingId] = useState(null);
+  const formCardRef = useRef(null);
 
   const loadPrayerWall = useCallback(async () => {
     setWallLoading(true);
@@ -33,6 +39,16 @@ function Prayer() {
   useEffect(() => {
     loadPrayerWall();
   }, [loadPrayerWall]);
+
+  useEffect(() => {
+    const card = formCardRef.current;
+    if (!card) return undefined;
+    const updateHeight = () => setFormHeight(Math.ceil(card.getBoundingClientRect().height));
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(card);
+    return () => observer.disconnect();
+  }, []);
 
   const handleSubmit = async event => {
     event.preventDefault();
@@ -83,6 +99,36 @@ function Prayer() {
     );
   };
 
+  const deleteWallPrayer = async id => {
+    const message = language === 'mn' ? 'Энэ залбирлыг устгах уу?' : 'Delete this prayer request?';
+    if (!window.confirm(message)) return;
+    setDeletingId(id);
+    try {
+      await api.deletePublicPrayerRequest(id);
+      setWallRequests(current => current.filter(item => item.id !== id));
+    } catch (error) {
+      setWallError(language === 'mn' ? 'Залбирлыг устгаж чадсангүй.' : 'Unable to delete the prayer request.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const saveWallPrayer = async id => {
+    const nextText = editText.trim();
+    if (!nextText) return;
+    setSavingId(id);
+    try {
+      await api.updatePublicPrayerRequest(id, nextText);
+      setWallRequests(current => current.map(item => item.id === id ? { ...item, request_text: nextText } : item));
+      setEditingId(null);
+      setEditText('');
+    } catch (error) {
+      setWallError(language === 'mn' ? 'Залбирлыг засаж чадсангүй.' : 'Unable to update the prayer request.');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   return (
     <main className="prayer-page">
       <section className="prayer-hero">
@@ -94,8 +140,8 @@ function Prayer() {
       </section>
 
       <section className="prayer-section">
-        <div className="prayer-shell prayer-layout">
-          <article className="prayer-form-card">
+        <div className="prayer-shell prayer-layout" style={formHeight ? { '--prayer-form-height': `${formHeight}px` } : undefined}>
+          <article ref={formCardRef} className="prayer-form-card">
             <HeartHandshake aria-hidden="true" />
             <h2>{t('sharePrayerRequest')}</h2>
             <p>{t('prayerFormIntro')}</p>
@@ -173,8 +219,28 @@ function Prayer() {
                       #{item.number}
                     </span>
                     <h3>{item.name || t('anonymous')}</h3>
-                    <p>{item.request_text}</p>
+                    {editingId === item.id ? (
+                      <textarea
+                        className="prayer-wall-edit-text"
+                        value={editText}
+                        onChange={event => setEditText(event.target.value)}
+                        maxLength="2000"
+                        rows="5"
+                        autoFocus
+                      />
+                    ) : <p>{item.request_text}</p>}
                     <time dateTime={item.date || undefined}>{formatDate(item.date)}</time>
+                    <div className="prayer-wall-card-actions">
+                      {editingId === item.id ? (
+                        <>
+                          <button type="button" disabled={savingId === item.id || !editText.trim()} onClick={() => saveWallPrayer(item.id)}>{savingId === item.id ? (language === 'mn' ? 'Хадгалж байна…' : 'Saving…') : (language === 'mn' ? 'Хадгалах' : 'Save')}</button>
+                          <button type="button" onClick={() => { setEditingId(null); setEditText(''); }}>{language === 'mn' ? 'Болих' : 'Cancel'}</button>
+                        </>
+                      ) : (
+                        <button type="button" onClick={() => { setEditingId(item.id); setEditText(item.request_text); }}>{language === 'mn' ? 'Засах' : 'Edit'}</button>
+                      )}
+                      <button type="button" disabled={deletingId === item.id} onClick={() => deleteWallPrayer(item.id)}>{deletingId === item.id ? (language === 'mn' ? 'Устгаж байна…' : 'Deleting…') : (language === 'mn' ? 'Устгах' : 'Delete')}</button>
+                    </div>
                   </article>
                 ))}
               </div>
