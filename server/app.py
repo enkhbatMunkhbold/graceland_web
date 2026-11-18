@@ -13,6 +13,7 @@ from flask import session, request, send_from_directory
 from flask_restful import Resource
 from flask_migrate import Migrate
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import or_
 from marshmallow.exceptions import ValidationError
 from datetime import datetime, date, timedelta
 from urllib.request import urlopen, Request
@@ -58,8 +59,8 @@ HOME_ANNOUNCEMENT_KEY = 'home_announcement'
 HOME_ANNOUNCEMENT_DEFAULT = {
     'enabled': True,
     'type': 'text',
-    'title': 'Welcome to Graceland',
-    'body': 'Watch this space for church news, special services, and upcoming events.',
+    'title': '',
+    'body': '',
     'mediaUrl': '',
     'posterUrl': '',
     'alt': '',
@@ -74,6 +75,11 @@ def _home_announcement_value():
         saved = json.loads(setting.value)
     except (TypeError, json.JSONDecodeError):
         return HOME_ANNOUNCEMENT_DEFAULT.copy()
+    if (
+        saved.get('title') == 'Welcome to Graceland'
+        and saved.get('body') == 'Watch this space for church news, special services, and upcoming events.'
+    ):
+        saved = {**saved, 'title': '', 'body': ''}
     try:
         return _validate_home_announcement({**HOME_ANNOUNCEMENT_DEFAULT, **saved})
     except ValueError:
@@ -1662,6 +1668,32 @@ class AnonymousFeedback(Resource):
 api.add_resource(AnonymousFeedback, '/feedback')
 
 
+class MemberAnnouncements(Resource):
+    def get(self):
+        now = datetime.utcnow()
+        announcements = (
+            models.Announcement.query
+            .filter(or_(
+                models.Announcement.expire_date.is_(None),
+                models.Announcement.expire_date > now,
+            ))
+            .order_by(models.Announcement.publish_date.desc())
+            .limit(4)
+            .all()
+        )
+        return [{
+            'id': item.id,
+            'title': item.title,
+            'content': item.content or '',
+            'publish_date': item.publish_date.isoformat() if item.publish_date else None,
+            'author_name': (
+                f'{item.author.member.first_name} {item.author.member.last_name}'
+                if item.author and item.author.member
+                else item.author.username if item.author else 'Church member'
+            ),
+        } for item in announcements], 200
+
+
 class HomeAnnouncement(Resource):
     def get(self):
         return _home_announcement_value(), 200
@@ -1706,6 +1738,7 @@ class HomeAnnouncementUpload(Resource):
         return {'url': url, 'filename': file.filename}, 201
 
 
+api.add_resource(MemberAnnouncements, '/announcements')
 api.add_resource(HomeAnnouncement, '/home-announcement')
 api.add_resource(HomeAnnouncementUpload, '/home-announcement/upload')
 

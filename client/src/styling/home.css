@@ -16,7 +16,7 @@
 .home-hero-visit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home-hero-visit-item{min-width:0}.home-hero-visit-item span{overflow-wrap:anywhere}
 @media(max-width:699px){.home-hero{min-height:950px;padding-bottom:320px}.home-hero-visit-item{padding:.85rem 0}.home-hero-visit-item:nth-child(even){border-left:1px solid rgba(255,255,255,.12);padding-left:1rem}}
 @media(min-width:700px) and (max-width:999px){.home-hero{padding-bottom:180px}.home-hero-visit-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.home-hero-visit-item{padding:1.15rem}.home-hero-visit-item:nth-child(2),.home-hero-visit-item:nth-child(3),.home-hero-visit-item:nth-child(5){border-left:1px solid rgba(255,255,255,.12)}.home-hero-visit-item:nth-child(n+4){border-top:1px solid rgba(255,255,255,.12)}.home-hero-visit-item:last-child{grid-column:auto}}
-@media(min-width:1000px){.home-hero{padding-bottom:104px}.home-hero-visit-grid{grid-template-columns:repeat(6,minmax(0,1fr))}.home-hero-visit-item{padding:1.35rem 1rem}.home-hero-visit-item+.home-hero-visit-item{border-left:1px solid rgba(255,255,255,.12)}}
+@media(min-width:1000px){.home-hero{padding-bottom:104px}.home-hero-visit-grid{grid-template-columns:repeat(6,minmax(0,1fr));padding-left:1rem}.home-hero-visit-item{padding:1.35rem 1rem}.home-hero-visit-item+.home-hero-visit-item{border-left:1px solid rgba(255,255,255,.12)}}
 
 /* Compact contact, prayer, and giving cards */
 .home-care-section{padding-block:clamp(2.5rem,5vw,4rem);background:#f5f1e7}.home-care-grid{display:grid;gap:1rem}.home-care-card{min-height:310px;justify-content:flex-start;padding:clamp(1.5rem,4vw,2.25rem);border:1px solid rgba(38,59,44,.12);border-radius:12px;box-shadow:0 12px 35px rgba(20,37,26,.07)}.home-care-card>svg{width:1.8rem;height:1.8rem;margin-bottom:1.35rem}.home-care-card h2{font-size:clamp(1.65rem,4vw,2.15rem)}.home-care-card>p:not(.home-kicker){margin:1rem 0 1.5rem;font-size:.94rem;line-height:1.6}.home-care-card .home-button{width:100%;margin-top:auto;border-radius:7px}.home-care-card--contact{background:#fffdf8;color:#14251a}.home-care-card--contact>svg,.home-care-card--contact .home-kicker{color:#477d2e}.home-care-card--prayer{background:#263b2c}.home-care-card--giving{background:#dff1d2}.home-care-card--giving>svg,.home-care-card--giving .home-kicker{color:#477d2e}.home-button--care{border-color:#72bd4b;background:#91cf62;color:#14251a}.home-button--care:hover{background:#b8e394;color:#14251a}
@@ -31,13 +31,19 @@
 @media(max-width:699px){.home-hero-video{inset:0;width:100%;height:100%;aspect-ratio:auto;object-fit:cover;object-position:center center}.home-hero-media-toggle{top:.75rem;right:.75rem}}
 @media(prefers-reduced-motion:reduce){.home-hero-video{transition:none}}
 
-/* Flexible home-hero announcement slot. */
-.home-announcement{position:absolute;z-index:2;overflow:hidden;background:rgba(20,37,26,.9);color:#fff;backdrop-filter:blur(12px)}
+/* Matching home-hero announcement rails: official church news on the left and member news on the right. */
+.home-announcement{position:absolute;z-index:2;overflow:hidden;box-sizing:border-box;border:1px solid rgba(255,255,255,.9);background:rgba(20,37,26,.94);color:#fff;backdrop-filter:blur(12px)}
 .home-announcement-inner{width:100%;height:100%;display:flex;flex-direction:column;color:inherit;text-decoration:none}
 .home-announcement-media{width:100%;height:100%;display:block;object-fit:cover}
 .home-announcement-copy{display:flex;flex:1;flex-direction:column;justify-content:flex-end;padding:clamp(1.25rem,2vw,2rem);background:linear-gradient(180deg,rgba(20,37,26,.18),rgba(20,37,26,.96))}
 .home-announcement--image .home-announcement-copy{position:absolute;inset:auto 0 0}.home-announcement--video .home-announcement-media{height:52%;flex:0 0 52%}.home-announcement--video .home-announcement-copy{justify-content:center}
 .home-announcement-copy h2{margin:0;font-size:clamp(1.4rem,2.3vw,2.25rem);line-height:1.03;letter-spacing:-.035em}
 .home-announcement-copy div{margin-top:.85rem;color:rgba(255,255,255,.76);font-size:.9rem;line-height:1.55}
-@media(min-width:1000px){.home-hero-content{position:absolute;top:calc((100% - 104px)/2);right:calc(20vw + 2rem);left:max(2rem,calc((100% - 1180px)/2));width:auto;margin:0;transform:translateY(-50%)}.home-hero-title{max-width:760px}.home-announcement{top:0;right:0;bottom:104px;width:20vw}.home-hero-media-toggle{right:calc(20vw + 1rem)}}
-@media(max-width:999px){.home-announcement{display:none}}
+.home-announcement-copy a,.home-member-announcement a{color:#b8e394;font-weight:700;overflow-wrap:anywhere}
+.home-member-announcements{position:absolute;z-index:2;overflow:hidden;box-sizing:border-box;border:1px solid rgba(255,255,255,.9);background:transparent;color:#fff}
+.home-member-announcements-inner{height:100%;overflow-y:auto;padding:clamp(1rem,1.6vw,1.5rem)}
+.home-member-announcement{padding:1rem 0;border-bottom:1px solid rgba(255,255,255,.16)}.home-member-announcement:first-child{padding-top:0}.home-member-announcement:last-child{border-bottom:0}
+.home-member-announcement-meta{display:flex;flex-direction:column;gap:.18rem;margin:0 0 .6rem;color:rgba(255,255,255,.78);font-size:.7rem}.home-member-announcement-meta strong{color:#fff;font-size:.75rem}
+.home-member-announcement h2{margin:0 0 .45rem;color:#fff;font-size:clamp(1rem,1.4vw,1.3rem);line-height:1.15}.home-member-announcement>div{color:#fff;font-size:.83rem;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;text-shadow:0 1px 3px rgba(0,0,0,.75)}
+@media(min-width:1000px){.home-hero-content{position:absolute;top:calc((100% - 104px)/2);right:calc(20vw + 2rem);left:calc(20vw + 2rem);width:auto;margin:0;transform:translateY(-50%)}.home-hero-title{max-width:760px}.home-announcement,.home-member-announcements{top:0;bottom:1rem;width:20vw}.home-announcement--left{top:1rem;left:0}.home-member-announcements{right:0}.home-hero-media-toggle{right:calc(20vw + 1rem)}}
+@media(max-width:999px){.home-announcement,.home-member-announcements{display:none}}

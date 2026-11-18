@@ -17,13 +17,13 @@ const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURICom
 const WEATHER_URL = 'https://weather.com/en-MH/weather/today/l/Walnut%2BCreek%2BCA%2BUnited%2BStates?canonicalCityId=68b6dc922062f6664354084b9d9807b0f335a2a92ddb85ba01b164546cdd2068';
 const WEATHER_API_URL = 'https://api.open-meteo.com/v1/forecast?latitude=37.92626&longitude=-122.07590&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=America%2FLos_Angeles&forecast_days=1';
 
-// Staff announcement content. Use type "text", "image", or "video". Images can
+// Official staff announcement content. Use type "text", "image", or "video". Images can
 // also be used as posters; URLs may point to /media files or hosted content.
 const HOME_ANNOUNCEMENT = {
   enabled: true,
   type: 'text',
-  title: 'Welcome to Graceland',
-  body: 'Watch this space for church news, special services, and upcoming events.',
+  title: '',
+  body: '',
   mediaUrl: '',
   posterUrl: '',
   alt: '',
@@ -33,6 +33,13 @@ function formatDate(value, language) {
   return new Date(value).toLocaleDateString(language === 'mn' ? 'mn-MN' : 'en-US', {
     month: 'long', day: 'numeric', year: 'numeric',
   });
+}
+
+function TextWithLinks({ children }) {
+  const parts = String(children || '').split(/(https?:\/\/[^\s]+)/g);
+  return parts.map((part, index) => part.startsWith('http://') || part.startsWith('https://') ? (
+    <a key={`${part}-${index}`} href={part} target="_blank" rel="noopener noreferrer">{part}</a>
+  ) : part);
 }
 
 function getSermonWatchUrl(sermon) {
@@ -56,7 +63,7 @@ function getWeatherCondition(code, t) {
   return t('weatherConditions');
 }
 
-function HomeAnnouncement({ announcement }) {
+function HomeAnnouncement({ announcement, side = 'left' }) {
   if (!announcement?.enabled) return null;
 
   const content = (
@@ -76,14 +83,34 @@ function HomeAnnouncement({ announcement }) {
       )}
       <div className="home-announcement-copy">
         {announcement.title && <h2>{announcement.title}</h2>}
-        {announcement.body && <div>{announcement.body}</div>}
+        {announcement.body && <div><TextWithLinks>{announcement.body}</TextWithLinks></div>}
       </div>
     </>
   );
 
   return (
-    <aside className={`home-announcement home-announcement--${announcement.type || 'text'}`} aria-label="Announcement">
+    <aside className={`home-announcement home-announcement--${side} home-announcement--${announcement.type || 'text'}`} aria-label="Official church announcement">
       <div className="home-announcement-inner">{content}</div>
+    </aside>
+  );
+}
+
+function MemberAnnouncements({ announcements, language }) {
+  if (!announcements.length) return null;
+  return (
+    <aside className="home-member-announcements" aria-label="Church member announcements">
+      <div className="home-member-announcements-inner">
+        {announcements.map(item => (
+          <article className="home-member-announcement" key={item.id}>
+            <p className="home-member-announcement-meta">
+              <span>{formatDate(item.publish_date, language)}</span>
+              <strong>{item.author_name}</strong>
+            </p>
+            {item.title && <h2>{item.title}</h2>}
+            <div><TextWithLinks>{item.content}</TextWithLinks></div>
+          </article>
+        ))}
+      </div>
     </aside>
   );
 }
@@ -96,6 +123,7 @@ function Home() {
   const [weather, setWeather] = useState(null);
   const [contentLoading, setContentLoading] = useState(true);
   const [announcement, setAnnouncement] = useState(HOME_ANNOUNCEMENT);
+  const [memberAnnouncements, setMemberAnnouncements] = useState([]);
   const [isHeroVideoReady, setIsHeroVideoReady] = useState(false);
   const [isHeroVideoPlaying, setIsHeroVideoPlaying] = useState(false);
   const heroVideoRef = useRef(null);
@@ -121,6 +149,9 @@ function Home() {
     api.getHomeAnnouncement()
       .then(data => active && setAnnouncement(data))
       .catch(error => console.error('Unable to load home announcement:', error));
+    api.getMemberAnnouncements()
+      .then(data => active && setMemberAnnouncements(data))
+      .catch(error => console.error('Unable to load member announcements:', error));
     return () => { active = false; };
   }, []);
 
@@ -256,7 +287,8 @@ function Home() {
             </Link>
           </div>
         </div>
-        <HomeAnnouncement announcement={announcement} />
+        <HomeAnnouncement announcement={announcement} side="left" />
+        <MemberAnnouncements announcements={memberAnnouncements} language={language} />
         <div id="plan-your-visit" className="home-hero-visit">
           <div className="home-shell home-hero-visit-grid">
             <div className="home-hero-visit-item">

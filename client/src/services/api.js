@@ -13,6 +13,12 @@ export const api = {
     return response.json();
   },
 
+  getMemberAnnouncements: async () => {
+    const response = await fetch(`${API_BASE_URL}/announcements`, { cache: 'no-store' });
+    if (!response.ok) throw new Error('Failed to load member announcements');
+    return response.json();
+  },
+
   updateHomeAnnouncement: async data => {
     const response = await fetch(`${API_BASE_URL}/home-announcement`, {
       method: 'PUT',

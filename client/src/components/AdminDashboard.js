@@ -50,13 +50,25 @@ function AdminDashboard() {
     setAnnouncementMessage('');
   };
 
+  const chooseAnnouncementFile = file => {
+    if (!file) return;
+    const type = file.type.startsWith('video/') ? 'video' : file.type.startsWith('image/') ? 'image' : null;
+    if (!type) {
+      setAnnouncementMessage('Please choose an image or video file.');
+      return;
+    }
+    setAnnouncementFile(file);
+    setAnnouncement(current => ({ ...current, type }));
+    setAnnouncementMessage('');
+  };
+
   const saveAnnouncement = async event => {
     event.preventDefault();
     const form = event.currentTarget;
     setAnnouncementBusy(true);
     setAnnouncementMessage('');
     try {
-      let next = { ...announcement };
+      let next = { ...announcement, title: '' };
       if (announcementFile) {
         const uploaded = await api.uploadHomeAnnouncementFile(announcementFile);
         next.mediaUrl = uploaded.url;
@@ -120,8 +132,8 @@ function AdminDashboard() {
           <section className="admin-announcement-editor" aria-labelledby="announcement-editor-title">
             <div className="admin-section-heading">
               <p>Home page</p>
-              <h2 id="announcement-editor-title">Hero announcement</h2>
-              <span>Replace the announcement shown to the right of the home-page title.</span>
+              <h2 id="announcement-editor-title">Official church announcement</h2>
+              <span>Publish the official announcement shown on the far left of the home page.</span>
             </div>
             {announcement ? (
               <form className="admin-announcement-form" onSubmit={saveAnnouncement}>
@@ -130,51 +142,35 @@ function AdminDashboard() {
                   <span>Show announcement on the home page</span>
                 </label>
                 <div className="admin-form-grid">
-                  <label>
-                    <span>Content type</span>
-                    <select name="type" value={announcement.type} onChange={changeAnnouncement}>
-                      <option value="text">Text</option>
-                      <option value="image">Image or poster</option>
-                      <option value="video">Video</option>
-                    </select>
+                  <label
+                    className="admin-field-wide admin-announcement-dropzone"
+                    onDragOver={event => event.preventDefault()}
+                    onDrop={event => {
+                      event.preventDefault();
+                      chooseAnnouncementFile(event.dataTransfer.files?.[0]);
+                    }}
+                  >
+                    <span>Image or video (optional)</span>
+                    <strong>Drag and drop a file here, or click to choose one</strong>
+                    <input type="file" accept="image/*,video/*" onChange={event => chooseAnnouncementFile(event.target.files?.[0])} />
+                    {(announcementFile || announcement.mediaUrl) && (
+                      <small>{announcementFile ? announcementFile.name : 'The current uploaded file will be kept.'}</small>
+                    )}
                   </label>
+                  {(announcementFile || announcement.mediaUrl) && (
+                    <button
+                      className="admin-clear-media admin-field-wide"
+                      type="button"
+                      onClick={() => {
+                        setAnnouncementFile(null);
+                        setAnnouncement(current => ({ ...current, type: 'text', mediaUrl: '', posterUrl: '', alt: '' }));
+                      }}
+                    >Remove image or video</button>
+                  )}
                   <label className="admin-field-wide">
-                    <span>Title</span>
-                    <input name="title" value={announcement.title} onChange={changeAnnouncement} maxLength="255" />
+                    <span>{announcement.type === 'text' ? 'Announcement text' : 'Text below the image or video'}</span>
+                    <textarea name="body" value={announcement.body} onChange={changeAnnouncement} rows="5" maxLength="5000" placeholder="Type text, an explanation, or a link..." />
                   </label>
-                  <label className="admin-field-wide">
-                    <span>Message</span>
-                    <textarea name="body" value={announcement.body} onChange={changeAnnouncement} rows="4" maxLength="5000" />
-                  </label>
-                  {announcement.type !== 'text' && (
-                    <>
-                      <label className="admin-field-wide">
-                        <span>Upload {announcement.type === 'image' ? 'image or poster' : 'video'}</span>
-                        <input
-                          type="file"
-                          accept={announcement.type === 'image' ? 'image/*' : 'video/*'}
-                          onChange={event => setAnnouncementFile(event.target.files?.[0] || null)}
-                        />
-                        {announcement.mediaUrl && <small>Current file: {announcement.mediaUrl}</small>}
-                      </label>
-                      <label className="admin-field-wide">
-                        <span>Or media URL</span>
-                        <input name="mediaUrl" type="url" value={announcement.mediaUrl} onChange={changeAnnouncement} placeholder="https://..." />
-                      </label>
-                    </>
-                  )}
-                  {announcement.type === 'image' && (
-                    <label className="admin-field-wide">
-                      <span>Image description</span>
-                      <input name="alt" value={announcement.alt} onChange={changeAnnouncement} maxLength="500" />
-                    </label>
-                  )}
-                  {announcement.type === 'video' && (
-                    <label className="admin-field-wide">
-                      <span>Optional video poster URL</span>
-                      <input name="posterUrl" type="url" value={announcement.posterUrl} onChange={changeAnnouncement} placeholder="https://..." />
-                    </label>
-                  )}
                 </div>
                 <div className="admin-announcement-footer">
                   <button type="submit" disabled={announcementBusy}>{announcementBusy ? 'Publishing...' : 'Publish announcement'}</button>
