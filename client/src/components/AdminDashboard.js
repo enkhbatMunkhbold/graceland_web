@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import UserContext from '../context/UserContext';
 import { api } from '../services/api';
 import '../styling/admin-dashboard.css';
 
@@ -13,10 +14,15 @@ const STATUS_KEYS = {
 
 function AdminDashboard() {
   const { t, language } = useLanguage();
+  const { user } = useContext(UserContext);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState(null);
+  const [announcement, setAnnouncement] = useState(null);
+  const [announcementFile, setAnnouncementFile] = useState(null);
+  const [announcementBusy, setAnnouncementBusy] = useState(false);
+  const [announcementMessage, setAnnouncementMessage] = useState('');
 
   const loadRequests = useCallback(async () => {
     setLoading(true);
@@ -31,8 +37,42 @@ function AdminDashboard() {
   }, [t]);
 
   useEffect(() => {
-    loadRequests();
-  }, [loadRequests]);
+    if (user?.is_admin) loadRequests();
+    else setLoading(false);
+    api.getHomeAnnouncement()
+      .then(setAnnouncement)
+      .catch(() => setAnnouncementMessage('Unable to load the current announcement.'));
+  }, [loadRequests, user?.is_admin]);
+
+  const changeAnnouncement = event => {
+    const { name, value, type, checked } = event.target;
+    setAnnouncement(current => ({ ...current, [name]: type === 'checkbox' ? checked : value }));
+    setAnnouncementMessage('');
+  };
+
+  const saveAnnouncement = async event => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    setAnnouncementBusy(true);
+    setAnnouncementMessage('');
+    try {
+      let next = { ...announcement };
+      if (announcementFile) {
+        const uploaded = await api.uploadHomeAnnouncementFile(announcementFile);
+        next.mediaUrl = uploaded.url;
+      }
+      const saved = await api.updateHomeAnnouncement(next);
+      setAnnouncement(saved);
+      setAnnouncementFile(null);
+      const fileInput = form.querySelector('input[type="file"]');
+      if (fileInput) fileInput.value = '';
+      setAnnouncementMessage('Announcement published successfully.');
+    } catch (announcementError) {
+      setAnnouncementMessage(announcementError.message || 'Unable to publish the announcement.');
+    } finally {
+      setAnnouncementBusy(false);
+    }
+  };
 
   const updateStatus = async (id, status) => {
     setBusyId(id);
@@ -71,12 +111,92 @@ function AdminDashboard() {
       <header className="admin-hero">
         <div className="admin-shell">
           <p>{t('adminDashboard')}</p>
-          <h1>{t('adminPrayerTitle')}</h1>
-          <span>{t('adminPrayerIntro')}</span>
+          <h1>{t('adminDashboard')}</h1>
+          <span>Manage frequently updated home-page content.</span>
         </div>
       </header>
       <section className="admin-section">
         <div className="admin-shell">
+          <section className="admin-announcement-editor" aria-labelledby="announcement-editor-title">
+            <div className="admin-section-heading">
+              <p>Home page</p>
+              <h2 id="announcement-editor-title">Hero announcement</h2>
+              <span>Replace the announcement shown to the right of the home-page title.</span>
+            </div>
+            {announcement ? (
+              <form className="admin-announcement-form" onSubmit={saveAnnouncement}>
+                <label className="admin-toggle">
+                  <input name="enabled" type="checkbox" checked={announcement.enabled} onChange={changeAnnouncement} />
+                  <span>Show announcement on the home page</span>
+                </label>
+                <div className="admin-form-grid">
+                  <label>
+                    <span>Content type</span>
+                    <select name="type" value={announcement.type} onChange={changeAnnouncement}>
+                      <option value="text">Text</option>
+                      <option value="image">Image or poster</option>
+                      <option value="video">Video</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Small heading</span>
+                    <input name="eyebrow" value={announcement.eyebrow} onChange={changeAnnouncement} maxLength="80" />
+                  </label>
+                  <label className="admin-field-wide">
+                    <span>Title</span>
+                    <input name="title" value={announcement.title} onChange={changeAnnouncement} maxLength="255" />
+                  </label>
+                  <label className="admin-field-wide">
+                    <span>Message</span>
+                    <textarea name="body" value={announcement.body} onChange={changeAnnouncement} rows="4" maxLength="5000" />
+                  </label>
+                  {announcement.type !== 'text' && (
+                    <>
+                      <label className="admin-field-wide">
+                        <span>Upload {announcement.type === 'image' ? 'image or poster' : 'video'}</span>
+                        <input
+                          type="file"
+                          accept={announcement.type === 'image' ? 'image/*' : 'video/*'}
+                          onChange={event => setAnnouncementFile(event.target.files?.[0] || null)}
+                        />
+                        {announcement.mediaUrl && <small>Current file: {announcement.mediaUrl}</small>}
+                      </label>
+                      <label className="admin-field-wide">
+                        <span>Or media URL</span>
+                        <input name="mediaUrl" type="url" value={announcement.mediaUrl} onChange={changeAnnouncement} placeholder="https://..." />
+                      </label>
+                    </>
+                  )}
+                  <label>
+                    <span>Link label</span>
+                    <input name="linkLabel" value={announcement.linkLabel} onChange={changeAnnouncement} maxLength="120" />
+                  </label>
+                  <label>
+                    <span>Link destination</span>
+                    <input name="linkUrl" value={announcement.linkUrl} onChange={changeAnnouncement} placeholder="/events or https://..." />
+                  </label>
+                  {announcement.type === 'image' && (
+                    <label className="admin-field-wide">
+                      <span>Image description</span>
+                      <input name="alt" value={announcement.alt} onChange={changeAnnouncement} maxLength="500" />
+                    </label>
+                  )}
+                  {announcement.type === 'video' && (
+                    <label className="admin-field-wide">
+                      <span>Optional video poster URL</span>
+                      <input name="posterUrl" type="url" value={announcement.posterUrl} onChange={changeAnnouncement} placeholder="https://..." />
+                    </label>
+                  )}
+                </div>
+                <div className="admin-announcement-footer">
+                  <button type="submit" disabled={announcementBusy}>{announcementBusy ? 'Publishing...' : 'Publish announcement'}</button>
+                  {announcementMessage && <p role="status">{announcementMessage}</p>}
+                </div>
+              </form>
+            ) : <p className="admin-state">Loading announcement...</p>}
+          </section>
+          {user?.is_admin && <section className="admin-prayer-section" aria-labelledby="prayer-admin-title">
+          <h2 id="prayer-admin-title" className="admin-subheading">Prayer requests</h2>
           {error && <p className="admin-alert" role="alert">{error}</p>}
           {loading ? (
             <p className="admin-state">{t('adminPrayerLoading')}</p>
@@ -126,6 +246,7 @@ function AdminDashboard() {
               ))}
             </div>
           )}
+          </section>}
         </div>
       </section>
     </main>

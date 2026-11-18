@@ -20,6 +20,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode
 import json
 import os
+import uuid
 import models  # Import models to register them with SQLAlchemy
 import schemas
 from auth_utils import user_is_admin
@@ -52,6 +53,60 @@ def _require_admin_or_staff():
     if not user or not (user_is_admin(user) or getattr(user, 'is_staff', False)):
         return None
     return user
+
+HOME_ANNOUNCEMENT_KEY = 'home_announcement'
+HOME_ANNOUNCEMENT_DEFAULT = {
+    'enabled': True,
+    'type': 'text',
+    'eyebrow': 'Announcement',
+    'title': 'Welcome to Graceland',
+    'body': 'Watch this space for church news, special services, and upcoming events.',
+    'linkUrl': '/events',
+    'linkLabel': 'See upcoming events',
+    'mediaUrl': '',
+    'posterUrl': '',
+    'alt': '',
+}
+
+
+def _home_announcement_value():
+    setting = models.SiteSetting.query.filter_by(key=HOME_ANNOUNCEMENT_KEY).first()
+    if not setting or not setting.value:
+        return HOME_ANNOUNCEMENT_DEFAULT.copy()
+    try:
+        saved = json.loads(setting.value)
+    except (TypeError, json.JSONDecodeError):
+        return HOME_ANNOUNCEMENT_DEFAULT.copy()
+    return {**HOME_ANNOUNCEMENT_DEFAULT, **saved}
+
+
+def _validate_home_announcement(data):
+    if not isinstance(data, dict):
+        raise ValueError('Announcement data is required')
+    announcement_type = str(data.get('type', 'text')).strip().lower()
+    if announcement_type not in ('text', 'image', 'video'):
+        raise ValueError('Announcement type must be text, image, or video')
+
+    def text_value(key, limit):
+        return str(data.get(key, '') or '').strip()[:limit]
+
+    result = {
+        'enabled': bool(data.get('enabled', True)),
+        'type': announcement_type,
+        'eyebrow': text_value('eyebrow', 80),
+        'title': text_value('title', 255),
+        'body': text_value('body', 5000),
+        'linkUrl': text_value('linkUrl', 2000),
+        'linkLabel': text_value('linkLabel', 120),
+        'mediaUrl': text_value('mediaUrl', 2000),
+        'posterUrl': text_value('posterUrl', 2000),
+        'alt': text_value('alt', 500),
+    }
+    if result['enabled'] and not any((result['title'], result['body'], result['mediaUrl'])):
+        raise ValueError('Add a title, message, image, or video before publishing')
+    if announcement_type in ('image', 'video') and result['enabled'] and not result['mediaUrl']:
+        raise ValueError(f'{announcement_type.capitalize()} announcements require a media file or URL')
+    return result
 
 class CheckSession(Resource):
     def get(self):
@@ -1608,6 +1663,62 @@ class AnonymousFeedback(Resource):
 
 
 api.add_resource(AnonymousFeedback, '/feedback')
+
+
+class HomeAnnouncement(Resource):
+    def get(self):
+        return _home_announcement_value(), 200
+
+    def put(self):
+        if not _require_admin_or_staff():
+            return {'error': 'Staff access required'}, 403
+        try:
+            announcement = _validate_home_announcement(request.get_json(silent=True))
+        except ValueError as error:
+            return {'error': str(error)}, 400
+
+        setting = models.SiteSetting.query.filter_by(key=HOME_ANNOUNCEMENT_KEY).first()
+        if not setting:
+            setting = models.SiteSetting(
+                key=HOME_ANNOUNCEMENT_KEY,
+                description='Current home hero announcement',
+            )
+            db.session.add(setting)
+        setting.value = json.dumps(announcement)
+        db.session.commit()
+        return announcement, 200
+
+
+class HomeAnnouncementUpload(Resource):
+    def post(self):
+        if not _require_admin_or_staff():
+            return {'error': 'Staff access required'}, 403
+        file = request.files.get('file')
+        if not file or not file.filename or '.' not in file.filename:
+            return {'error': 'Choose an image or video file'}, 400
+        extension = file.filename.rsplit('.', 1)[1].lower()
+        allowed = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'mp4', 'webm', 'ogg', 'mov'}
+        if extension not in allowed:
+            return {'error': 'Only image and video files are allowed'}, 400
+
+        stored_name = f'{uuid.uuid4().hex}.{extension}'
+        directory = os.path.join(app.config['UPLOAD_FOLDER'], 'announcements')
+        os.makedirs(directory, exist_ok=True)
+        file.save(os.path.join(directory, stored_name))
+        url = f"{request.host_url.rstrip('/')}/uploads/announcements/{stored_name}"
+        return {'url': url, 'filename': file.filename}, 201
+
+
+api.add_resource(HomeAnnouncement, '/home-announcement')
+api.add_resource(HomeAnnouncementUpload, '/home-announcement/upload')
+
+
+@app.route('/uploads/announcements/<path:filename>')
+def serve_announcement_upload(filename):
+    directory = os.path.join(app.config['UPLOAD_FOLDER'], 'announcements')
+    if not os.path.isdir(directory):
+        return {'error': 'Not found'}, 404
+    return send_from_directory(directory, filename)
 
 
 @app.route('/uploads/ministry/<string:slug>/<path:filename>')

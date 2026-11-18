@@ -17,6 +17,21 @@ const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURICom
 const WEATHER_URL = 'https://weather.com/en-MH/weather/today/l/Walnut%2BCreek%2BCA%2BUnited%2BStates?canonicalCityId=68b6dc922062f6664354084b9d9807b0f335a2a92ddb85ba01b164546cdd2068';
 const WEATHER_API_URL = 'https://api.open-meteo.com/v1/forecast?latitude=37.92626&longitude=-122.07590&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=America%2FLos_Angeles&forecast_days=1';
 
+// Staff announcement content. Use type "text", "image", or "video". Images can
+// also be used as posters; URLs may point to /media files or hosted content.
+const HOME_ANNOUNCEMENT = {
+  enabled: true,
+  type: 'text',
+  eyebrow: 'Announcement',
+  title: 'Welcome to Graceland',
+  body: 'Watch this space for church news, special services, and upcoming events.',
+  linkUrl: '/events',
+  linkLabel: 'See upcoming events',
+  mediaUrl: '',
+  posterUrl: '',
+  alt: '',
+};
+
 function formatDate(value, language) {
   return new Date(value).toLocaleDateString(language === 'mn' ? 'mn-MN' : 'en-US', {
     month: 'long', day: 'numeric', year: 'numeric',
@@ -44,6 +59,46 @@ function getWeatherCondition(code, t) {
   return t('weatherConditions');
 }
 
+function HomeAnnouncement({ announcement }) {
+  if (!announcement?.enabled) return null;
+
+  const content = (
+    <>
+      {announcement.type === 'image' && announcement.mediaUrl && (
+        <img className="home-announcement-media" src={announcement.mediaUrl} alt={announcement.alt || ''} />
+      )}
+      {announcement.type === 'video' && announcement.mediaUrl && (
+        <video
+          className="home-announcement-media"
+          src={announcement.mediaUrl}
+          poster={announcement.posterUrl || undefined}
+          controls
+          playsInline
+          preload="metadata"
+        />
+      )}
+      <div className="home-announcement-copy">
+        {announcement.eyebrow && <p>{announcement.eyebrow}</p>}
+        {announcement.title && <h2>{announcement.title}</h2>}
+        {announcement.body && <div>{announcement.body}</div>}
+        {announcement.linkUrl && announcement.linkLabel && <span>{announcement.linkLabel} <ArrowRight aria-hidden="true" /></span>}
+      </div>
+    </>
+  );
+
+  return (
+    <aside className={`home-announcement home-announcement--${announcement.type || 'text'}`} aria-label={announcement.eyebrow || 'Announcement'}>
+      {announcement.linkUrl && announcement.type !== 'video' ? (
+        announcement.linkUrl.startsWith('/') ? (
+          <Link className="home-announcement-inner" to={announcement.linkUrl}>{content}</Link>
+        ) : (
+          <a className="home-announcement-inner" href={announcement.linkUrl} target="_blank" rel="noopener noreferrer">{content}</a>
+        )
+      ) : <div className="home-announcement-inner">{content}</div>}
+    </aside>
+  );
+}
+
 function Home() {
   const { t, language } = useLanguage();
   const { user } = useContext(UserContext);
@@ -51,6 +106,7 @@ function Home() {
   const [events, setEvents] = useState([]);
   const [weather, setWeather] = useState(null);
   const [contentLoading, setContentLoading] = useState(true);
+  const [announcement, setAnnouncement] = useState(HOME_ANNOUNCEMENT);
   const [isHeroVideoReady, setIsHeroVideoReady] = useState(false);
   const [isHeroVideoPlaying, setIsHeroVideoPlaying] = useState(false);
   const heroVideoRef = useRef(null);
@@ -69,6 +125,14 @@ function Home() {
     } catch (error) {
       setIsHeroVideoPlaying(false);
     }
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    api.getHomeAnnouncement()
+      .then(data => active && setAnnouncement(data))
+      .catch(error => console.error('Unable to load home announcement:', error));
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
@@ -203,6 +267,7 @@ function Home() {
             </Link>
           </div>
         </div>
+        <HomeAnnouncement announcement={announcement} />
         <div id="plan-your-visit" className="home-hero-visit">
           <div className="home-shell home-hero-visit-grid">
             <div className="home-hero-visit-item">

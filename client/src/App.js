@@ -68,7 +68,7 @@ function AppContent() {
             <Route path="/prayer" element={<Prayer />} />
             <Route
               path="/admin"
-              element={user.is_admin ? <AdminDashboard /> : <Navigate to="/home" replace />}
+              element={(user.is_admin || user.is_staff) ? <AdminDashboard /> : <Navigate to="/home" replace />}
             />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>          

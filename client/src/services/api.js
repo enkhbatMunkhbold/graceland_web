@@ -7,6 +7,41 @@ let latestYouTubeVideosRequest = null;
 const LATEST_YOUTUBE_VIDEOS_CACHE_TTL = 30 * 1000;
 
 export const api = {
+  getHomeAnnouncement: async () => {
+    const response = await fetch(`${API_BASE_URL}/home-announcement`, { cache: 'no-store' });
+    if (!response.ok) throw new Error('Failed to load the home announcement');
+    return response.json();
+  },
+
+  updateHomeAnnouncement: async data => {
+    const response = await fetch(`${API_BASE_URL}/home-announcement`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to save the home announcement');
+    }
+    return response.json();
+  },
+
+  uploadHomeAnnouncementFile: async file => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch(`${API_BASE_URL}/home-announcement/upload`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to upload the announcement file');
+    }
+    return response.json();
+  },
+
   getSiteTextOverrides: async (pagePath, language) => {
     const params = new URLSearchParams({ page_path: pagePath, language });
     const response = await fetch(`${API_BASE_URL}/site-text-overrides?${params}`);
