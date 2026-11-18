@@ -34,7 +34,7 @@
 /* Matching home-hero announcement rails: official church news on the left and member news on the right. */
 .home-announcement{position:absolute;z-index:2;overflow:hidden;box-sizing:border-box;border:1px solid rgba(255,255,255,.9);background:rgba(20,37,26,.94);color:#fff;backdrop-filter:blur(12px)}
 .home-announcement-inner{width:100%;height:100%;display:flex;flex-direction:column;color:inherit;text-decoration:none}
-.home-announcement-media{width:100%;height:100%;display:block;object-fit:cover}
+.home-announcement-media{width:100%;height:100%;display:block;object-fit:contain;object-position:center top;background:rgba(0,0,0,.28)}
 .home-announcement-copy{display:flex;flex:1;flex-direction:column;justify-content:flex-end;padding:clamp(1.25rem,2vw,2rem);background:linear-gradient(180deg,rgba(20,37,26,.18),rgba(20,37,26,.96))}
 .home-announcement--image .home-announcement-copy{position:absolute;inset:auto 0 0}.home-announcement--video .home-announcement-media{height:52%;flex:0 0 52%}.home-announcement--video .home-announcement-copy{justify-content:center}
 .home-announcement-copy h2{margin:0;font-size:clamp(1.4rem,2.3vw,2.25rem);line-height:1.03;letter-spacing:-.035em}
@@ -45,5 +45,5 @@
 .home-member-announcement{padding:1rem 0;border-bottom:1px solid rgba(255,255,255,.16)}.home-member-announcement:first-child{padding-top:0}.home-member-announcement:last-child{border-bottom:0}
 .home-member-announcement-meta{display:flex;flex-direction:column;gap:.18rem;margin:0 0 .6rem;color:rgba(255,255,255,.78);font-size:.7rem}.home-member-announcement-meta strong{color:#fff;font-size:.75rem}
 .home-member-announcement h2{margin:0 0 .45rem;color:#fff;font-size:clamp(1rem,1.4vw,1.3rem);line-height:1.15}.home-member-announcement>div{color:#fff;font-size:.83rem;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;text-shadow:0 1px 3px rgba(0,0,0,.75)}
-@media(min-width:1000px){.home-hero-content{position:absolute;top:calc((100% - 104px)/2);right:calc(20vw + 2rem);left:calc(20vw + 2rem);width:auto;margin:0;transform:translateY(-50%)}.home-hero-title{max-width:760px}.home-announcement,.home-member-announcements{top:0;bottom:1rem;width:20vw}.home-announcement--left{top:1rem;left:0}.home-member-announcements{right:0}.home-hero-media-toggle{right:calc(20vw + 1rem)}}
+@media(min-width:1000px){.home-hero-content{position:absolute;top:calc((100% - 104px)/2);right:calc(20vw + 2rem);left:calc(20vw + 2rem);width:auto;margin:0;transform:translateY(-50%)}.home-hero-title{max-width:760px}.home-announcement,.home-member-announcements{top:0;bottom:calc(104px + 2rem);width:20vw}.home-announcement--left{top:1rem;left:0}.home-member-announcements{right:0}.home-hero-media-toggle{right:calc(20vw + 1rem)}}
 @media(max-width:999px){.home-announcement,.home-member-announcements{display:none}}

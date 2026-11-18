@@ -1,4 +1,5 @@
 import { useCallback, useContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import UserContext from '../context/UserContext';
 import { api } from '../services/api';
@@ -13,6 +14,7 @@ const STATUS_KEYS = {
 };
 
 function AdminDashboard() {
+  const navigate = useNavigate();
   const { t, language } = useLanguage();
   const { user } = useContext(UserContext);
   const [requests, setRequests] = useState([]);
@@ -79,6 +81,7 @@ function AdminDashboard() {
       const fileInput = form.querySelector('input[type="file"]');
       if (fileInput) fileInput.value = '';
       setAnnouncementMessage('Announcement published successfully.');
+      navigate('/home');
     } catch (announcementError) {
       setAnnouncementMessage(announcementError.message || 'Unable to publish the announcement.');
     } finally {
