@@ -20,8 +20,8 @@ const WEATHER_API_URL = 'https://api.open-meteo.com/v1/forecast?latitude=37.9262
 // Official staff announcement content. Use type "text", "image", or "video". Images can
 // also be used as posters; URLs may point to /media files or hosted content.
 const HOME_ANNOUNCEMENT = {
-  enabled: true,
-  type: 'text',
+  enabled: false,
+  type: 'image',
   title: '',
   body: '',
   mediaUrl: '',
@@ -81,15 +81,11 @@ function HomeAnnouncement({ announcement, side = 'left' }) {
           preload="metadata"
         />
       )}
-      <div className="home-announcement-copy">
-        {announcement.title && <h2>{announcement.title}</h2>}
-        {announcement.body && <div><TextWithLinks>{announcement.body}</TextWithLinks></div>}
-      </div>
     </>
   );
 
   return (
-    <aside className={`home-announcement home-announcement--${side} home-announcement--${announcement.type || 'text'}`} aria-label="Official church announcement">
+    <aside className={`home-announcement home-announcement--${side} home-announcement--${announcement.type || 'image'}`} aria-label="Official church announcement">
       <div className="home-announcement-inner">{content}</div>
     </aside>
   );
@@ -114,24 +110,23 @@ function PrayerWall({ prayers, language }) {
 function CommunityAnnouncements({ announcements, language }) {
   const mn = language === 'mn';
   return (
-    <section className="home-section home-community-announcements" aria-labelledby="community-announcements-title">
-      <div className="home-shell">
-        <div className="home-community-announcements-heading">
-          <div><p className="home-kicker">{mn ? 'Олон нийтийн мэдээлэл' : 'Community board'}</p><h2 id="community-announcements-title">{mn ? 'Зарууд' : 'Announcements'}</h2></div>
-          <Link className="home-button home-button--outline-dark" to="/announcements/new">{mn ? 'Зар оруулах' : 'Insert announcement'}</Link>
-        </div>
-        <div className="home-community-announcements-list">
-          {announcements.length ? announcements.map(item => (
-            <article className="home-community-announcement" key={item.id}>
-              <strong>{mn && item.author_name === 'Anonymous' ? 'Нэргүй' : item.author_name}</strong>
-              {item.title && <h3>{item.title}</h3>}
-              <div><TextWithLinks>{item.content}</TextWithLinks></div>
-              <time dateTime={item.publish_date}>{formatDate(item.publish_date, language)}</time>
-            </article>
-          )) : <p>{mn ? 'Одоогоор зар алга.' : 'No announcements yet.'}</p>}
-        </div>
+    <article className="home-highlight-column home-community-announcements-column" aria-labelledby="community-announcements-title">
+      <div className="home-section-heading">
+        <p className="home-kicker">{mn ? 'Олон нийтийн мэдээлэл' : 'Community board'}</p>
+        <h2 id="community-announcements-title">{mn ? 'Зарууд' : 'Announcements'}</h2>
       </div>
-    </section>
+      <div className="home-community-announcements-list">
+        {announcements.length ? announcements.map(item => (
+          <article className="home-community-announcement" key={item.id}>
+            <strong>{mn && item.author_name === 'Anonymous' ? 'Нэргүй' : item.author_name}</strong>
+            {item.title && <h3>{item.title}</h3>}
+            <div><TextWithLinks>{item.content}</TextWithLinks></div>
+            <time dateTime={item.publish_date}>{formatDate(item.publish_date, language)}</time>
+          </article>
+        )) : <p>{mn ? 'Одоогоор зар алга.' : 'No announcements yet.'}</p>}
+      </div>
+      <Link className="home-text-link home-column-link" to="/announcements/new">{mn ? 'Зар оруулах' : 'Insert announcement'} <ArrowRight aria-hidden="true" /></Link>
+    </article>
   );
 }
 
@@ -366,8 +361,6 @@ function Home() {
         </div>
       </section>
 
-      <CommunityAnnouncements announcements={memberAnnouncements} language={language} />
-
       <section className="home-section home-highlights-section">
         <div className="home-shell home-highlights-grid">
           <article className="home-highlight-column home-sermon-column">
@@ -458,6 +451,8 @@ function Home() {
           </div>
           <Link className="home-text-link home-column-link" to="/ministries">{t('exploreMinistries')} <ArrowRight aria-hidden="true" /></Link>
           </article>
+
+          <CommunityAnnouncements announcements={memberAnnouncements} language={language} />
         </div>
       </section>
 

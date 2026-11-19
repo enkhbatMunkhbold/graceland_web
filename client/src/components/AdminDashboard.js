@@ -70,7 +70,7 @@ function AdminDashboard() {
     setAnnouncementBusy(true);
     setAnnouncementMessage('');
     try {
-      let next = { ...announcement, title: '' };
+      let next = { ...announcement, title: '', body: '' };
       if (announcementFile) {
         const uploaded = await api.uploadHomeAnnouncementFile(announcementFile);
         next.mediaUrl = uploaded.url;
@@ -166,14 +166,10 @@ function AdminDashboard() {
                       type="button"
                       onClick={() => {
                         setAnnouncementFile(null);
-                        setAnnouncement(current => ({ ...current, type: 'text', mediaUrl: '', posterUrl: '', alt: '' }));
+                        setAnnouncement(current => ({ ...current, type: 'image', mediaUrl: '', posterUrl: '', alt: '' }));
                       }}
                     >Remove image or video</button>
                   )}
-                  <label className="admin-field-wide">
-                    <span>{announcement.type === 'text' ? 'Announcement text' : 'Text below the image or video'}</span>
-                    <textarea name="body" value={announcement.body} onChange={changeAnnouncement} rows="5" maxLength="5000" placeholder="Type text, an explanation, or a link..." />
-                  </label>
                 </div>
                 <div className="admin-announcement-footer">
                   <button type="submit" disabled={announcementBusy}>{announcementBusy ? 'Publishing...' : 'Publish announcement'}</button>

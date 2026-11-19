@@ -57,8 +57,8 @@ def _require_admin_or_staff():
 
 HOME_ANNOUNCEMENT_KEY = 'home_announcement'
 HOME_ANNOUNCEMENT_DEFAULT = {
-    'enabled': True,
-    'type': 'text',
+    'enabled': False,
+    'type': 'image',
     'title': '',
     'body': '',
     'mediaUrl': '',
@@ -89,9 +89,9 @@ def _home_announcement_value():
 def _validate_home_announcement(data):
     if not isinstance(data, dict):
         raise ValueError('Announcement data is required')
-    announcement_type = str(data.get('type', 'text')).strip().lower()
-    if announcement_type not in ('text', 'image', 'video'):
-        raise ValueError('Announcement type must be text, image, or video')
+    announcement_type = str(data.get('type', 'image')).strip().lower()
+    if announcement_type not in ('image', 'video'):
+        raise ValueError('Official announcements must be an image or video')
 
     def text_value(key, limit):
         return str(data.get(key, '') or '').strip()[:limit]
@@ -99,15 +99,13 @@ def _validate_home_announcement(data):
     result = {
         'enabled': bool(data.get('enabled', True)),
         'type': announcement_type,
-        'title': text_value('title', 255),
-        'body': text_value('body', 5000),
+        'title': '',
+        'body': '',
         'mediaUrl': text_value('mediaUrl', 2000),
         'posterUrl': text_value('posterUrl', 2000),
         'alt': text_value('alt', 500),
     }
-    if result['enabled'] and not any((result['title'], result['body'], result['mediaUrl'])):
-        raise ValueError('Add a title, message, image, or video before publishing')
-    if announcement_type in ('image', 'video') and result['enabled'] and not result['mediaUrl']:
+    if result['enabled'] and not result['mediaUrl']:
         raise ValueError(f'{announcement_type.capitalize()} announcements require a media file or URL')
     return result
 
