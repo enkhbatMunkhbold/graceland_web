@@ -32,6 +32,36 @@ export const api = {
     return response.json();
   },
 
+  updateMemberAnnouncement: async (id, content, ownerToken) => {
+    const response = await fetch(`${API_BASE_URL}/announcements/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Announcement-Owner-Token': ownerToken,
+      },
+      credentials: 'include',
+      body: JSON.stringify({ content }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to update the announcement');
+    }
+    return response.json();
+  },
+
+  deleteMemberAnnouncement: async (id, ownerToken) => {
+    const response = await fetch(`${API_BASE_URL}/announcements/${id}`, {
+      method: 'DELETE',
+      headers: { 'X-Announcement-Owner-Token': ownerToken },
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to delete the announcement');
+    }
+    return response.json();
+  },
+
   updateHomeAnnouncement: async data => {
     const response = await fetch(`${API_BASE_URL}/home-announcement`, {
       method: 'PUT',

@@ -4,6 +4,8 @@ import { useLanguage } from '../context/LanguageContext';
 import { api } from '../services/api';
 import '../styling/announcement-form.css';
 
+const ANNOUNCEMENT_OWNER_TOKENS_KEY = 'gracelandAnnouncementOwnerTokens';
+
 function AnnouncementForm() {
   const { language } = useLanguage();
   const navigate = useNavigate();
@@ -18,8 +20,18 @@ function AnnouncementForm() {
     setSubmitting(true);
     setError('');
     try {
-      await api.createMemberAnnouncement({ name: name.trim(), content: content.trim() });
-      navigate('/home');
+      const announcement = await api.createMemberAnnouncement({ name: name.trim(), content: content.trim() });
+      if (announcement?.id && announcement?.owner_token) {
+        let tokens = {};
+        try {
+          tokens = JSON.parse(window.localStorage.getItem(ANNOUNCEMENT_OWNER_TOKENS_KEY) || '{}');
+        } catch (storageError) {
+          tokens = {};
+        }
+        tokens[announcement.id] = announcement.owner_token;
+        window.localStorage.setItem(ANNOUNCEMENT_OWNER_TOKENS_KEY, JSON.stringify(tokens));
+      }
+      navigate('/announcements');
     } catch (submitError) {
       setError(submitError.message || (mn ? 'Зарыг нийтэлж чадсангүй.' : 'Unable to post the announcement.'));
     } finally {
@@ -51,7 +63,7 @@ function AnnouncementForm() {
             <button type="submit" disabled={submitting || !content.trim()}>
               {submitting ? (mn ? 'Нийтэлж байна…' : 'Posting…') : (mn ? 'Нийтлэх' : 'Post announcement')}
             </button>
-            <Link to="/home">{mn ? 'Буцах' : 'Cancel'}</Link>
+            <Link to="/announcements">{mn ? 'Буцах' : 'Cancel'}</Link>
           </div>
         </form>
       </section>

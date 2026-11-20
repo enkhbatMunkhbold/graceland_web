@@ -1464,7 +1464,6 @@ class PrayerWall(Resource):
             return [
                 {
                     'id': prayer_request.id,
-                    'number': index,
                     'name': prayer_request.name or 'Anonymous',
                     'request_text': prayer_request.request_text,
                     'date': (
@@ -1472,9 +1471,7 @@ class PrayerWall(Resource):
                         if prayer_request.date_submitted else None
                     ),
                 }
-                for index, prayer_request in enumerate(
-                    requests_for_wall, start=1
-                )
+                for prayer_request in requests_for_wall
             ], 200
         except Exception:
             return {'error': 'Unable to load prayer wall'}, 500
@@ -1813,10 +1810,64 @@ class MemberAnnouncements(Resource):
                 'content': announcement.content,
                 'publish_date': announcement.publish_date.isoformat(),
                 'author_name': name,
+                'owner_token': _announcement_owner_token(announcement.id),
             }, 201
         except Exception as error:
             db.session.rollback()
             return {'error': str(error)}, 500
+
+
+def _announcement_owner_token(announcement_id):
+    secret = app.secret_key or app.config.get('SECRET_KEY')
+    if not secret:
+        raise RuntimeError('SECRET_KEY is required for announcement ownership tokens')
+    secret_bytes = secret.encode('utf-8') if isinstance(secret, str) else secret
+    message = f'announcement-owner:{announcement_id}'.encode('utf-8')
+    return hmac.new(secret_bytes, message, hashlib.sha256).hexdigest()
+
+
+def _can_manage_public_announcement(announcement):
+    if user_is_admin(_get_current_user()):
+        return True
+    supplied_token = request.headers.get('X-Announcement-Owner-Token', '')
+    return bool(supplied_token) and hmac.compare_digest(
+        supplied_token,
+        _announcement_owner_token(announcement.id),
+    )
+
+
+class MemberAnnouncementByID(Resource):
+    def _announcement(self, announcement_id):
+        return models.Announcement.query.filter_by(
+            id=announcement_id,
+            author_id=None,
+        ).first()
+
+    def patch(self, announcement_id):
+        announcement = self._announcement(announcement_id)
+        if not announcement:
+            return {'error': 'Public announcement not found'}, 404
+        if not _can_manage_public_announcement(announcement):
+            return {'error': 'You cannot edit this announcement'}, 403
+        data = request.get_json(silent=True) or {}
+        content = str(data.get('content', '') or '').strip()
+        if not content:
+            return {'error': 'Announcement is required'}, 400
+        if len(content) > 5000:
+            return {'error': 'Announcement must be 5,000 characters or fewer'}, 400
+        announcement.content = content
+        db.session.commit()
+        return {'id': announcement.id, 'content': announcement.content}, 200
+
+    def delete(self, announcement_id):
+        announcement = self._announcement(announcement_id)
+        if not announcement:
+            return {'error': 'Public announcement not found'}, 404
+        if not _can_manage_public_announcement(announcement):
+            return {'error': 'You cannot delete this announcement'}, 403
+        db.session.delete(announcement)
+        db.session.commit()
+        return {'message': 'Announcement deleted'}, 200
 
 
 class HomeAnnouncement(Resource):
@@ -1864,6 +1915,7 @@ class HomeAnnouncementUpload(Resource):
 
 
 api.add_resource(MemberAnnouncements, '/announcements')
+api.add_resource(MemberAnnouncementByID, '/announcements/<int:announcement_id>')
 api.add_resource(HomeAnnouncement, '/home-announcement')
 api.add_resource(HomeAnnouncementUpload, '/home-announcement/upload')
 

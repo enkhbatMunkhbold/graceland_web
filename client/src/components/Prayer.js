@@ -244,10 +244,7 @@ function Prayer() {
             ) : (
               <div className="prayer-wall-grid">
                 {wallRequests.map(item => (
-                  <article className="prayer-wall-card" key={`${item.number}-${item.date}`}>
-                    <span className="prayer-wall-number" aria-label={`${t('prayerNumber')} ${item.number}`}>
-                      #{item.number}
-                    </span>
+                  <article className="prayer-wall-card" key={item.id}>
                     <h3>{item.name || t('anonymous')}</h3>
                     {editingId === item.id ? (
                       <textarea
