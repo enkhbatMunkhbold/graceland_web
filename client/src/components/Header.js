@@ -52,9 +52,15 @@ function Header() {
     { label: t('ourBeliefs'), href: '/about/beliefs', isRoute: true },
   ];
 
+  const communitySubItems = [
+    { label: t('prayerWallTitle'), href: '/prayer', isRoute: true },
+    { label: t('announcements'), href: '/announcements', isRoute: true },
+  ];
+
   const navItems = [
     { label: t('home'), href: '/home', isRoute: true },
     { label: t('about'), href: '/about', isRoute: true, subItems: aboutSubItems },
+    { label: t('community'), href: '/announcements', isRoute: true, subItems: communitySubItems },
     { label: t('ministries'), href: '/ministries', isRoute: true },
     { label: t('events'), href: '/events', isRoute: true },
     { label: t('sermons'), href: '/sermons', isRoute: true },
@@ -89,7 +95,7 @@ function Header() {
             {navItems.map(item => (
               item.subItems ? (
                 <div key={item.href} className="nav-item-with-dropdown">
-                  <button className={`nav-link nav-link-trigger${location.pathname.startsWith('/about') ? ' nav-link--active' : ''}`}>{item.label}</button>
+                  <button className={`nav-link nav-link-trigger${item.subItems.some(sub => location.pathname === sub.href || location.pathname.startsWith(`${sub.href}/`)) ? ' nav-link--active' : ''}`}>{item.label}</button>
                   <div className="nav-dropdown">
                     {item.subItems.map(sub => (
                       <a

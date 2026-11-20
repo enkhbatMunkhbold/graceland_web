@@ -17,29 +17,10 @@ const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURICom
 const WEATHER_URL = 'https://weather.com/en-MH/weather/today/l/Walnut%2BCreek%2BCA%2BUnited%2BStates?canonicalCityId=68b6dc922062f6664354084b9d9807b0f335a2a92ddb85ba01b164546cdd2068';
 const WEATHER_API_URL = 'https://api.open-meteo.com/v1/forecast?latitude=37.92626&longitude=-122.07590&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=America%2FLos_Angeles&forecast_days=1';
 
-// Official staff announcement content. Use type "text", "image", or "video". Images can
-// also be used as posters; URLs may point to /media files or hosted content.
-const HOME_ANNOUNCEMENT = {
-  enabled: false,
-  type: 'image',
-  title: '',
-  body: '',
-  mediaUrl: '',
-  posterUrl: '',
-  alt: '',
-};
-
 function formatDate(value, language) {
   return new Date(value).toLocaleDateString(language === 'mn' ? 'mn-MN' : 'en-US', {
     month: 'long', day: 'numeric', year: 'numeric',
   });
-}
-
-function TextWithLinks({ children }) {
-  const parts = String(children || '').split(/(https?:\/\/[^\s]+)/g);
-  return parts.map((part, index) => part.startsWith('http://') || part.startsWith('https://') ? (
-    <a key={`${part}-${index}`} href={part} target="_blank" rel="noopener noreferrer">{part}</a>
-  ) : part);
 }
 
 function getSermonWatchUrl(sermon) {
@@ -63,73 +44,6 @@ function getWeatherCondition(code, t) {
   return t('weatherConditions');
 }
 
-function HomeAnnouncement({ announcement, side = 'left' }) {
-  if (!announcement?.enabled) return null;
-
-  const content = (
-    <>
-      {announcement.type === 'image' && announcement.mediaUrl && (
-        <img className="home-announcement-media" src={announcement.mediaUrl} alt={announcement.alt || ''} />
-      )}
-      {announcement.type === 'video' && announcement.mediaUrl && (
-        <video
-          className="home-announcement-media"
-          src={announcement.mediaUrl}
-          poster={announcement.posterUrl || undefined}
-          controls
-          playsInline
-          preload="metadata"
-        />
-      )}
-    </>
-  );
-
-  return (
-    <aside className={`home-announcement home-announcement--${side} home-announcement--${announcement.type || 'image'}`} aria-label="Official church announcement">
-      <div className="home-announcement-inner">{content}</div>
-    </aside>
-  );
-}
-
-function PrayerWall({ prayers, language }) {
-  const mn = language === 'mn';
-  return (
-    <aside className="home-prayer-wall" aria-label={mn ? 'Залбирлууд' : 'Prayers'}>
-      <h2 className="home-prayer-wall-title">{mn ? 'Залбирлууд' : 'Prayers'}</h2>
-      <ul className="home-prayer-wall-list">
-        {prayers.length ? prayers.map(item => (
-          <li className="home-prayer-wall-item" key={`${item.number}-${item.date}`}>
-            <div>{item.request_text}</div>
-          </li>
-        )) : <li className="home-prayer-wall-empty">{mn ? 'Одоогоор залбирал алга.' : 'No public prayers yet.'}</li>}
-      </ul>
-    </aside>
-  );
-}
-
-function CommunityAnnouncements({ announcements, language }) {
-  const mn = language === 'mn';
-  return (
-    <article className="home-highlight-column home-community-announcements-column" aria-labelledby="community-announcements-title">
-      <div className="home-section-heading">
-        <p className="home-kicker">{mn ? 'Олон нийтийн мэдээлэл' : 'Community board'}</p>
-        <h2 id="community-announcements-title">{mn ? 'Зарууд' : 'Announcements'}</h2>
-      </div>
-      <div className="home-community-announcements-list">
-        {announcements.length ? announcements.map(item => (
-          <article className="home-community-announcement" key={item.id}>
-            <strong>{mn && item.author_name === 'Anonymous' ? 'Нэргүй' : item.author_name}</strong>
-            {item.title && <h3>{item.title}</h3>}
-            <div><TextWithLinks>{item.content}</TextWithLinks></div>
-            <time dateTime={item.publish_date}>{formatDate(item.publish_date, language)}</time>
-          </article>
-        )) : <p>{mn ? 'Одоогоор зар алга.' : 'No announcements yet.'}</p>}
-      </div>
-      <Link className="home-text-link home-column-link" to="/announcements/new">{mn ? 'Зар оруулах' : 'Insert announcement'} <ArrowRight aria-hidden="true" /></Link>
-    </article>
-  );
-}
-
 function Home() {
   const { t, language } = useLanguage();
   const { user } = useContext(UserContext);
@@ -137,9 +51,6 @@ function Home() {
   const [events, setEvents] = useState([]);
   const [weather, setWeather] = useState(null);
   const [contentLoading, setContentLoading] = useState(true);
-  const [announcement, setAnnouncement] = useState(HOME_ANNOUNCEMENT);
-  const [memberAnnouncements, setMemberAnnouncements] = useState([]);
-  const [prayers, setPrayers] = useState([]);
   const [isHeroVideoReady, setIsHeroVideoReady] = useState(false);
   const [isHeroVideoPlaying, setIsHeroVideoPlaying] = useState(false);
   const heroVideoRef = useRef(null);
@@ -158,20 +69,6 @@ function Home() {
     } catch (error) {
       setIsHeroVideoPlaying(false);
     }
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-    api.getHomeAnnouncement()
-      .then(data => active && setAnnouncement(data))
-      .catch(error => console.error('Unable to load home announcement:', error));
-    api.getMemberAnnouncements()
-      .then(data => active && setMemberAnnouncements(data))
-      .catch(error => console.error('Unable to load member announcements:', error));
-    api.getPrayerWall()
-      .then(data => active && setPrayers(data.slice(0, 12)))
-      .catch(error => console.error('Unable to load prayer wall:', error));
-    return () => { active = false; };
   }, []);
 
   useEffect(() => {
@@ -306,8 +203,6 @@ function Home() {
             </Link>
           </div>
         </div>
-        <HomeAnnouncement announcement={announcement} side="left" />
-        <PrayerWall prayers={prayers} language={language} />
         <div id="plan-your-visit" className="home-hero-visit">
           <div className="home-shell home-hero-visit-grid">
             <div className="home-hero-visit-item">
@@ -452,7 +347,6 @@ function Home() {
           <Link className="home-text-link home-column-link" to="/ministries">{t('exploreMinistries')} <ArrowRight aria-hidden="true" /></Link>
           </article>
 
-          <CommunityAnnouncements announcements={memberAnnouncements} language={language} />
         </div>
       </section>
 

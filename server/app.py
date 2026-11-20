@@ -22,6 +22,8 @@ from urllib.parse import quote, urlencode
 import json
 import os
 import uuid
+import hashlib
+import hmac
 import models  # Import models to register them with SQLAlchemy
 import schemas
 from auth_utils import user_is_admin
@@ -1302,6 +1304,27 @@ PRAYER_STATUSES = {
 }
 
 
+def _prayer_owner_token(prayer_request_id):
+    secret = app.secret_key or app.config.get('SECRET_KEY')
+    if not secret:
+        raise RuntimeError('SECRET_KEY is required for prayer ownership tokens')
+    secret_bytes = secret.encode('utf-8') if isinstance(secret, str) else secret
+    message = f'prayer-owner:{prayer_request_id}'.encode('utf-8')
+    return hmac.new(secret_bytes, message, hashlib.sha256).hexdigest()
+
+
+def _can_manage_public_prayer(prayer_request):
+    if user_is_admin(_get_current_user()):
+        return True
+    supplied_token = request.headers.get('X-Prayer-Owner-Token', '')
+    if not supplied_token:
+        return False
+    return hmac.compare_digest(
+        supplied_token,
+        _prayer_owner_token(prayer_request.id),
+    )
+
+
 def _admin_prayer_data(prayer_request):
     return {
         'id': prayer_request.id,
@@ -1371,7 +1394,11 @@ class PrayerRequests(Resource):
                 for older_request in older_public_requests:
                     db.session.delete(older_request)
             db.session.commit()
-            return {'message': 'Prayer request submitted successfully'}, 201
+            return {
+                'id': prayer_request.id,
+                'owner_token': _prayer_owner_token(prayer_request.id),
+                'message': 'Prayer request submitted successfully',
+            }, 201
         except Exception:
             db.session.rollback()
             return {'error': 'Unable to submit prayer request'}, 500
@@ -1392,6 +1419,8 @@ class PublicPrayerRequestByID(Resource):
         prayer_request = self._public_request(prayer_request_id)
         if not prayer_request:
             return {'error': 'Public prayer request not found'}, 404
+        if not _can_manage_public_prayer(prayer_request):
+            return {'error': 'You cannot edit this prayer request'}, 403
         data = request.get_json(silent=True) or {}
         request_text = str(data.get('request_text', '') or '').strip()
         if not request_text:
@@ -1406,6 +1435,8 @@ class PublicPrayerRequestByID(Resource):
         prayer_request = self._public_request(prayer_request_id)
         if not prayer_request:
             return {'error': 'Public prayer request not found'}, 404
+        if not _can_manage_public_prayer(prayer_request):
+            return {'error': 'You cannot delete this prayer request'}, 403
         db.session.delete(prayer_request)
         db.session.commit()
         return {'message': 'Prayer request deleted'}, 200

@@ -4,6 +4,29 @@ import { useLanguage } from '../context/LanguageContext';
 import { api } from '../services/api';
 import '../styling/prayer.css';
 
+const PRAYER_OWNER_TOKENS_KEY = 'gracelandPrayerOwnerTokens';
+
+function getPrayerOwnerTokens() {
+  try {
+    return JSON.parse(window.localStorage.getItem(PRAYER_OWNER_TOKENS_KEY) || '{}');
+  } catch (error) {
+    return {};
+  }
+}
+
+function savePrayerOwnerToken(id, token) {
+  if (!id || !token) return;
+  const tokens = getPrayerOwnerTokens();
+  tokens[id] = token;
+  window.localStorage.setItem(PRAYER_OWNER_TOKENS_KEY, JSON.stringify(tokens));
+}
+
+function removePrayerOwnerToken(id) {
+  const tokens = getPrayerOwnerTokens();
+  delete tokens[id];
+  window.localStorage.setItem(PRAYER_OWNER_TOKENS_KEY, JSON.stringify(tokens));
+}
+
 function Prayer() {
   const { t, language } = useLanguage();
   const [formData, setFormData] = useState({
@@ -28,7 +51,12 @@ function Prayer() {
     setWallLoading(true);
     setWallError('');
     try {
-      setWallRequests(await api.getPrayerWall());
+      const tokens = getPrayerOwnerTokens();
+      const requests = await api.getPrayerWall();
+      setWallRequests(requests.map(item => ({
+        ...item,
+        canManage: Boolean(tokens[item.id]),
+      })));
     } catch (error) {
       setWallError(t('prayerWallError'));
     } finally {
@@ -65,11 +93,12 @@ function Prayer() {
 
     setSubmitting(true);
     try {
-      await api.submitPrayerRequest({
+      const createdPrayer = await api.submitPrayerRequest({
         name,
         request_text: requestText,
         publication_consent: !formData.keepPrivate,
       });
+      savePrayerOwnerToken(createdPrayer?.id, createdPrayer?.owner_token);
       if (!formData.keepPrivate) {
         await loadPrayerWall();
       }
@@ -104,7 +133,8 @@ function Prayer() {
     if (!window.confirm(message)) return;
     setDeletingId(id);
     try {
-      await api.deletePublicPrayerRequest(id);
+      await api.deletePublicPrayerRequest(id, getPrayerOwnerTokens()[id]);
+      removePrayerOwnerToken(id);
       setWallRequests(current => current.filter(item => item.id !== id));
     } catch (error) {
       setWallError(language === 'mn' ? 'Залбирлыг устгаж чадсангүй.' : 'Unable to delete the prayer request.');
@@ -118,7 +148,7 @@ function Prayer() {
     if (!nextText) return;
     setSavingId(id);
     try {
-      await api.updatePublicPrayerRequest(id, nextText);
+      await api.updatePublicPrayerRequest(id, nextText, getPrayerOwnerTokens()[id]);
       setWallRequests(current => current.map(item => item.id === id ? { ...item, request_text: nextText } : item));
       setEditingId(null);
       setEditText('');
@@ -230,7 +260,7 @@ function Prayer() {
                       />
                     ) : <p>{item.request_text}</p>}
                     <time dateTime={item.date || undefined}>{formatDate(item.date)}</time>
-                    <div className="prayer-wall-card-actions">
+                    {item.canManage && <div className="prayer-wall-card-actions">
                       {editingId === item.id ? (
                         <>
                           <button type="button" disabled={savingId === item.id || !editText.trim()} onClick={() => saveWallPrayer(item.id)}>{savingId === item.id ? (language === 'mn' ? 'Хадгалж байна…' : 'Saving…') : (language === 'mn' ? 'Хадгалах' : 'Save')}</button>
@@ -240,7 +270,7 @@ function Prayer() {
                         <button type="button" onClick={() => { setEditingId(item.id); setEditText(item.request_text); }}>{language === 'mn' ? 'Засах' : 'Edit'}</button>
                       )}
                       <button type="button" disabled={deletingId === item.id} onClick={() => deleteWallPrayer(item.id)}>{deletingId === item.id ? (language === 'mn' ? 'Устгаж байна…' : 'Deleting…') : (language === 'mn' ? 'Устгах' : 'Delete')}</button>
-                    </div>
+                    </div>}
                   </article>
                 ))}
               </div>

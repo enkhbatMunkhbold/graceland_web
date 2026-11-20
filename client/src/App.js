@@ -21,6 +21,7 @@ import Footer from './components/Footer';
 import Login from './components/Login';
 import SignUp from './components/SignUp';
 import Prayer from './components/Prayer';
+import Announcements from './components/Announcements';
 import AdminDashboard from './components/AdminDashboard';
 import AnnouncementForm from './components/AnnouncementForm';
 import SiteTextEditor from './components/SiteTextEditor';
@@ -67,6 +68,7 @@ function AppContent() {
             <Route path="/ministries/marriage" element={<Marriage />} />
             <Route path="/sermons" element={<Sermons />} />
             <Route path="/prayer" element={<Prayer />} />
+            <Route path="/announcements" element={<Announcements />} />
             <Route path="/announcements/new" element={<AnnouncementForm />} />
             <Route
               path="/admin"
@@ -92,6 +94,7 @@ function AppContent() {
             <Route path="/ministries/marriage" element={<Marriage />} />
             <Route path="/sermons" element={<Sermons />} />
             <Route path="/prayer" element={<Prayer />} />
+            <Route path="/announcements" element={<Announcements />} />
             <Route path="/announcements/new" element={<AnnouncementForm />} />
             <Route path="/login" element={<Login />} />
             <Route path="/SignUp" element={<SignUp />} />

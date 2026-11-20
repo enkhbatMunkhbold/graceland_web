@@ -358,10 +358,14 @@ export const api = {
     return response.json();
   },
 
-  updatePublicPrayerRequest: async (id, requestText) => {
+  updatePublicPrayerRequest: async (id, requestText, ownerToken) => {
     const response = await fetch(`${API_BASE_URL}/prayer-requests/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Prayer-Owner-Token': ownerToken,
+      },
+      credentials: 'include',
       body: JSON.stringify({ request_text: requestText }),
     });
     if (!response.ok) {
@@ -371,8 +375,12 @@ export const api = {
     return response.json();
   },
 
-  deletePublicPrayerRequest: async id => {
-    const response = await fetch(`${API_BASE_URL}/prayer-requests/${id}`, { method: 'DELETE' });
+  deletePublicPrayerRequest: async (id, ownerToken) => {
+    const response = await fetch(`${API_BASE_URL}/prayer-requests/${id}`, {
+      method: 'DELETE',
+      headers: { 'X-Prayer-Owner-Token': ownerToken },
+      credentials: 'include',
+    });
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
       throw new Error(error.error || 'Failed to delete prayer request');
