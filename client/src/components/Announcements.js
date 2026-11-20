@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
-import { ArrowRight, Megaphone, Users } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { ArrowRight, Megaphone, Users, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../services/api';
 import '../styling/announcements.css';
@@ -21,6 +20,13 @@ function removeAnnouncementOwnerToken(id) {
   window.localStorage.setItem(ANNOUNCEMENT_OWNER_TOKENS_KEY, JSON.stringify(tokens));
 }
 
+function saveAnnouncementOwnerToken(id, token) {
+  if (!id || !token) return;
+  const tokens = getAnnouncementOwnerTokens();
+  tokens[id] = token;
+  window.localStorage.setItem(ANNOUNCEMENT_OWNER_TOKENS_KEY, JSON.stringify(tokens));
+}
+
 function TextWithLinks({ children }) {
   const parts = String(children || '').split(/(https?:\/\/[^\s]+)/g);
   return parts.map((part, index) => part.startsWith('http://') || part.startsWith('https://') ? (
@@ -38,6 +44,13 @@ function Announcements() {
   const [editContent, setEditContent] = useState('');
   const [savingId, setSavingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [formData, setFormData] = useState({ name: '', content: '' });
+  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
+  const closeFormButtonRef = useRef(null);
+  const churchColumnRef = useRef(null);
+  const [desktopColumnHeight, setDesktopColumnHeight] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -59,6 +72,31 @@ function Announcements() {
       .finally(() => active && setLoading(false));
     return () => { active = false; };
   }, [t]);
+
+  useEffect(() => {
+    if (!isFormOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    closeFormButtonRef.current?.focus();
+    const handleKeyDown = event => {
+      if (event.key === 'Escape') setIsFormOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isFormOpen]);
+
+  useEffect(() => {
+    const column = churchColumnRef.current;
+    if (!column || typeof ResizeObserver === 'undefined') return undefined;
+    const updateHeight = () => setDesktopColumnHeight(Math.ceil(column.getBoundingClientRect().height));
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(column);
+    return () => observer.disconnect();
+  }, [loading, churchAnnouncement]);
 
   const formatDate = value => value ? new Date(value).toLocaleDateString(
     language === 'mn' ? 'mn-MN' : 'en-US',
@@ -97,6 +135,28 @@ function Announcements() {
     }
   };
 
+  const submitAnnouncement = async event => {
+    event.preventDefault();
+    const content = formData.content.trim();
+    if (!content) return;
+    setFormSubmitting(true);
+    setFormError('');
+    try {
+      const announcement = await api.createMemberAnnouncement({
+        name: formData.name.trim(),
+        content,
+      });
+      saveAnnouncementOwnerToken(announcement.id, announcement.owner_token);
+      setPublicAnnouncements(current => [{ ...announcement, canManage: true }, ...current].slice(0, 20));
+      setFormData({ name: '', content: '' });
+      setIsFormOpen(false);
+    } catch (submitError) {
+      setFormError(t('announcementSubmitError'));
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
+
   return (
     <main className="announcements-page">
       <section className="announcements-hero">
@@ -109,7 +169,7 @@ function Announcements() {
 
       <section className="announcements-section">
         <div className="announcements-shell announcements-layout">
-          <section className="announcements-column" aria-labelledby="church-announcements-title">
+          <section ref={churchColumnRef} className="announcements-column" aria-labelledby="church-announcements-title">
             <div className="announcements-heading">
               <Megaphone aria-hidden="true" />
               <div>
@@ -135,16 +195,20 @@ function Announcements() {
             ) : <p className="announcements-state">{t('churchAnnouncementsEmpty')}</p>}
           </section>
 
-          <section className="announcements-column" aria-labelledby="public-announcements-title">
+          <section
+            className="announcements-column announcements-column--public"
+            aria-labelledby="public-announcements-title"
+            style={desktopColumnHeight ? { '--announcements-column-height': `${desktopColumnHeight}px` } : undefined}
+          >
             <div className="announcements-heading announcements-heading--public">
               <Users aria-hidden="true" />
               <div>
                 <p className="announcements-kicker">{t('communityBoard')}</p>
                 <h2 id="public-announcements-title">{t('publicAnnouncements')}</h2>
               </div>
-              <Link className="announcements-submit-link" to="/announcements/new">
+              <button className="announcements-submit-link" type="button" onClick={() => { setFormError(''); setIsFormOpen(true); }}>
                 {t('insertAnnouncement')} <ArrowRight aria-hidden="true" />
-              </Link>
+              </button>
             </div>
             {loading ? <p className="announcements-state">{t('announcementsLoading')}</p> : error ? (
               <p className="announcements-state announcements-state--error">{error}</p>
@@ -185,6 +249,33 @@ function Announcements() {
           </section>
         </div>
       </section>
+      {isFormOpen && (
+        <section className="announcement-dialog" role="dialog" aria-modal="true" aria-labelledby="announcement-dialog-title">
+          <button className="announcement-dialog-backdrop" type="button" onClick={() => setIsFormOpen(false)} aria-label={t('closeAnnouncementForm')} />
+          <div className="announcement-dialog-panel">
+            <button ref={closeFormButtonRef} className="announcement-dialog-close" type="button" onClick={() => setIsFormOpen(false)} aria-label={t('closeAnnouncementForm')}>
+              <X aria-hidden="true" />
+            </button>
+            <p className="announcements-kicker">{t('communityBoard')}</p>
+            <h2 id="announcement-dialog-title">{t('postAnnouncementTitle')}</h2>
+            <p className="announcement-dialog-intro">{t('postAnnouncementIntro')}</p>
+            <form className="announcement-dialog-form" onSubmit={submitAnnouncement}>
+              <label>
+                <span>{t('announcementName')}</span>
+                <input type="text" value={formData.name} onChange={event => setFormData({ ...formData, name: event.target.value })} maxLength="120" autoComplete="name" />
+              </label>
+              <label>
+                <span>{t('announcementContent')}</span>
+                <textarea value={formData.content} onChange={event => setFormData({ ...formData, content: event.target.value })} rows="8" maxLength="5000" required />
+              </label>
+              {formError && <p className="announcement-dialog-error" role="alert">{formError}</p>}
+              <button className="announcement-dialog-submit" type="submit" disabled={formSubmitting || !formData.content.trim()}>
+                {formSubmitting ? t('postingAnnouncement') : t('postAnnouncement')}
+              </button>
+            </form>
+          </div>
+        </section>
+      )}
     </main>
   );
 }
