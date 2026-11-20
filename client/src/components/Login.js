@@ -112,12 +112,6 @@ const Login = () => {
           </button>
         </form>
         <p className="auth-footer"><Link to="/forgot-password" className="auth-link">{t('forgotPassword')}</Link></p>
-        <p className="auth-footer">
-          {t('noAccount')}{' '}
-          <Link to="/SignUp" className="auth-link">
-            {t('signUp')}
-          </Link>
-        </p>
       </div>
     </div>
   );
