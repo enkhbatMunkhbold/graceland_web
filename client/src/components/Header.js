@@ -15,6 +15,8 @@ function Header() {
   const { user, setUser } = useContext(UserContext)
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [staffRequest, setStaffRequest] = useState(null);
+  const [staffRequestBusy, setStaffRequestBusy] = useState(false);
   const { language, toggleLanguage, t } = useLanguage();
   const navigate = useNavigate()
   const location = useLocation();
@@ -27,6 +29,27 @@ function Header() {
   }, []);
 
   useEffect(() => setIsMenuOpen(false), [location.pathname]);
+
+  useEffect(() => {
+    if (!user || user.is_staff || user.is_admin) {
+      setStaffRequest(null);
+      return;
+    }
+    api.getMyStaffRequest()
+      .then(data => setStaffRequest(data.request))
+      .catch(() => setStaffRequest(null));
+  }, [user]);
+
+  const requestStaffAccess = async () => {
+    setStaffRequestBusy(true);
+    try {
+      setStaffRequest(await api.requestStaffAccess());
+    } catch (error) {
+      console.error('Unable to request staff access:', error);
+    } finally {
+      setStaffRequestBusy(false);
+    }
+  };
 
   const handleAuthClick = async () => {
     if (user) {
@@ -64,7 +87,7 @@ function Header() {
     { label: t('ministries'), href: '/ministries', isRoute: true },
     { label: t('events'), href: '/events', isRoute: true },
     { label: t('sermons'), href: '/sermons', isRoute: true },
-    ...(user ? [{ label: t('adminDashboard'), href: '/admin', isRoute: true }] : []),
+    ...(user?.is_admin || user?.is_staff ? [{ label: t('adminDashboard'), href: '/admin', isRoute: true }] : []),
     {
       label: t('contact'),
       href: `mailto:${CONTACT_EMAIL}`,
@@ -150,6 +173,16 @@ function Header() {
             {user && (
               <button className="logout-button" onClick={handleAuthClick}>
                 {t('logout')}
+              </button>
+            )}
+            {user && !user.is_staff && !user.is_admin && (
+              <button
+                className="staff-request-button"
+                type="button"
+                disabled={staffRequestBusy || staffRequest?.status === 'pending'}
+                onClick={requestStaffAccess}
+              >
+                {staffRequest?.status === 'pending' ? t('staffRequestPending') : t('requestStaffAccess')}
               </button>
             )}
             <a

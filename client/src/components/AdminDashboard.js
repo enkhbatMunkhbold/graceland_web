@@ -4,6 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import UserContext from '../context/UserContext';
 import { api } from '../services/api';
 import '../styling/admin-dashboard.css';
+import '../styling/admin-invite.css';
 
 const STATUS_KEYS = {
   new: 'prayerStatusNew',
@@ -25,6 +26,15 @@ function AdminDashboard() {
   const [announcementFile, setAnnouncementFile] = useState(null);
   const [announcementBusy, setAnnouncementBusy] = useState(false);
   const [announcementMessage, setAnnouncementMessage] = useState('');
+  const [roleRequests, setRoleRequests] = useState([]);
+  const [roleUsers, setRoleUsers] = useState([]);
+  const [roleAudit, setRoleAudit] = useState([]);
+  const [roleLoading, setRoleLoading] = useState(true);
+  const [roleError, setRoleError] = useState('');
+  const [roleBusyId, setRoleBusyId] = useState(null);
+  const [signupInvite, setSignupInvite] = useState('');
+  const [inviteBusy, setInviteBusy] = useState(false);
+  const [inviteMessage, setInviteMessage] = useState('');
 
   const loadRequests = useCallback(async () => {
     setLoading(true);
@@ -38,13 +48,84 @@ function AdminDashboard() {
     }
   }, [t]);
 
+  const loadRoleData = useCallback(async () => {
+    setRoleLoading(true);
+    setRoleError('');
+    try {
+      const [pending, users, audit] = await Promise.all([
+        api.getRoleRequests(),
+        api.getRoleUsers(),
+        api.getRoleAudit(),
+      ]);
+      setRoleRequests(pending);
+      setRoleUsers(users);
+      setRoleAudit(audit);
+    } catch (roleLoadError) {
+      setRoleError('Unable to load users and roles.');
+    } finally {
+      setRoleLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    if (user?.is_admin) loadRequests();
+    if (user?.is_admin) {
+      loadRequests();
+      loadRoleData();
+    }
     else setLoading(false);
     api.getHomeAnnouncement()
       .then(setAnnouncement)
       .catch(() => setAnnouncementMessage('Unable to load the current announcement.'));
-  }, [loadRequests, user?.is_admin]);
+  }, [loadRequests, loadRoleData, user?.is_admin]);
+
+  const reviewRoleRequest = async (id, decision) => {
+    setRoleBusyId(`request-${id}`);
+    setRoleError('');
+    try {
+      await api.reviewRoleRequest(id, decision);
+      await loadRoleData();
+    } catch (reviewError) {
+      setRoleError(reviewError.message || 'Unable to review this request.');
+    } finally {
+      setRoleBusyId(null);
+    }
+  };
+
+  const changeUserRole = async (target, role, checked) => {
+    setRoleBusyId(`user-${target.id}`);
+    setRoleError('');
+    try {
+      const updated = await api.updateUserRoles(target.id, { [role]: checked });
+      setRoleUsers(current => current.map(item => item.id === target.id ? updated : item));
+      setRoleAudit(await api.getRoleAudit());
+    } catch (roleChangeError) {
+      setRoleError(roleChangeError.message || 'Unable to update this role.');
+    } finally {
+      setRoleBusyId(null);
+    }
+  };
+
+  const createSignupInvite = async () => {
+    setInviteBusy(true);
+    setInviteMessage('');
+    try {
+      const result = await api.createSignupInvite(7);
+      setSignupInvite(`${window.location.origin}/SignUp?invite=${encodeURIComponent(result.token)}`);
+    } catch (inviteError) {
+      setInviteMessage(inviteError.message || t('signupInviteError'));
+    } finally {
+      setInviteBusy(false);
+    }
+  };
+
+  const copySignupInvite = async () => {
+    try {
+      await navigator.clipboard.writeText(signupInvite);
+      setInviteMessage(t('inviteCopied'));
+    } catch (copyError) {
+      setInviteMessage(t('copyInviteError'));
+    }
+  };
 
   const changeAnnouncement = event => {
     const { name, value, type, checked } = event.target;
@@ -178,6 +259,80 @@ function AdminDashboard() {
               </form>
             ) : <p className="admin-state">Loading announcement...</p>}
           </section>
+          {user?.is_admin && <section className="admin-role-section" aria-labelledby="role-management-title">
+            <div className="admin-section-heading">
+              <p>{t('adminDashboard')}</p>
+              <h2 id="role-management-title">{t('roleManagement')}</h2>
+              <span>{t('roleManagementIntro')}</span>
+            </div>
+            <div className="admin-role-content">
+              {roleError && <p className="admin-alert" role="alert">{roleError}</p>}
+              {user?.username === 'Boojoo' && (
+                <div className="admin-invite-panel">
+                  <div>
+                    <h3>{t('signupInviteTitle')}</h3>
+                    <p>{t('signupInviteIntro')}</p>
+                  </div>
+                  <button type="button" disabled={inviteBusy} onClick={createSignupInvite}>
+                    {inviteBusy ? t('creatingInvite') : t('createSignupInvite')}
+                  </button>
+                  {signupInvite && (
+                    <div className="admin-invite-result">
+                      <input type="text" readOnly value={signupInvite} aria-label={t('signupInviteLink')} />
+                      <button type="button" onClick={copySignupInvite}>{t('copyInviteLink')}</button>
+                    </div>
+                  )}
+                  {inviteMessage && <p className="admin-invite-message" role="status">{inviteMessage}</p>}
+                </div>
+              )}
+              {roleLoading ? <p className="admin-state">Loading users and roles...</p> : (
+                <>
+                  <h3>{t('pendingStaffRequests')}</h3>
+                  {roleRequests.length ? (
+                    <div className="admin-role-requests">
+                      {roleRequests.map(item => (
+                        <article key={item.id} className="admin-role-request-card">
+                          <div><strong>{item.user.username}</strong><span>{item.user.email}</span></div>
+                          <div className="admin-role-request-actions">
+                            <button type="button" disabled={roleBusyId === `request-${item.id}`} onClick={() => reviewRoleRequest(item.id, 'approved')}>{t('approveStaffRequest')}</button>
+                            <button type="button" disabled={roleBusyId === `request-${item.id}`} onClick={() => reviewRoleRequest(item.id, 'rejected')}>{t('rejectStaffRequest')}</button>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : <p className="admin-state">{t('noPendingStaffRequests')}</p>}
+
+                  <h3>All users</h3>
+                  <div className="admin-role-users">
+                    {roleUsers.map(item => (
+                      <article key={item.id} className="admin-role-user-card">
+                        <div className="admin-role-user-identity">
+                          <strong>{item.username}</strong>
+                          <span>{item.email}</span>
+                          {item.is_protected && <em>{t('protectedAccount')}</em>}
+                        </div>
+                        <div className="admin-role-toggles">
+                          <label>
+                            <input type="checkbox" checked={item.is_staff} disabled={item.is_protected || roleBusyId === `user-${item.id}`} onChange={event => changeUserRole(item, 'is_staff', event.target.checked)} />
+                            <span>{t('staffRole')}</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" checked={item.is_admin} disabled={item.is_protected || user?.username !== 'Boojoo' || roleBusyId === `user-${item.id}`} onChange={event => changeUserRole(item, 'is_admin', event.target.checked)} />
+                            <span>{t('administratorRole')}</span>
+                          </label>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+
+                  <h3>{t('roleAuditTitle')}</h3>
+                  {roleAudit.length ? <div className="admin-role-audit">
+                    {roleAudit.map(entry => <p key={entry.id}><strong>{entry.actor}</strong> {entry.action} {entry.role} — {entry.target}<time>{formatDate(entry.created_at)}</time></p>)}
+                  </div> : <p className="admin-state">No role changes recorded yet.</p>}
+                </>
+              )}
+            </div>
+          </section>}
           {user?.is_admin && <section className="admin-prayer-section" aria-labelledby="prayer-admin-title">
           <h2 id="prayer-admin-title" className="admin-subheading">Prayer requests</h2>
           {error && <p className="admin-alert" role="alert">{error}</p>}

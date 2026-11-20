@@ -43,7 +43,7 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = User
         load_instance = True
-        exclude = ('_password_hash',)
+        exclude = ('_password_hash', 'phone', 'session_version')
     
     member = fields.Nested(MemberSchema, dump_only=True)
     email = fields.Email(required=True)

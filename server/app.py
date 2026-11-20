@@ -15,7 +15,7 @@ from flask_migrate import Migrate
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_
 from marshmallow.exceptions import ValidationError
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode
@@ -24,11 +24,13 @@ import os
 import uuid
 import hashlib
 import hmac
+import secrets
 import models  # Import models to register them with SQLAlchemy
 import schemas
 from auth_utils import user_is_admin, user_is_staff, user_is_protected_superuser
 from ministry_upload import ministry_upload_allowed, save_ministry_upload
 from google_calendar_sync import start_hourly_sync, sync_google_calendar
+from email_delivery import send_password_reset_code
 
 # Initialize Flask-Migrate
 migrate = Migrate(app, db)
@@ -42,7 +44,11 @@ def _get_current_user():
     user_id = session.get('user_id')
     if not user_id:
         return None
-    return db.session.get(models.User, user_id)
+    user = db.session.get(models.User, user_id)
+    if not user or session.get('session_version') != user.session_version:
+        session.clear()
+        return None
+    return user
 
 
 def _require_admin():
@@ -113,14 +119,8 @@ def _validate_home_announcement(data):
 
 class CheckSession(Resource):
     def get(self):
-        user_id = session.get('user_id')
-
-        if not user_id:
-          return {'error': 'Not authenticated'}, 401
-        
-        user = db.session.get(models.User, user_id)
+        user = _get_current_user()
         if not user:
-            session.pop('user_id', None)
             return {'error': 'Not authenticated'}, 401
         
         user_data = schemas.user_schema.dump(user)
@@ -141,6 +141,7 @@ class Login(Resource):
           
           if user.authenticate(data['password']):
               session['user_id'] = user.id
+              session['session_version'] = user.session_version
               session.permanent = True
               return schemas.user_schema.dump(user), 200
           return {'message': 'Invalid credentials'}, 401    
@@ -162,13 +163,97 @@ class Logout(Resource):
 
 api.add_resource(Logout, '/logout')
 
+
+def _reset_code_hash(user_id, code):
+    value = '{}:{}'.format(user_id, code).encode('utf-8')
+    return hmac.new(app.secret_key.encode('utf-8'), value, hashlib.sha256).hexdigest()
+
+
+class PasswordResetRequest(Resource):
+    def post(self):
+        data = request.get_json(silent=True) or {}
+        username = str(data.get('username', '') or '').strip()
+        generic = {'message': 'If the protected account exists, a recovery code has been sent.'}
+        user = models.User.query.filter_by(username=username).first()
+        if not user_is_protected_superuser(user):
+            return generic, 200
+
+        now = datetime.utcnow()
+        recent_count = models.PasswordResetCode.query.filter(
+            models.PasswordResetCode.user_id == user.id,
+            models.PasswordResetCode.requested_at >= now - timedelta(minutes=15),
+        ).count()
+        if recent_count >= 3:
+            return generic, 200
+
+        code = '{:06d}'.format(secrets.randbelow(1000000))
+        reset = models.PasswordResetCode(
+            user_id=user.id,
+            code_hash=_reset_code_hash(user.id, code),
+            expires_at=now + timedelta(minutes=10),
+        )
+        models.PasswordResetCode.query.filter_by(user_id=user.id, used_at=None).update(
+            {'used_at': now}, synchronize_session=False
+        )
+        db.session.add(reset)
+        try:
+            send_password_reset_code(user.email, code)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            app.logger.exception('Password recovery email delivery failed')
+            return {'error': 'Password recovery email is temporarily unavailable'}, 503
+        return generic, 200
+
+
+class PasswordResetConfirm(Resource):
+    def post(self):
+        data = request.get_json(silent=True) or {}
+        username = str(data.get('username', '') or '').strip()
+        code = str(data.get('code', '') or '').strip()
+        password = str(data.get('new_password', '') or '')
+        if len(code) != 6 or not code.isdigit() or not 8 <= len(password) <= 128:
+            return {'error': 'Invalid or expired recovery code'}, 400
+
+        user = models.User.query.filter_by(username=username).first()
+        if not user_is_protected_superuser(user):
+            return {'error': 'Invalid or expired recovery code'}, 400
+        reset = models.PasswordResetCode.query.filter_by(user_id=user.id, used_at=None).order_by(
+            models.PasswordResetCode.requested_at.desc()
+        ).first()
+        now = datetime.utcnow()
+        if not reset or reset.expires_at <= now or reset.attempts >= 5:
+            return {'error': 'Invalid or expired recovery code'}, 400
+
+        reset.attempts += 1
+        if not hmac.compare_digest(reset.code_hash, _reset_code_hash(user.id, code)):
+            db.session.commit()
+            return {'error': 'Invalid or expired recovery code'}, 400
+
+        user.set_password(password)
+        user.session_version += 1
+        reset.used_at = now
+        db.session.commit()
+        session.clear()
+        return {'message': 'Password updated successfully'}, 200
+
+
+api.add_resource(PasswordResetRequest, '/password-reset/request')
+api.add_resource(PasswordResetConfirm, '/password-reset/confirm')
+
 class SignUp(Resource):
     def post(self):
         try:
             data = request.get_json()
 
-            if not data or not all(c in data for c in ['username', 'email', 'password']):
+            if not data or not all(c in data for c in ['username', 'email', 'password', 'invite_token']):
                 return {'error': 'Missing required fields'}, 400
+
+            invite_token = str(data.get('invite_token', '') or '').strip()
+            invite_hash = hashlib.sha256(invite_token.encode('utf-8')).hexdigest()
+            invite = models.SignupInvite.query.filter_by(token_hash=invite_hash).first()
+            if not invite or invite.used_at or invite.expires_at <= datetime.utcnow():
+                return {'error': 'This signup invitation is invalid or expired'}, 403
             
             if models.User.query.filter_by(username=data['username']).first():
                 return {'error': 'Username already exists'}, 400
@@ -180,9 +265,13 @@ class SignUp(Resource):
             new_user.set_password(data['password'])
 
             db.session.add(new_user)
+            db.session.flush()
+            invite.used_at = datetime.utcnow()
+            invite.used_by_id = new_user.id
             db.session.commit()
 
             session['user_id'] = new_user.id
+            session['session_version'] = new_user.session_version
             return schemas.user_schema.dump(new_user), 201
         
         except ValidationError as ve:
@@ -195,12 +284,42 @@ class SignUp(Resource):
         
 api.add_resource(SignUp, '/sign_up')
 
+
+class SignupInvites(Resource):
+    def post(self):
+        actor = _get_current_user()
+        if not user_is_protected_superuser(actor):
+            return {'error': 'Only Boojoo can create signup invitations'}, 403
+        data = request.get_json(silent=True) or {}
+        expires_in_days = data.get('expires_in_days', 7)
+        if not isinstance(expires_in_days, int) or not 1 <= expires_in_days <= 30:
+            return {'error': 'Invitation expiry must be between 1 and 30 days'}, 400
+        token = secrets.token_urlsafe(32)
+        invite = models.SignupInvite(
+            token_hash=hashlib.sha256(token.encode('utf-8')).hexdigest(),
+            created_by_id=actor.id,
+            expires_at=datetime.utcnow() + timedelta(days=expires_in_days),
+        )
+        db.session.add(invite)
+        db.session.commit()
+        return {
+            'token': token,
+            'expires_at': invite.expires_at.isoformat(),
+        }, 201
+
+
+api.add_resource(SignupInvites, '/admin/signup-invites')
+
 class Users(Resource):
     def get(self):
+        if not _require_admin():
+            return {'error': 'Administrator access required'}, 403
         users = models.User.query.all()
         return schemas.users_schema.dump(users), 200
     
-    def post(self): 
+    def post(self):
+        if not _require_admin():
+            return {'error': 'Administrator access required'}, 403
         try:
             data = request.get_json()
 
@@ -223,13 +342,17 @@ class Users(Resource):
 api.add_resource(Users, '/users')
 
 class UserByID(Resource):
-    def get(self, user_id):        
+    def get(self, user_id):
+        if not _require_admin():
+            return {'error': 'Administrator access required'}, 403
         user = db.session.get(models.User, user_id)
         if not user:
             return {'error': 'User not found'}, 404
         return schemas.user_schema.dump(user), 200
     
     def patch(self, user_id):
+        if not _require_admin():
+            return {'error': 'Administrator access required'}, 403
         user = db.session.get(models.User, user_id)
         if not user:
             return {'error': 'User not found'}, 404
@@ -257,6 +380,8 @@ class UserByID(Resource):
             return {'error': f'Internal server error: {str(e)}'}, 500
         
     def delete(self, user_id):
+        if not _require_admin():
+            return {'error': 'Administrator access required'}, 403
         user = db.session.get(models.User, user_id)
 
         if not user:
@@ -273,6 +398,174 @@ class UserByID(Resource):
             return {'error': str(e)}, 500       
 
 api.add_resource(UserByID, '/users/<int:user_id>')
+
+
+ROLE_REQUEST_STATUSES = {'pending', 'approved', 'rejected'}
+
+
+def _role_user_data(user):
+    return {
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'is_admin': user_is_admin(user),
+        'is_staff': user_is_staff(user),
+        'is_protected': user_is_protected_superuser(user),
+    }
+
+
+def _staff_request_data(role_request):
+    return {
+        'id': role_request.id,
+        'status': role_request.status,
+        'requested_at': role_request.requested_at.isoformat() if role_request.requested_at else None,
+        'reviewed_at': role_request.reviewed_at.isoformat() if role_request.reviewed_at else None,
+        'user': _role_user_data(role_request.user),
+        'reviewed_by': role_request.reviewed_by.username if role_request.reviewed_by else None,
+    }
+
+
+def _record_role_change(actor, target, role, action):
+    db.session.add(models.RoleAuditLog(
+        actor_id=actor.id,
+        target_user_id=target.id,
+        role=role,
+        action=action,
+    ))
+
+
+class MyStaffRoleRequest(Resource):
+    def get(self):
+        user = _get_current_user()
+        if not user:
+            return {'error': 'Login required'}, 401
+        latest = (
+            models.StaffRoleRequest.query
+            .filter_by(user_id=user.id)
+            .order_by(models.StaffRoleRequest.requested_at.desc())
+            .first()
+        )
+        return {'request': _staff_request_data(latest) if latest else None}, 200
+
+    def post(self):
+        user = _get_current_user()
+        if not user:
+            return {'error': 'Login required'}, 401
+        if user_is_staff(user):
+            return {'error': 'This account already has staff access'}, 400
+        pending = models.StaffRoleRequest.query.filter_by(
+            user_id=user.id,
+            status='pending',
+        ).first()
+        if pending:
+            return _staff_request_data(pending), 200
+        role_request = models.StaffRoleRequest(user_id=user.id, status='pending')
+        db.session.add(role_request)
+        db.session.commit()
+        return _staff_request_data(role_request), 201
+
+
+class AdminStaffRoleRequests(Resource):
+    def get(self):
+        if not _require_admin():
+            return {'error': 'Administrator access required'}, 403
+        status = request.args.get('status', 'pending').strip().lower()
+        if status not in ROLE_REQUEST_STATUSES and status != 'all':
+            return {'error': 'Invalid request status'}, 400
+        query = models.StaffRoleRequest.query
+        if status != 'all':
+            query = query.filter_by(status=status)
+        role_requests = query.order_by(models.StaffRoleRequest.requested_at.desc()).all()
+        return [_staff_request_data(item) for item in role_requests], 200
+
+
+class AdminStaffRoleRequestByID(Resource):
+    def patch(self, role_request_id):
+        actor = _require_admin()
+        if not actor:
+            return {'error': 'Administrator access required'}, 403
+        role_request = db.session.get(models.StaffRoleRequest, role_request_id)
+        if not role_request:
+            return {'error': 'Staff request not found'}, 404
+        if role_request.status != 'pending':
+            return {'error': 'This staff request has already been reviewed'}, 409
+        decision = str((request.get_json(silent=True) or {}).get('decision', '')).strip().lower()
+        if decision not in {'approved', 'rejected'}:
+            return {'error': 'Decision must be approved or rejected'}, 400
+        role_request.status = decision
+        role_request.reviewed_by_id = actor.id
+        role_request.reviewed_at = datetime.now(timezone.utc)
+        if decision == 'approved' and not user_is_staff(role_request.user):
+            role_request.user.is_staff = True
+            _record_role_change(actor, role_request.user, 'staff', 'granted')
+        db.session.commit()
+        return _staff_request_data(role_request), 200
+
+
+class AdminRoleUsers(Resource):
+    def get(self):
+        if not _require_admin():
+            return {'error': 'Administrator access required'}, 403
+        users = models.User.query.order_by(models.User.username.asc()).all()
+        return [_role_user_data(user) for user in users], 200
+
+
+class AdminUserRoles(Resource):
+    def patch(self, user_id):
+        actor = _require_admin()
+        if not actor:
+            return {'error': 'Administrator access required'}, 403
+        target = db.session.get(models.User, user_id)
+        if not target:
+            return {'error': 'User not found'}, 404
+        data = request.get_json(silent=True) or {}
+        allowed = {'is_staff', 'is_admin'}
+        if not data or any(key not in allowed for key in data):
+            return {'error': 'Only is_staff and is_admin may be changed'}, 400
+        if user_is_protected_superuser(target):
+            return {'error': 'Boojoo roles are permanent'}, 403
+
+        if 'is_admin' in data:
+            if not user_is_protected_superuser(actor):
+                return {'error': 'Only Boojoo can change administrator access'}, 403
+            if not isinstance(data['is_admin'], bool):
+                return {'error': 'is_admin must be true or false'}, 400
+            if target.is_admin != data['is_admin']:
+                target.is_admin = data['is_admin']
+                _record_role_change(actor, target, 'admin', 'granted' if target.is_admin else 'revoked')
+
+        if 'is_staff' in data:
+            if not isinstance(data['is_staff'], bool):
+                return {'error': 'is_staff must be true or false'}, 400
+            if target.is_staff != data['is_staff']:
+                target.is_staff = data['is_staff']
+                _record_role_change(actor, target, 'staff', 'granted' if target.is_staff else 'revoked')
+
+        db.session.commit()
+        return _role_user_data(target), 200
+
+
+class AdminRoleAudit(Resource):
+    def get(self):
+        if not _require_admin():
+            return {'error': 'Administrator access required'}, 403
+        entries = models.RoleAuditLog.query.order_by(models.RoleAuditLog.created_at.desc()).limit(100).all()
+        return [{
+            'id': entry.id,
+            'actor': entry.actor.username,
+            'target': entry.target_user.username,
+            'role': entry.role,
+            'action': entry.action,
+            'created_at': entry.created_at.isoformat() if entry.created_at else None,
+        } for entry in entries], 200
+
+
+api.add_resource(MyStaffRoleRequest, '/role-requests/staff')
+api.add_resource(AdminStaffRoleRequests, '/admin/role-requests')
+api.add_resource(AdminStaffRoleRequestByID, '/admin/role-requests/<int:role_request_id>')
+api.add_resource(AdminRoleUsers, '/admin/users')
+api.add_resource(AdminUserRoles, '/admin/users/<int:user_id>/roles')
+api.add_resource(AdminRoleAudit, '/admin/role-audit')
 
 class Members(Resource):
     def get(self):
@@ -1883,8 +2176,8 @@ class HomeAnnouncement(Resource):
         return _home_announcement_value(), 200
 
     def put(self):
-        if not _get_current_user():
-            return {'error': 'Login required'}, 401
+        if not _require_admin_or_staff():
+            return {'error': 'Admin or staff access required'}, 403
         try:
             announcement = _validate_home_announcement(request.get_json(silent=True))
         except ValueError as error:
@@ -1904,8 +2197,8 @@ class HomeAnnouncement(Resource):
 
 class HomeAnnouncementUpload(Resource):
     def post(self):
-        if not _get_current_user():
-            return {'error': 'Login required'}, 401
+        if not _require_admin_or_staff():
+            return {'error': 'Admin or staff access required'}, 403
         file = request.files.get('file')
         if not file or not file.filename or '.' not in file.filename:
             return {'error': 'Choose an image or video file'}, 400

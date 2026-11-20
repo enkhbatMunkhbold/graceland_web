@@ -41,10 +41,12 @@ app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'uploads')
 app.config['SESSION_COOKIE_SECURE'] = is_production
 app.config['SESSION_COOKIE_SAMESITE'] = 'None' if is_production else 'Lax'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = 60 * 60 * 24 * 7
 app.json.compact = False
 
 metadata = MetaData(naming_convention={
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "ix": "ix_%(column_0_label)s",
 })
 
 db = SQLAlchemy(metadata=metadata)

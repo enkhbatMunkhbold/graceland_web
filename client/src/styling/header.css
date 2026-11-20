@@ -12,3 +12,4 @@
 
 /* Graceland leaf-green accent palette */
 .nav-link:after{background:#62b342}.nav-dropdown-link:hover,.nav-dropdown-link--active,.language-toggle:hover,.mobile-menu-button:hover,.nav-mobile-link:hover,.nav-mobile-link--active,.header-actions .logout-button:hover{background:#edf7e8}.donate-button{border-color:#72bd4b;background:#91cf62;color:#14251a}.donate-button:hover{background:#b8e394}.donate-button:focus-visible,.nav-link:focus-visible,.nav-dropdown-link:focus-visible,.language-toggle:focus-visible,.mobile-menu-button:focus-visible,.logout-button:focus-visible,.nav-mobile-link:focus-visible,.logo:focus-visible{outline-color:#62b342}
+.staff-request-button{border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:.55rem .8rem;background:transparent;color:inherit;font-size:.65rem;font-weight:800;letter-spacing:.04em;white-space:nowrap;cursor:pointer}.staff-request-button:disabled{cursor:default;opacity:.65}

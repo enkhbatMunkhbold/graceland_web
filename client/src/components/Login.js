@@ -1,5 +1,5 @@
 import { useState, useContext, useMemo } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Eye, EyeOff } from 'lucide-react';
@@ -111,13 +111,7 @@ const Login = () => {
             {isLoading ? t('loggingIn') : t('login')}
           </button>
         </form>
-
-        <p className="auth-footer">
-          {t('noAccount')}{' '}
-          <Link to="/SignUp" className="auth-link">
-            {t('signUp')}
-          </Link>
-        </p>
+        <p className="auth-footer"><Link to="/forgot-password" className="auth-link">{t('forgotPassword')}</Link></p>
       </div>
     </div>
   );

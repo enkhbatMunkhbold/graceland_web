@@ -452,6 +452,72 @@ export const api = {
     return response.json();
   },
 
+  getMyStaffRequest: async () => {
+    const response = await fetch(`${API_BASE_URL}/role-requests/staff`, { credentials: 'include' });
+    if (!response.ok) throw new Error('Failed to load staff request');
+    return response.json();
+  },
+
+  requestStaffAccess: async () => {
+    const response = await fetch(`${API_BASE_URL}/role-requests/staff`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to request staff access');
+    }
+    return response.json();
+  },
+
+  getRoleRequests: async (status = 'pending') => {
+    const response = await fetch(`${API_BASE_URL}/admin/role-requests?status=${encodeURIComponent(status)}`, {
+      credentials: 'include',
+    });
+    if (!response.ok) throw new Error('Failed to load role requests');
+    return response.json();
+  },
+
+  reviewRoleRequest: async (id, decision) => {
+    const response = await fetch(`${API_BASE_URL}/admin/role-requests/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ decision }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to review role request');
+    }
+    return response.json();
+  },
+
+  getRoleUsers: async () => {
+    const response = await fetch(`${API_BASE_URL}/admin/users`, { credentials: 'include' });
+    if (!response.ok) throw new Error('Failed to load users');
+    return response.json();
+  },
+
+  updateUserRoles: async (id, roles) => {
+    const response = await fetch(`${API_BASE_URL}/admin/users/${id}/roles`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(roles),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to update user roles');
+    }
+    return response.json();
+  },
+
+  getRoleAudit: async () => {
+    const response = await fetch(`${API_BASE_URL}/admin/role-audit`, { credentials: 'include' });
+    if (!response.ok) throw new Error('Failed to load role audit');
+    return response.json();
+  },
+
   // Auth
   login: async (username, password) => {
     const response = await fetch(`${API_BASE_URL}/login`, {
@@ -464,15 +530,51 @@ export const api = {
     return response.json();
   },
 
-  signup: async (username, email, password) => {
+  signup: async (username, email, password, inviteToken) => {
     const response = await fetch(`${API_BASE_URL}/sign_up`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email, password }),
+      body: JSON.stringify({ username, email, password, invite_token: inviteToken }),
       credentials: 'include'
     });
     if (!response.ok) throw new Error('Signup failed');
     return response.json();
+  },
+
+  createSignupInvite: async (expiresInDays = 7) => {
+    const response = await fetch(`${API_BASE_URL}/admin/signup-invites`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ expires_in_days: expiresInDays }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to create signup invitation');
+    }
+    return response.json();
+  },
+
+  requestPasswordReset: async username => {
+    const response = await fetch(`${API_BASE_URL}/password-reset/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'Password recovery is unavailable');
+    return data;
+  },
+
+  confirmPasswordReset: async (username, code, newPassword) => {
+    const response = await fetch(`${API_BASE_URL}/password-reset/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, code, new_password: newPassword }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'Invalid or expired recovery code');
+    return data;
   },
 
   checkSession: async () => {

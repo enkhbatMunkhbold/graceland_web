@@ -20,6 +20,7 @@ import Contact from './components/Contact';
 import Footer from './components/Footer';
 import Login from './components/Login';
 import SignUp from './components/SignUp';
+import ForgotPassword from './components/ForgotPassword';
 import Prayer from './components/Prayer';
 import Announcements from './components/Announcements';
 import AdminDashboard from './components/AdminDashboard';
@@ -72,7 +73,7 @@ function AppContent() {
             <Route path="/announcements/new" element={<AnnouncementForm />} />
             <Route
               path="/admin"
-              element={<AdminDashboard />}
+              element={user.is_admin || user.is_staff ? <AdminDashboard /> : <Navigate to="/home" replace />}
             />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>          
@@ -97,6 +98,7 @@ function AppContent() {
             <Route path="/announcements" element={<Announcements />} />
             <Route path="/announcements/new" element={<AnnouncementForm />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/SignUp" element={<SignUp />} />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>

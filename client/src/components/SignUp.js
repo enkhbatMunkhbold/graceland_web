@@ -1,5 +1,5 @@
 import { useState, useContext, useMemo } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Eye, EyeOff } from 'lucide-react';
@@ -16,6 +16,8 @@ const SignUp = () => {
   const { t } = useLanguage();
   const { setUser, refreshUser } = useContext(UserContext);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const inviteToken = searchParams.get('invite') || '';
 
   const validationSchema = useMemo(() => Yup.object({
     username: Yup.string()
@@ -27,7 +29,7 @@ const SignUp = () => {
       .email(t('invalidEmail'))
       .required(t('fillAllFields')),
     password: Yup.string()
-      .min(6, t('passwordTooShort'))
+      .min(8, t('passwordTooShort'))
       .required(t('fillAllFields')),
     confirmPassword: Yup.string()
       .oneOf([Yup.ref('password')], t('passwordsDoNotMatch'))
@@ -47,7 +49,7 @@ const SignUp = () => {
       setIsLoading(true);
 
       try {
-        const userData = await api.signup(values.username.trim(), values.email.trim(), values.password);
+        const userData = await api.signup(values.username.trim(), values.email.trim(), values.password, inviteToken);
         setUser(userData);
         await refreshUser();
         navigate('/home');
@@ -58,6 +60,18 @@ const SignUp = () => {
       }
     },
   });
+
+  if (!inviteToken) {
+    return (
+      <div className="auth-container">
+        <div className="auth-card">
+          <h2 className="auth-title">{t('invitationRequired')}</h2>
+          <p className="auth-subtitle">{t('invitationRequiredIntro')}</p>
+          <p className="auth-footer"><Link to="/login" className="auth-link">{t('login')}</Link></p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-container">

@@ -49,6 +49,7 @@ class PrayerRequestAPITest(unittest.TestCase):
         db.session.commit()
         with self.client.session_transaction() as session:
             session['user_id'] = admin.id
+            session['session_version'] = admin.session_version
         return admin
 
     def test_anonymous_named_private_and_empty_submissions(self):
@@ -183,12 +184,11 @@ class PrayerRequestAPITest(unittest.TestCase):
         response = self.client.get('/prayer-wall')
         self.assertEqual(response.status_code, 200)
         wall = response.get_json()
-        self.assertEqual(len(wall), 30)
-        self.assertEqual(wall[0]['number'], 1)
+        self.assertEqual(len(wall), 20)
         self.assertEqual(wall[0]['name'], 'Person 34')
-        self.assertEqual(wall[-1]['number'], 30)
-        self.assertEqual(wall[-1]['name'], 'Person 5')
-        self.assertNotIn('id', wall[0])
+        self.assertEqual(wall[-1]['name'], 'Person 15')
+        self.assertIn('id', wall[0])
+        self.assertNotIn('number', wall[0])
         self.assertNotIn('user_id', wall[0])
         self.assertNotIn('email', wall[0])
         self.assertNotIn('status', wall[0])

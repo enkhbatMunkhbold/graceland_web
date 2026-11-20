@@ -12,7 +12,7 @@ function renderAuthRoute(path, element, contextValue) {
       <UserContext.Provider value={contextValue}>
         <MemoryRouter initialEntries={[path]}>
           <Routes>
-            <Route path={path} element={element} />
+            <Route path={path.split('?')[0]} element={element} />
             <Route path="/home" element={<div>Home destination</div>} />
           </Routes>
         </MemoryRouter>
@@ -54,7 +54,7 @@ describe('authentication forms', () => {
     const refreshUser = jest.fn().mockResolvedValue(undefined);
     jest.spyOn(api, 'signup').mockResolvedValue(user);
 
-    renderAuthRoute('/SignUp', <SignUp />, { setUser, refreshUser });
+    renderAuthRoute('/SignUp?invite=test-invite-token', <SignUp />, { setUser, refreshUser });
 
     fireEvent.change(screen.getByLabelText('Username'), {
       target: { value: ' newmember ' },
@@ -74,7 +74,8 @@ describe('authentication forms', () => {
       expect(api.signup).toHaveBeenCalledWith(
         'newmember',
         'member@example.com',
-        'secret123'
+        'secret123',
+        'test-invite-token'
       );
     });
     expect(setUser).toHaveBeenCalledWith(user);

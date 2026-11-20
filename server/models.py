@@ -11,6 +11,8 @@ class User(db.Model):
   _password_hash = db.Column(db.String(255), nullable=False)
   is_admin = db.Column(db.Boolean, default=False, nullable=False)
   is_staff = db.Column(db.Boolean, default=False, nullable=False)
+  phone = db.Column(db.String(20))
+  session_version = db.Column(db.Integer, default=0, nullable=False)
   created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
   member = db.relationship('Member', backref='user', uselist=False, cascade='all, delete')
@@ -27,6 +29,63 @@ class User(db.Model):
   
   def __repr__(self):
     return f'<User {self.username} >'
+
+
+class StaffRoleRequest(db.Model):
+  __tablename__ = 'staff_role_requests'
+
+  id = db.Column(db.Integer, primary_key=True)
+  user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+  status = db.Column(db.String(20), nullable=False, default='pending')
+  requested_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+  reviewed_at = db.Column(db.DateTime)
+  reviewed_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+  user = db.relationship('User', foreign_keys=[user_id])
+  reviewed_by = db.relationship('User', foreign_keys=[reviewed_by_id])
+
+
+class RoleAuditLog(db.Model):
+  __tablename__ = 'role_audit_logs'
+
+  id = db.Column(db.Integer, primary_key=True)
+  actor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+  target_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+  role = db.Column(db.String(20), nullable=False)
+  action = db.Column(db.String(20), nullable=False)
+  created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+  actor = db.relationship('User', foreign_keys=[actor_id])
+  target_user = db.relationship('User', foreign_keys=[target_user_id])
+
+
+class SignupInvite(db.Model):
+  __tablename__ = 'signup_invites'
+
+  id = db.Column(db.Integer, primary_key=True)
+  token_hash = db.Column(db.String(64), unique=True, nullable=False)
+  created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+  created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+  expires_at = db.Column(db.DateTime, nullable=False)
+  used_at = db.Column(db.DateTime)
+  used_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+  created_by = db.relationship('User', foreign_keys=[created_by_id])
+  used_by = db.relationship('User', foreign_keys=[used_by_id])
+
+
+class PasswordResetCode(db.Model):
+  __tablename__ = 'password_reset_codes'
+
+  id = db.Column(db.Integer, primary_key=True)
+  user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+  code_hash = db.Column(db.String(64), nullable=False)
+  requested_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+  expires_at = db.Column(db.DateTime, nullable=False)
+  attempts = db.Column(db.Integer, default=0, nullable=False)
+  used_at = db.Column(db.DateTime)
+
+  user = db.relationship('User')
 
 # ============================================
 # MINISTRIES
