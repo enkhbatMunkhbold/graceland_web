@@ -1,6 +1,6 @@
 # schemas.py
 from config import ma
-from auth_utils import user_is_admin
+from auth_utils import user_is_admin, user_is_staff
 from models import (User, Member, Ministry, MinistryLeader, MinistryMember, Group, GroupMember, Event, DailyJob, EventRegistration,
                    Sermon, Donation, PrayerRequest, Page, MinistryPageContent, Announcement,
                    Media, ContactMessage, NavigationMenu, NavigationItem)
@@ -49,7 +49,7 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     email = fields.Email(required=True)
     full_name = fields.Method("get_full_name")
     is_admin = fields.Method("get_is_admin")
-    is_staff = fields.Boolean(dump_only=True)
+    is_staff = fields.Method("get_is_staff")
     
     def get_full_name(self, obj):
         if obj.member:
@@ -58,6 +58,9 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
 
     def get_is_admin(self, obj):
         return user_is_admin(obj)
+
+    def get_is_staff(self, obj):
+        return user_is_staff(obj)
         
 class UserPasswordChangeSchema(ma.Schema):
     old_password = fields.String(required=True, load_only=True)

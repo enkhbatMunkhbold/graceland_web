@@ -26,7 +26,7 @@ import hashlib
 import hmac
 import models  # Import models to register them with SQLAlchemy
 import schemas
-from auth_utils import user_is_admin
+from auth_utils import user_is_admin, user_is_staff, user_is_protected_superuser
 from ministry_upload import ministry_upload_allowed, save_ministry_upload
 from google_calendar_sync import start_hourly_sync, sync_google_calendar
 
@@ -53,7 +53,7 @@ def _require_admin():
 
 def _require_admin_or_staff():
     user = _get_current_user()
-    if not user or not (user_is_admin(user) or getattr(user, 'is_staff', False)):
+    if not user or not (user_is_admin(user) or user_is_staff(user)):
         return None
     return user
 
@@ -238,6 +238,12 @@ class UserByID(Resource):
             data = request.get_json()
             if not data:
                 return {'error': 'No data provided'}, 400
+            if user_is_protected_superuser(user):
+                requested_username = data.get('username', user.username)
+                if requested_username != user.username:
+                    return {'error': 'The protected administrator username cannot be changed'}, 403
+                if data.get('is_admin') is False or data.get('is_staff') is False:
+                    return {'error': 'Boojoo must remain both administrator and staff'}, 403
             updated_user = schemas.user_schema.load(data, instance=user, partial=True)
             db.session.commit()
 
@@ -255,6 +261,8 @@ class UserByID(Resource):
 
         if not user:
             return {'error': 'User not found'}, 404
+        if user_is_protected_superuser(user):
+            return {'error': 'The protected Boojoo account cannot be deleted'}, 403
         
         try:
             db.session.delete(user)
