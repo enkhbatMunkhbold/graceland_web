@@ -35,6 +35,11 @@ from email_delivery import send_password_reset_code
 # Initialize Flask-Migrate
 migrate = Migrate(app, db)
 
+@app.route('/')
+def index():
+    return '<h1>Church Management System</h1>'
+
+
 def _get_current_user():
     user_id = session.get('user_id')
     if not user_id:
@@ -2237,27 +2242,6 @@ def serve_ministry_upload(slug, filename):
 
 
 start_hourly_sync(app)
-
-
-CLIENT_BUILD_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', 'client', 'build')
-)
-
-
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve_react_app(path):
-    """Serve the production React app and preserve client-side routes."""
-    if path:
-        requested_file = os.path.join(CLIENT_BUILD_DIR, path)
-        if os.path.isfile(requested_file):
-            return send_from_directory(CLIENT_BUILD_DIR, path)
-
-    index_file = os.path.join(CLIENT_BUILD_DIR, 'index.html')
-    if os.path.isfile(index_file):
-        return send_from_directory(CLIENT_BUILD_DIR, 'index.html')
-
-    return {'error': 'Frontend build not found'}, 503
 
 
 if __name__ == '__main__':
