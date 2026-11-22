@@ -53,46 +53,32 @@ class RoleAuthorizationAPITest(unittest.TestCase):
             session['user_id'] = user.id
             session['session_version'] = user.session_version
 
-    def test_staff_request_requires_admin_approval_and_is_audited(self):
-        member = self.create_user('member')
+    def test_admin_can_promote_staff_and_change_is_audited(self):
+        staff = self.create_user('staff', is_staff=True)
         admin = self.create_user('admin', is_admin=True)
 
-        self.login_as(member)
-        created = self.client.post('/role-requests/staff')
-        self.assertEqual(created.status_code, 201)
-        request_id = created.get_json()['id']
-        self.assertFalse(member.is_staff)
-
-        forbidden = self.client.patch(
-            f'/admin/role-requests/{request_id}',
-            json={'decision': 'approved'},
-        )
-        self.assertEqual(forbidden.status_code, 403)
-
         self.login_as(admin)
-        approved = self.client.patch(
-            f'/admin/role-requests/{request_id}',
-            json={'decision': 'approved'},
+        promoted = self.client.patch(
+            f'/admin/users/{staff.id}/roles',
+            json={'is_admin': True},
         )
-        self.assertEqual(approved.status_code, 200)
-        db.session.refresh(member)
-        self.assertTrue(member.is_staff)
+        self.assertEqual(promoted.status_code, 200)
+        self.assertTrue(promoted.get_json()['is_admin'])
         audit = RoleAuditLog.query.one()
-        self.assertEqual((audit.role, audit.action), ('staff', 'granted'))
+        self.assertEqual((audit.role, audit.action), ('admin', 'granted'))
 
-    def test_only_boojoo_can_change_admin_and_boojoo_is_immutable(self):
+        staff_change = self.client.patch(
+            f'/admin/users/{staff.id}/roles',
+            json={'is_staff': False},
+        )
+        self.assertEqual(staff_change.status_code, 400)
+
+    def test_boojoo_is_immutable_and_admin_accounts_must_be_demoted_before_deletion(self):
         boojoo = self.create_user('Boojoo')
         admin = self.create_user('admin', is_admin=True)
         member = self.create_user('member')
 
         self.login_as(admin)
-        denied = self.client.patch(
-            f'/admin/users/{member.id}/roles',
-            json={'is_admin': True},
-        )
-        self.assertEqual(denied.status_code, 403)
-
-        self.login_as(boojoo)
         granted = self.client.patch(
             f'/admin/users/{member.id}/roles',
             json={'is_admin': True},
@@ -100,9 +86,27 @@ class RoleAuthorizationAPITest(unittest.TestCase):
         self.assertEqual(granted.status_code, 200)
         self.assertTrue(granted.get_json()['is_admin'])
 
+        delete_admin = self.client.delete(f'/users/{member.id}')
+        self.assertEqual(delete_admin.status_code, 409)
+
+        denied_demotion = self.client.patch(
+            f'/admin/users/{member.id}/roles',
+            json={'is_admin': False},
+        )
+        self.assertEqual(denied_demotion.status_code, 403)
+
+        self.login_as(boojoo)
+        demoted = self.client.patch(
+            f'/admin/users/{member.id}/roles',
+            json={'is_admin': False},
+        )
+        self.assertEqual(demoted.status_code, 200)
+        self.assertFalse(demoted.get_json()['is_admin'])
+        self.assertTrue(demoted.get_json()['is_staff'])
+
         protected_roles = self.client.patch(
             f'/admin/users/{boojoo.id}/roles',
-            json={'is_admin': False, 'is_staff': False},
+            json={'is_admin': False},
         )
         self.assertEqual(protected_roles.status_code, 403)
         protected_delete = self.client.delete(f'/users/{boojoo.id}')
@@ -113,7 +117,7 @@ class RoleAuthorizationAPITest(unittest.TestCase):
         response = self.client.get('/users')
         self.assertEqual(response.status_code, 403)
 
-    def test_signup_requires_a_single_use_boojoo_invitation(self):
+    def test_signup_requires_a_single_use_admin_invitation_and_creates_staff(self):
         no_invite = self.client.post('/sign_up', json={
             'username': 'uninvited',
             'email': 'uninvited@example.test',
@@ -123,11 +127,6 @@ class RoleAuthorizationAPITest(unittest.TestCase):
 
         ordinary_admin = self.create_user('admin', is_admin=True)
         self.login_as(ordinary_admin)
-        denied = self.client.post('/admin/signup-invites', json={'expires_in_days': 7})
-        self.assertEqual(denied.status_code, 403)
-
-        boojoo = self.create_user('Boojoo')
-        self.login_as(boojoo)
         created = self.client.post('/admin/signup-invites', json={'expires_in_days': 7})
         self.assertEqual(created.status_code, 201)
         token = created.get_json()['token']
@@ -141,7 +140,7 @@ class RoleAuthorizationAPITest(unittest.TestCase):
         self.assertEqual(signup.status_code, 201)
         invited = User.query.filter_by(username='invited').one()
         self.assertFalse(invited.is_admin)
-        self.assertFalse(invited.is_staff)
+        self.assertTrue(invited.is_staff)
 
         reused = self.client.post('/sign_up', json={
             'username': 'second',
@@ -150,6 +149,11 @@ class RoleAuthorizationAPITest(unittest.TestCase):
             'invite_token': token,
         })
         self.assertEqual(reused.status_code, 403)
+
+        self.login_as(ordinary_admin)
+        deleted = self.client.delete(f'/users/{invited.id}')
+        self.assertEqual(deleted.status_code, 200)
+        self.assertIsNone(db.session.get(User, invited.id))
 
     @patch('app.send_password_reset_code')
     def test_boojoo_can_reset_password_with_emailed_code(self, send_code):

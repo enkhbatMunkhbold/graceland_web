@@ -5,6 +5,7 @@ import UserContext from '../context/UserContext';
 import { api } from '../services/api';
 import '../styling/admin-dashboard.css';
 import '../styling/admin-invite.css';
+import '../styling/admin-users.css';
 
 const STATUS_KEYS = {
   new: 'prayerStatusNew',
@@ -26,7 +27,6 @@ function AdminDashboard() {
   const [announcementFile, setAnnouncementFile] = useState(null);
   const [announcementBusy, setAnnouncementBusy] = useState(false);
   const [announcementMessage, setAnnouncementMessage] = useState('');
-  const [roleRequests, setRoleRequests] = useState([]);
   const [roleUsers, setRoleUsers] = useState([]);
   const [roleAudit, setRoleAudit] = useState([]);
   const [roleLoading, setRoleLoading] = useState(true);
@@ -52,12 +52,10 @@ function AdminDashboard() {
     setRoleLoading(true);
     setRoleError('');
     try {
-      const [pending, users, audit] = await Promise.all([
-        api.getRoleRequests(),
+      const [users, audit] = await Promise.all([
         api.getRoleUsers(),
         api.getRoleAudit(),
       ]);
-      setRoleRequests(pending);
       setRoleUsers(users);
       setRoleAudit(audit);
     } catch (roleLoadError) {
@@ -78,19 +76,6 @@ function AdminDashboard() {
       .catch(() => setAnnouncementMessage('Unable to load the current announcement.'));
   }, [loadRequests, loadRoleData, user?.is_admin]);
 
-  const reviewRoleRequest = async (id, decision) => {
-    setRoleBusyId(`request-${id}`);
-    setRoleError('');
-    try {
-      await api.reviewRoleRequest(id, decision);
-      await loadRoleData();
-    } catch (reviewError) {
-      setRoleError(reviewError.message || 'Unable to review this request.');
-    } finally {
-      setRoleBusyId(null);
-    }
-  };
-
   const changeUserRole = async (target, role, checked) => {
     setRoleBusyId(`user-${target.id}`);
     setRoleError('');
@@ -100,6 +85,21 @@ function AdminDashboard() {
       setRoleAudit(await api.getRoleAudit());
     } catch (roleChangeError) {
       setRoleError(roleChangeError.message || 'Unable to update this role.');
+    } finally {
+      setRoleBusyId(null);
+    }
+  };
+
+  const deleteRoleUser = async target => {
+    if (!window.confirm(t('deleteUserConfirm').replace('{name}', target.username))) return;
+    setRoleBusyId(`user-${target.id}`);
+    setRoleError('');
+    try {
+      await api.deleteRoleUser(target.id);
+      setRoleUsers(current => current.filter(item => item.id !== target.id));
+      setRoleAudit(await api.getRoleAudit());
+    } catch (deleteError) {
+      setRoleError(deleteError.message || t('deleteUserError'));
     } finally {
       setRoleBusyId(null);
     }
@@ -267,8 +267,7 @@ function AdminDashboard() {
             </div>
             <div className="admin-role-content">
               {roleError && <p className="admin-alert" role="alert">{roleError}</p>}
-              {user?.username === 'Boojoo' && (
-                <div className="admin-invite-panel">
+              <div className="admin-invite-panel">
                   <div>
                     <h3>{t('signupInviteTitle')}</h3>
                     <p>{t('signupInviteIntro')}</p>
@@ -283,25 +282,9 @@ function AdminDashboard() {
                     </div>
                   )}
                   {inviteMessage && <p className="admin-invite-message" role="status">{inviteMessage}</p>}
-                </div>
-              )}
+              </div>
               {roleLoading ? <p className="admin-state">Loading users and roles...</p> : (
                 <>
-                  <h3>{t('pendingStaffRequests')}</h3>
-                  {roleRequests.length ? (
-                    <div className="admin-role-requests">
-                      {roleRequests.map(item => (
-                        <article key={item.id} className="admin-role-request-card">
-                          <div><strong>{item.user.username}</strong><span>{item.user.email}</span></div>
-                          <div className="admin-role-request-actions">
-                            <button type="button" disabled={roleBusyId === `request-${item.id}`} onClick={() => reviewRoleRequest(item.id, 'approved')}>{t('approveStaffRequest')}</button>
-                            <button type="button" disabled={roleBusyId === `request-${item.id}`} onClick={() => reviewRoleRequest(item.id, 'rejected')}>{t('rejectStaffRequest')}</button>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  ) : <p className="admin-state">{t('noPendingStaffRequests')}</p>}
-
                   <h3>All users</h3>
                   <div className="admin-role-users">
                     {roleUsers.map(item => (
@@ -313,13 +296,12 @@ function AdminDashboard() {
                         </div>
                         <div className="admin-role-toggles">
                           <label>
-                            <input type="checkbox" checked={item.is_staff} disabled={item.is_protected || roleBusyId === `user-${item.id}`} onChange={event => changeUserRole(item, 'is_staff', event.target.checked)} />
-                            <span>{t('staffRole')}</span>
-                          </label>
-                          <label>
-                            <input type="checkbox" checked={item.is_admin} disabled={item.is_protected || user?.username !== 'Boojoo' || roleBusyId === `user-${item.id}`} onChange={event => changeUserRole(item, 'is_admin', event.target.checked)} />
+                            <input type="checkbox" checked={item.is_admin} disabled={item.is_protected || item.id === user?.id || (item.is_admin && user?.username !== 'Boojoo') || roleBusyId === `user-${item.id}`} onChange={event => changeUserRole(item, 'is_admin', event.target.checked)} />
                             <span>{t('administratorRole')}</span>
                           </label>
+                          {!item.is_protected && !item.is_admin && item.id !== user?.id && (
+                            <button className="admin-user-delete" type="button" disabled={roleBusyId === `user-${item.id}`} onClick={() => deleteRoleUser(item)}>{t('deleteUser')}</button>
+                          )}
                         </div>
                       </article>
                     ))}

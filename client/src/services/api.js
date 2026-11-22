@@ -512,6 +512,18 @@ export const api = {
     return response.json();
   },
 
+  deleteRoleUser: async id => {
+    const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to delete user');
+    }
+    return response.json();
+  },
+
   getRoleAudit: async () => {
     const response = await fetch(`${API_BASE_URL}/admin/role-audit`, { credentials: 'include' });
     if (!response.ok) throw new Error('Failed to load role audit');

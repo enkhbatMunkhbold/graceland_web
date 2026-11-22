@@ -122,7 +122,11 @@ class CheckSession(Resource):
         user = _get_current_user()
         if not user:
             return {'error': 'Not authenticated'}, 401
-        
+
+        if not user.is_staff:
+            user.is_staff = True
+            db.session.commit()
+
         user_data = schemas.user_schema.dump(user)
         return user_data, 200
     
@@ -140,6 +144,9 @@ class Login(Resource):
               return {'message': 'Invalid credentials'}, 401
           
           if user.authenticate(data['password']):
+              if not user.is_staff:
+                  user.is_staff = True
+                  db.session.commit()
               session['user_id'] = user.id
               session['session_version'] = user.session_version
               session.permanent = True
@@ -261,7 +268,7 @@ class SignUp(Resource):
             if models.User.query.filter_by(email=data['email']).first():
                 return {'error': 'Email already exists'}, 400
             
-            new_user = models.User(username=data['username'], email=data['email'])
+            new_user = models.User(username=data['username'], email=data['email'], is_staff=True)
             new_user.set_password(data['password'])
 
             db.session.add(new_user)
@@ -287,9 +294,9 @@ api.add_resource(SignUp, '/sign_up')
 
 class SignupInvites(Resource):
     def post(self):
-        actor = _get_current_user()
-        if not user_is_protected_superuser(actor):
-            return {'error': 'Only Boojoo can create signup invitations'}, 403
+        actor = _require_admin()
+        if not actor:
+            return {'error': 'Administrator access required'}, 403
         data = request.get_json(silent=True) or {}
         expires_in_days = data.get('expires_in_days', 7)
         if not isinstance(expires_in_days, int) or not 1 <= expires_in_days <= 30:
@@ -323,7 +330,7 @@ class Users(Resource):
         try:
             data = request.get_json()
 
-            new_user = models.User(username=data['username'], email=data['email'])
+            new_user = models.User(username=data['username'], email=data['email'], is_staff=True)
             new_user.set_password(data['password'])
 
             db.session.add(new_user)
@@ -380,7 +387,8 @@ class UserByID(Resource):
             return {'error': f'Internal server error: {str(e)}'}, 500
         
     def delete(self, user_id):
-        if not _require_admin():
+        actor = _require_admin()
+        if not actor:
             return {'error': 'Administrator access required'}, 403
         user = db.session.get(models.User, user_id)
 
@@ -388,8 +396,29 @@ class UserByID(Resource):
             return {'error': 'User not found'}, 404
         if user_is_protected_superuser(user):
             return {'error': 'The protected Boojoo account cannot be deleted'}, 403
-        
+        if user.id == actor.id:
+            return {'error': 'You cannot delete your own account'}, 403
+        if user_is_admin(user):
+            return {'error': 'Remove administrator access before deleting this account'}, 409
+
         try:
+            for table in db.metadata.sorted_tables:
+                if table.name == models.User.__tablename__:
+                    continue
+                user_columns = [
+                    column for column in table.columns
+                    if any(
+                        foreign_key.column.table.name == models.User.__tablename__
+                        for foreign_key in column.foreign_keys
+                    )
+                ]
+                for column in user_columns:
+                    statement = (
+                        table.update().where(column == user.id).values({column.name: None})
+                        if column.nullable
+                        else table.delete().where(column == user.id)
+                    )
+                    db.session.execute(statement)
             db.session.delete(user)
             db.session.commit()
             return {'message': 'User deleted successfully'}, 200
@@ -519,27 +548,21 @@ class AdminUserRoles(Resource):
         if not target:
             return {'error': 'User not found'}, 404
         data = request.get_json(silent=True) or {}
-        allowed = {'is_staff', 'is_admin'}
+        allowed = {'is_admin'}
         if not data or any(key not in allowed for key in data):
-            return {'error': 'Only is_staff and is_admin may be changed'}, 400
+            return {'error': 'Only is_admin may be changed'}, 400
         if user_is_protected_superuser(target):
             return {'error': 'Boojoo roles are permanent'}, 403
 
         if 'is_admin' in data:
-            if not user_is_protected_superuser(actor):
-                return {'error': 'Only Boojoo can change administrator access'}, 403
             if not isinstance(data['is_admin'], bool):
                 return {'error': 'is_admin must be true or false'}, 400
+            if data['is_admin'] is False and not user_is_protected_superuser(actor):
+                return {'error': 'Only Boojoo can remove administrator access'}, 403
             if target.is_admin != data['is_admin']:
                 target.is_admin = data['is_admin']
+                target.is_staff = True
                 _record_role_change(actor, target, 'admin', 'granted' if target.is_admin else 'revoked')
-
-        if 'is_staff' in data:
-            if not isinstance(data['is_staff'], bool):
-                return {'error': 'is_staff must be true or false'}, 400
-            if target.is_staff != data['is_staff']:
-                target.is_staff = data['is_staff']
-                _record_role_change(actor, target, 'staff', 'granted' if target.is_staff else 'revoked')
 
         db.session.commit()
         return _role_user_data(target), 200
