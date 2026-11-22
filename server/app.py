@@ -9,7 +9,7 @@ from config import (
     GOOGLE_CALENDAR_API_KEY,
     GOOGLE_CALENDAR_ID,
 )
-from flask import session, request, send_from_directory
+from flask import session, request, send_file, send_from_directory
 from flask_restful import Resource
 from flask_migrate import Migrate
 from sqlalchemy.exc import IntegrityError
@@ -25,6 +25,7 @@ import uuid
 import hashlib
 import hmac
 import secrets
+from io import BytesIO
 import models  # Import models to register them with SQLAlchemy
 import schemas
 from auth_utils import user_is_admin, user_is_staff, user_is_protected_superuser
@@ -2227,11 +2228,16 @@ class HomeAnnouncementUpload(Resource):
         if extension not in allowed:
             return {'error': 'Only image and video files are allowed'}, 400
 
-        stored_name = f'{uuid.uuid4().hex}.{extension}'
-        directory = os.path.join(app.config['UPLOAD_FOLDER'], 'announcements')
-        os.makedirs(directory, exist_ok=True)
-        file.save(os.path.join(directory, stored_name))
-        url = f"{request.host_url.rstrip('/')}/uploads/announcements/{stored_name}"
+        media = models.AnnouncementMedia(
+            filename=file.filename[:255],
+            content_type=(file.mimetype or 'application/octet-stream')[:100],
+            data=file.read(),
+        )
+        if not media.data:
+            return {'error': 'The uploaded file is empty'}, 400
+        db.session.add(media)
+        db.session.commit()
+        url = f"{request.host_url.rstrip('/')}/announcement-media/{media.id}"
         return {'url': url, 'filename': file.filename}, 201
 
 
@@ -2239,6 +2245,19 @@ api.add_resource(MemberAnnouncements, '/announcements')
 api.add_resource(MemberAnnouncementByID, '/announcements/<int:announcement_id>')
 api.add_resource(HomeAnnouncement, '/home-announcement')
 api.add_resource(HomeAnnouncementUpload, '/home-announcement/upload')
+
+
+@app.route('/announcement-media/<int:media_id>')
+def serve_persistent_announcement_media(media_id):
+    media = db.session.get(models.AnnouncementMedia, media_id)
+    if not media:
+        return {'error': 'Not found'}, 404
+    return send_file(
+        BytesIO(media.data),
+        mimetype=media.content_type,
+        download_name=media.filename,
+        max_age=3600,
+    )
 
 
 @app.route('/uploads/announcements/<path:filename>')

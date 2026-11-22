@@ -54,8 +54,10 @@ function Announcements() {
 
   useEffect(() => {
     let active = true;
-    Promise.allSettled([api.getHomeAnnouncement(), api.getMemberAnnouncements()])
-      .then(([churchResult, publicResult]) => {
+    const loadAnnouncements = () => {
+      setLoading(true);
+      return Promise.allSettled([api.getHomeAnnouncement(), api.getMemberAnnouncements()])
+        .then(([churchResult, publicResult]) => {
         if (!active) return;
         if (churchResult.status === 'fulfilled') setChurchAnnouncement(churchResult.value);
         if (publicResult.status === 'fulfilled') {
@@ -68,9 +70,20 @@ function Announcements() {
         if (churchResult.status === 'rejected' && publicResult.status === 'rejected') {
           setError(t('announcementsLoadError'));
         }
-      })
-      .finally(() => active && setLoading(false));
-    return () => { active = false; };
+        })
+        .finally(() => active && setLoading(false));
+    };
+    const refreshWhenVisible = () => {
+      if (!document.hidden) loadAnnouncements();
+    };
+    loadAnnouncements();
+    window.addEventListener('online', loadAnnouncements);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      active = false;
+      window.removeEventListener('online', loadAnnouncements);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
   }, [t]);
 
   useEffect(() => {

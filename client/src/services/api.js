@@ -8,13 +8,19 @@ const LATEST_YOUTUBE_VIDEOS_CACHE_TTL = 30 * 1000;
 
 export const api = {
   getHomeAnnouncement: async () => {
-    const response = await fetch(`${API_BASE_URL}/home-announcement`, { cache: 'no-store' });
+    const response = await fetch(`${API_BASE_URL}/home-announcement?_=${Date.now()}`, {
+      cache: 'no-store',
+      credentials: 'include',
+    });
     if (!response.ok) throw new Error('Failed to load the home announcement');
     return response.json();
   },
 
   getMemberAnnouncements: async () => {
-    const response = await fetch(`${API_BASE_URL}/announcements`, { cache: 'no-store' });
+    const response = await fetch(`${API_BASE_URL}/announcements?_=${Date.now()}`, {
+      cache: 'no-store',
+      credentials: 'include',
+    });
     if (!response.ok) throw new Error('Failed to load member announcements');
     return response.json();
   },

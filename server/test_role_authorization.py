@@ -1,11 +1,12 @@
 import unittest
+from io import BytesIO
 from unittest.mock import patch
 
 from sqlalchemy import create_engine
 
 from app import app
 from config import db
-from models import PasswordResetCode, RoleAuditLog, SignupInvite, StaffRoleRequest, User
+from models import AnnouncementMedia, PasswordResetCode, RoleAuditLog, SignupInvite, StaffRoleRequest, User
 
 
 class RoleAuthorizationAPITest(unittest.TestCase):
@@ -28,6 +29,7 @@ class RoleAuthorizationAPITest(unittest.TestCase):
         cls.app_context.pop()
 
     def setUp(self):
+        db.session.query(AnnouncementMedia).delete()
         db.session.query(RoleAuditLog).delete()
         db.session.query(StaffRoleRequest).delete()
         db.session.query(PasswordResetCode).delete()
@@ -125,6 +127,24 @@ class RoleAuthorizationAPITest(unittest.TestCase):
         self.assertEqual(self.client.delete('/logout').status_code, 200)
         self.assertEqual(self.client.get('/check_session').status_code, 401)
         self.assertEqual(self.client.delete('/logout').status_code, 200)
+
+    def test_official_announcement_upload_survives_as_database_media(self):
+        admin = self.create_user('admin', is_admin=True, is_staff=True)
+        self.login_as(admin)
+
+        uploaded = self.client.post(
+            '/home-announcement/upload',
+            data={'file': (BytesIO(b'fake-image-content'), 'announcement.jpg')},
+            content_type='multipart/form-data',
+        )
+        self.assertEqual(uploaded.status_code, 201)
+        media_url = uploaded.get_json()['url']
+        media_id = int(media_url.rsplit('/', 1)[1])
+        self.assertIsNotNone(db.session.get(AnnouncementMedia, media_id))
+
+        fetched = self.client.get(f'/announcement-media/{media_id}')
+        self.assertEqual(fetched.status_code, 200)
+        self.assertEqual(fetched.data, b'fake-image-content')
 
     def test_signup_requires_a_single_use_admin_invitation_and_creates_staff(self):
         no_invite = self.client.post('/sign_up', json={
