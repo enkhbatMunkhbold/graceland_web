@@ -160,12 +160,9 @@ api.add_resource(Login, '/login')
 
 class Logout(Resource):
     def delete(self):
-        user_id = session.get('user_id')
-        
-        if not user_id:
-            return {'error': 'Not authenticated'}, 401
-        
-        session.pop('user_id', None)
+        # Logout is intentionally idempotent so a stale mobile/PWA client can
+        # always clear its local authenticated state.
+        session.clear()
         return {'message': 'Logout successful'}, 200
 
 api.add_resource(Logout, '/logout')

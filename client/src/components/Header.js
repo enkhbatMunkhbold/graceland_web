@@ -30,14 +30,17 @@ function Header() {
 
   const handleAuthClick = async () => {
     if (user) {
-      // Logout
       try {
         await api.logout();
+      } catch (error) {
+        console.error('Logout request error:', error);
+      } finally {
+        // Always clear stale client authentication, even if the mobile
+        // browser has already discarded the server session cookie.
         setUser(null);
+        setIsMenuOpen(false);
         navigate('/home');
         window.scrollTo({ top: 0, behavior: 'smooth' });
-      } catch (error) {
-        console.error('Logout error:', error);
       }
     } else {
       // Navigate to login
@@ -234,10 +237,8 @@ function Header() {
                   </span>
                   <button
                     className="logout-button-mobile"
-                    onClick={() => {
-                      handleAuthClick();
-                      setIsMenuOpen(false);
-                    }}
+                    type="button"
+                    onClick={handleAuthClick}
                   >
                     {t('logout')}
                   </button>

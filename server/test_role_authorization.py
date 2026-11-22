@@ -117,6 +117,15 @@ class RoleAuthorizationAPITest(unittest.TestCase):
         response = self.client.get('/users')
         self.assertEqual(response.status_code, 403)
 
+    def test_logout_is_idempotent_for_stale_mobile_sessions(self):
+        self.assertEqual(self.client.delete('/logout').status_code, 200)
+
+        staff = self.create_user('staff', is_staff=True)
+        self.login_as(staff)
+        self.assertEqual(self.client.delete('/logout').status_code, 200)
+        self.assertEqual(self.client.get('/check_session').status_code, 401)
+        self.assertEqual(self.client.delete('/logout').status_code, 200)
+
     def test_signup_requires_a_single_use_admin_invitation_and_creates_staff(self):
         no_invite = self.client.post('/sign_up', json={
             'username': 'uninvited',
