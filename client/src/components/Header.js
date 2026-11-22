@@ -171,9 +171,14 @@ function Header() {
             </button>
             
             {user && (
-              <button className="logout-button" onClick={handleAuthClick}>
-                {t('logout')}
-              </button>
+              <>
+                <span className="welcome-user">
+                  {t('welcomeUser')}, {user.username}
+                </span>
+                <button className="logout-button" onClick={handleAuthClick}>
+                  {t('logout')}
+                </button>
+              </>
             )}
             {user && !user.is_staff && !user.is_admin && (
               <button
@@ -256,15 +261,20 @@ function Header() {
                 )
               ))}
               {user && (
-                <button
-                  className="logout-button-mobile"
-                  onClick={() => {
-                    handleAuthClick();
-                    setIsMenuOpen(false);
-                  }}
-                >
-                  {t('logout')}
-                </button>
+                <div className="mobile-user-actions">
+                  <span className="welcome-user-mobile">
+                    {t('welcomeUser')}, {user.username}
+                  </span>
+                  <button
+                    className="logout-button-mobile"
+                    onClick={() => {
+                      handleAuthClick();
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    {t('logout')}
+                  </button>
+                </div>
               )}
             </nav>
           </div>

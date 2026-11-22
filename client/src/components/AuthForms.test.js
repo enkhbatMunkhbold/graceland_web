@@ -29,10 +29,9 @@ describe('authentication forms', () => {
   test('Login validates with Formik and submits valid credentials', async () => {
     const user = { id: 1, username: 'member' };
     const setUser = jest.fn();
-    const refreshUser = jest.fn().mockResolvedValue(undefined);
     jest.spyOn(api, 'login').mockResolvedValue(user);
 
-    renderAuthRoute('/login', <Login />, { setUser, refreshUser });
+    renderAuthRoute('/login', <Login />, { setUser });
 
     fireEvent.change(screen.getByLabelText('Username'), {
       target: { value: ' member ' },
@@ -44,17 +43,15 @@ describe('authentication forms', () => {
 
     await waitFor(() => expect(api.login).toHaveBeenCalledWith('member', 'secret123'));
     expect(setUser).toHaveBeenCalledWith(user);
-    expect(refreshUser).toHaveBeenCalled();
     expect(await screen.findByText('Home destination')).not.toBeNull();
   });
 
   test('Sign-up validates with Formik and submits valid account details', async () => {
     const user = { id: 2, username: 'newmember' };
     const setUser = jest.fn();
-    const refreshUser = jest.fn().mockResolvedValue(undefined);
     jest.spyOn(api, 'signup').mockResolvedValue(user);
 
-    renderAuthRoute('/SignUp?invite=test-invite-token', <SignUp />, { setUser, refreshUser });
+    renderAuthRoute('/SignUp?invite=test-invite-token', <SignUp />, { setUser });
 
     fireEvent.change(screen.getByLabelText('Username'), {
       target: { value: ' newmember ' },
@@ -79,7 +76,6 @@ describe('authentication forms', () => {
       );
     });
     expect(setUser).toHaveBeenCalledWith(user);
-    expect(refreshUser).toHaveBeenCalled();
     expect(await screen.findByText('Home destination')).not.toBeNull();
   });
 });

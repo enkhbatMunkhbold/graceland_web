@@ -13,7 +13,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { t } = useLanguage();
-  const { setUser, refreshUser } = useContext(UserContext);
+  const { setUser } = useContext(UserContext);
   const navigate = useNavigate();
 
   const validationSchema = useMemo(() => Yup.object({
@@ -37,7 +37,6 @@ const Login = () => {
       try {
         const userData = await api.login(values.username.trim(), values.password);
         setUser(userData);
-        await refreshUser();
         navigate('/home');
       } catch (err) {
         setError(err.message || t('loginError'));

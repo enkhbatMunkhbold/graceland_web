@@ -14,7 +14,7 @@ const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { t } = useLanguage();
-  const { setUser, refreshUser } = useContext(UserContext);
+  const { setUser } = useContext(UserContext);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const inviteToken = searchParams.get('invite') || '';
@@ -51,7 +51,6 @@ const SignUp = () => {
       try {
         const userData = await api.signup(values.username.trim(), values.email.trim(), values.password, inviteToken);
         setUser(userData);
-        await refreshUser();
         navigate('/home');
       } catch (err) {
         setError(err.message || t('signupError'));
