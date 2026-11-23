@@ -908,6 +908,16 @@
   text-align: center;
 }
 
+@media (max-width: 1024px) {
+  .events-layout-columns {
+    flex-direction: column;
+  }
+
+  .events-day-column {
+    max-width: none;
+  }
+}
+
 @media (max-width: 768px) {
   .events-section {
     padding: 2.75rem 0;
@@ -930,14 +940,6 @@
 
   .events-section .section-title .word:not(:last-child)::after {
     content: '';
-  }
-
-  .events-layout-columns {
-    flex-direction: column;
-  }
-
-  .events-day-column {
-    max-width: none;
   }
 
   .events-day-panel-title {
