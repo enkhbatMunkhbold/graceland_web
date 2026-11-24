@@ -1,5 +1,17 @@
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  Bell,
+  CalendarDays,
+  ChevronRight,
+  ClipboardList,
+  Home,
+  Megaphone,
+  Settings,
+  ShieldCheck,
+  Users,
+  Video,
+} from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import UserContext from '../context/UserContext';
 import { api } from '../services/api';
@@ -15,10 +27,22 @@ const STATUS_KEYS = {
   archived: 'prayerStatusArchived',
 };
 
+const toDateKey = date => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 function AdminDashboard() {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const { user } = useContext(UserContext);
+  const [activeSection, setActiveSection] = useState('overview');
+  const [todayEvents, setTodayEvents] = useState([]);
+  const [todayJobs, setTodayJobs] = useState([]);
+  const [overviewLoading, setOverviewLoading] = useState(true);
+  const [overviewError, setOverviewError] = useState('');
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -75,6 +99,34 @@ function AdminDashboard() {
       .then(setAnnouncement)
       .catch(() => setAnnouncementMessage('Unable to load the current announcement.'));
   }, [loadRequests, loadRoleData, user?.is_admin]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const today = new Date();
+    const todayKey = toDateKey(today);
+
+    const loadOverview = async () => {
+      setOverviewLoading(true);
+      setOverviewError('');
+      const [eventsResult, jobsResult] = await Promise.allSettled([
+        api.getEvents(today.getFullYear(), today.getMonth() + 1),
+        api.getDailyJobs(todayKey),
+      ]);
+      if (cancelled) return;
+
+      if (eventsResult.status === 'fulfilled') {
+        setTodayEvents(eventsResult.value.filter(event => event.start_datetime?.slice(0, 10) === todayKey));
+      }
+      if (jobsResult.status === 'fulfilled') setTodayJobs(jobsResult.value);
+      if (eventsResult.status === 'rejected' || jobsResult.status === 'rejected') {
+        setOverviewError('Some operational information could not be loaded.');
+      }
+      setOverviewLoading(false);
+    };
+
+    loadOverview();
+    return () => { cancelled = true; };
+  }, []);
 
   const changeUserRole = async (target, role, checked) => {
     setRoleBusyId(`user-${target.id}`);
@@ -202,18 +254,122 @@ function AdminDashboard() {
     { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }
   ) : '';
 
+  const pendingPrayerCount = requests.filter(item => item.status === 'new').length;
+  const navigationItems = [
+    { id: 'overview', label: 'Overview', icon: Home },
+    { id: 'announcement', label: 'Announcement', icon: Megaphone },
+    ...(user?.is_admin ? [{ id: 'prayer', label: 'Prayer requests', icon: Bell }] : []),
+    ...(user?.is_admin ? [{ id: 'staff', label: 'Staff access', icon: Users }] : []),
+  ];
+
   return (
     <main className="admin-page">
       <header className="admin-hero">
         <div className="admin-shell">
-          <p>{t('adminDashboard')}</p>
-          <h1>{t('adminDashboard')}</h1>
-          <span>Manage frequently updated home-page content.</span>
+          <p>Staff workspace</p>
+          <h1>Church operations</h1>
+          <span>Plan today, manage public content, and keep staff work organized.</span>
         </div>
       </header>
       <section className="admin-section">
-        <div className="admin-shell">
-          <section className="admin-announcement-editor" aria-labelledby="announcement-editor-title">
+        <div className="admin-shell admin-workspace">
+          <aside className="admin-sidebar" aria-label="Operations navigation">
+            <div className="admin-sidebar-user">
+              <span>{user?.is_admin ? 'Administrator' : 'Staff member'}</span>
+              <strong>{user?.username}</strong>
+            </div>
+            <nav className="admin-sidebar-nav">
+              {navigationItems.map(item => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    type="button"
+                    key={item.id}
+                    className={activeSection === item.id ? 'is-active' : ''}
+                    aria-current={activeSection === item.id ? 'page' : undefined}
+                    onClick={() => setActiveSection(item.id)}
+                  >
+                    <Icon size={18} />
+                    <span>{item.label}</span>
+                    {item.id === 'prayer' && pendingPrayerCount > 0 && <em>{pendingPrayerCount}</em>}
+                  </button>
+                );
+              })}
+            </nav>
+            <div className="admin-sidebar-links">
+              <p>Manage website</p>
+              <button type="button" onClick={() => navigate('/events')}><CalendarDays size={17} />Calendar & assignments<ChevronRight size={16} /></button>
+              <button type="button" onClick={() => navigate('/sermons')}><Video size={17} />Sermons<ChevronRight size={16} /></button>
+              <button type="button" onClick={() => navigate('/ministries')}><ClipboardList size={17} />Ministry pages<ChevronRight size={16} /></button>
+            </div>
+          </aside>
+
+          <div className="admin-workspace-content">
+          {activeSection === 'overview' && (
+            <section className="admin-overview" aria-labelledby="operations-overview-title">
+              <div className="admin-content-heading">
+                <p>{new Date().toLocaleDateString(language === 'mn' ? 'mn-MN' : 'en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                <h2 id="operations-overview-title">Today at a glance</h2>
+                <span>The information most likely to need your attention.</span>
+              </div>
+
+              <div className="admin-summary-grid">
+                <button type="button" onClick={() => navigate('/events')}>
+                  <CalendarDays />
+                  <span>Today’s schedule</span>
+                  <strong>{overviewLoading ? '—' : todayEvents.length + todayJobs.length}</strong>
+                  <small>{todayEvents.length} events · {todayJobs.length} assignments</small>
+                </button>
+                {user?.is_admin && <button type="button" onClick={() => setActiveSection('prayer')}>
+                  <Bell />
+                  <span>Needs review</span>
+                  <strong>{loading ? '—' : pendingPrayerCount}</strong>
+                  <small>New prayer requests</small>
+                </button>}
+                <button type="button" onClick={() => setActiveSection('announcement')}>
+                  <Megaphone />
+                  <span>Home announcement</span>
+                  <strong>{announcement?.enabled ? 'Live' : 'Off'}</strong>
+                  <small>{announcement?.enabled ? 'Visible on the home page' : 'Not currently displayed'}</small>
+                </button>
+                {user?.is_admin && <button type="button" onClick={() => setActiveSection('staff')}>
+                  <ShieldCheck />
+                  <span>Staff access</span>
+                  <strong>{roleLoading ? '—' : roleUsers.length}</strong>
+                  <small>Authorized accounts</small>
+                </button>}
+              </div>
+
+              {overviewError && <p className="admin-alert" role="alert">{overviewError}</p>}
+
+              <div className="admin-overview-columns">
+                <section className="admin-today-panel">
+                  <div className="admin-panel-heading">
+                    <div><p>Schedule</p><h3>Today</h3></div>
+                    <button type="button" onClick={() => navigate('/events')}>Open calendar <ChevronRight size={16} /></button>
+                  </div>
+                  {overviewLoading ? <p className="admin-state">Loading today’s schedule...</p> : (
+                    todayEvents.length || todayJobs.length ? <div className="admin-today-list">
+                      {todayEvents.map(event => <article key={`event-${event.id}`}><CalendarDays /><div><strong>{event.title}</strong><span>{formatDate(event.start_datetime)}</span></div></article>)}
+                      {todayJobs.map(job => <article key={`job-${job.id}`}><ClipboardList /><div><strong>{job.title}</strong><span>{job.start_time}{job.location ? ` · ${job.location}` : ''}</span></div></article>)}
+                    </div> : <p className="admin-state">Nothing is scheduled for today.</p>
+                  )}
+                </section>
+
+                <section className="admin-quick-panel">
+                  <div className="admin-panel-heading"><div><p>Shortcuts</p><h3>Quick actions</h3></div></div>
+                  <div className="admin-quick-actions">
+                    <button type="button" onClick={() => navigate('/events')}><CalendarDays /><span><strong>Plan an event</strong><small>Calendar and daily assignments</small></span><ChevronRight /></button>
+                    <button type="button" onClick={() => setActiveSection('announcement')}><Megaphone /><span><strong>Update announcement</strong><small>Control the home-page feature</small></span><ChevronRight /></button>
+                    <button type="button" onClick={() => navigate('/sermons')}><Video /><span><strong>Manage sermons</strong><small>Review the public sermon page</small></span><ChevronRight /></button>
+                    {user?.is_admin && <button type="button" onClick={() => setActiveSection('staff')}><Settings /><span><strong>Manage staff</strong><small>Invitations and permissions</small></span><ChevronRight /></button>}
+                  </div>
+                </section>
+              </div>
+            </section>
+          )}
+
+          {activeSection === 'announcement' && <section className="admin-announcement-editor" aria-labelledby="announcement-editor-title">
             <div className="admin-section-heading">
               <p>Home page</p>
               <h2 id="announcement-editor-title">Official church announcement</h2>
@@ -258,8 +414,8 @@ function AdminDashboard() {
                 </div>
               </form>
             ) : <p className="admin-state">Loading announcement...</p>}
-          </section>
-          {user?.is_admin && <section className="admin-role-section" aria-labelledby="role-management-title">
+          </section>}
+          {user?.is_admin && activeSection === 'staff' && <section className="admin-role-section" aria-labelledby="role-management-title">
             <div className="admin-section-heading">
               <p>{t('adminDashboard')}</p>
               <h2 id="role-management-title">{t('roleManagement')}</h2>
@@ -315,7 +471,7 @@ function AdminDashboard() {
               )}
             </div>
           </section>}
-          {user?.is_admin && <section className="admin-prayer-section" aria-labelledby="prayer-admin-title">
+          {user?.is_admin && activeSection === 'prayer' && <section className="admin-prayer-section" aria-labelledby="prayer-admin-title">
           <h2 id="prayer-admin-title" className="admin-subheading">Prayer requests</h2>
           {error && <p className="admin-alert" role="alert">{error}</p>}
           {loading ? (
@@ -367,6 +523,7 @@ function AdminDashboard() {
             </div>
           )}
           </section>}
+          </div>
         </div>
       </section>
     </main>
