@@ -60,10 +60,10 @@ describe('authentication forms', () => {
       target: { value: ' member@example.com ' },
     });
     fireEvent.change(screen.getByLabelText('Password'), {
-      target: { value: 'secret123' },
+      target: { value: 'Secure123!' },
     });
     fireEvent.change(screen.getByLabelText('Confirm Password'), {
-      target: { value: 'secret123' },
+      target: { value: 'Secure123!' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Sign Up' }));
 
@@ -71,7 +71,7 @@ describe('authentication forms', () => {
       expect(api.signup).toHaveBeenCalledWith(
         'newmember',
         'member@example.com',
-        'secret123',
+        'Secure123!',
         'test-invite-token'
       );
     });

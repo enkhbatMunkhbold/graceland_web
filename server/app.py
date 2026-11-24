@@ -254,6 +254,25 @@ class SignUp(Resource):
             if not data or not all(c in data for c in ['username', 'email', 'password', 'invite_token']):
                 return {'error': 'Missing required fields'}, 400
 
+            username = str(data.get('username', '') or '').strip()
+            password = str(data.get('password', '') or '')
+            if not 3 <= len(username) <= 50:
+                return {'error': 'Username must be between 3 and 50 characters'}, 400
+            if any(not (char.isascii() and (char.isalnum() or char in '._-')) for char in username):
+                return {'error': 'Username may contain only letters, numbers, periods, underscores, and hyphens'}, 400
+            if not 10 <= len(password) <= 100:
+                return {'error': 'Password must be between 10 and 100 characters'}, 400
+            if not any(char.isupper() for char in password):
+                return {'error': 'Password must contain at least one uppercase letter'}, 400
+            if not any(char.islower() for char in password):
+                return {'error': 'Password must contain at least one lowercase letter'}, 400
+            if not any(char.isdigit() for char in password):
+                return {'error': 'Password must contain at least one number'}, 400
+            if not any(not char.isalnum() and not char.isspace() for char in password):
+                return {'error': 'Password must contain at least one special character'}, 400
+
+            data['username'] = username
+
             invite_token = str(data.get('invite_token', '') or '').strip()
             invite_hash = hashlib.sha256(invite_token.encode('utf-8')).hexdigest()
             invite = models.SignupInvite.query.filter_by(token_hash=invite_hash).first()
@@ -267,7 +286,7 @@ class SignUp(Resource):
                 return {'error': 'Email already exists'}, 400
             
             new_user = models.User(username=data['username'], email=data['email'], is_staff=True)
-            new_user.set_password(data['password'])
+            new_user.set_password(password)
 
             db.session.add(new_user)
             db.session.flush()

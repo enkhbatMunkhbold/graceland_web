@@ -23,13 +23,20 @@ const SignUp = () => {
     username: Yup.string()
       .trim()
       .min(3, t('usernameTooShort'))
+      .max(50, t('usernameTooLong'))
+      .matches(/^[A-Za-z0-9._-]+$/, t('usernameInvalidCharacters'))
       .required(t('fillAllFields')),
     email: Yup.string()
       .trim()
       .email(t('invalidEmail'))
       .required(t('fillAllFields')),
     password: Yup.string()
-      .min(8, t('passwordTooShort'))
+      .min(10, t('passwordTooShort'))
+      .max(100, t('passwordTooLong'))
+      .matches(/[A-Z]/, t('passwordNeedsUppercase'))
+      .matches(/[a-z]/, t('passwordNeedsLowercase'))
+      .matches(/[0-9]/, t('passwordNeedsNumber'))
+      .matches(/[^A-Za-z0-9\s]/, t('passwordNeedsSpecial'))
       .required(t('fillAllFields')),
     confirmPassword: Yup.string()
       .oneOf([Yup.ref('password')], t('passwordsDoNotMatch'))

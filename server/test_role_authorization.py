@@ -150,7 +150,7 @@ class RoleAuthorizationAPITest(unittest.TestCase):
         no_invite = self.client.post('/sign_up', json={
             'username': 'uninvited',
             'email': 'uninvited@example.test',
-            'password': 'secure-test-password',
+            'password': 'Secure-test-password1!',
         })
         self.assertEqual(no_invite.status_code, 400)
 
@@ -160,10 +160,26 @@ class RoleAuthorizationAPITest(unittest.TestCase):
         self.assertEqual(created.status_code, 201)
         token = created.get_json()['token']
 
+        invalid_username = self.client.post('/sign_up', json={
+            'username': 'invalid username',
+            'email': 'invalid-username@example.test',
+            'password': 'Secure-test-password1!',
+            'invite_token': token,
+        })
+        self.assertEqual(invalid_username.status_code, 400)
+
+        weak_password = self.client.post('/sign_up', json={
+            'username': 'weak-password',
+            'email': 'weak-password@example.test',
+            'password': 'lowercase-only',
+            'invite_token': token,
+        })
+        self.assertEqual(weak_password.status_code, 400)
+
         signup = self.client.post('/sign_up', json={
             'username': 'invited',
             'email': 'invited@example.test',
-            'password': 'secure-test-password',
+            'password': 'Secure-test-password1!',
             'invite_token': token,
         })
         self.assertEqual(signup.status_code, 201)
@@ -174,7 +190,7 @@ class RoleAuthorizationAPITest(unittest.TestCase):
         reused = self.client.post('/sign_up', json={
             'username': 'second',
             'email': 'second@example.test',
-            'password': 'secure-test-password',
+            'password': 'Secure-test-password1!',
             'invite_token': token,
         })
         self.assertEqual(reused.status_code, 403)
