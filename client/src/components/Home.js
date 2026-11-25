@@ -52,6 +52,7 @@ function Home() {
   const [events, setEvents] = useState([]);
   const [weather, setWeather] = useState(null);
   const [contentLoading, setContentLoading] = useState(true);
+  const [isHeroImageLoaded, setIsHeroImageLoaded] = useState(false);
   const [isHeroVideoReady, setIsHeroVideoReady] = useState(false);
   const [isHeroVideoPlaying, setIsHeroVideoPlaying] = useState(false);
   const heroVideoRef = useRef(null);
@@ -152,16 +153,23 @@ function Home() {
   return (
     <main className="home-page">
       <section className="home-hero" aria-labelledby="home-hero-title">
-        <img className="home-hero-image" src={heroImage} alt="" fetchPriority="high" />
+        <img
+          className="home-hero-image"
+          src={heroImage}
+          alt=""
+          fetchPriority="high"
+          onLoad={() => setIsHeroImageLoaded(true)}
+        />
         <video
           ref={heroVideoRef}
           className={`home-hero-video${isHeroVideoReady ? ' home-hero-video--ready' : ''}`}
+          src={isHeroImageLoaded ? `${process.env.PUBLIC_URL}/media/magtan-duu.mp4` : undefined}
           autoPlay
           muted
           loop
           playsInline
           disablePictureInPicture
-          preload="auto"
+          preload="metadata"
           poster={heroImage}
           onLoadedMetadata={event => {
             event.currentTarget.playbackRate = 0.5;
@@ -176,9 +184,7 @@ function Home() {
           }}
           onPause={() => setIsHeroVideoPlaying(false)}
           aria-hidden="true"
-        >
-          <source src={`${process.env.PUBLIC_URL}/media/magtan-duu.mp4`} type="video/mp4" />
-        </video>
+        />
         <div className="home-hero-overlay" />
         <button
           type="button"

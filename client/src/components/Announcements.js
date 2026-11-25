@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Megaphone, Users, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../services/api';
+import TurnstileWidget from './TurnstileWidget';
 import '../styling/announcements.css';
 
 const ANNOUNCEMENT_OWNER_TOKENS_KEY = 'gracelandAnnouncementOwnerTokens';
@@ -45,7 +46,8 @@ function Announcements() {
   const [savingId, setSavingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', content: '' });
+  const [formData, setFormData] = useState({ name: '', content: '', website: '' });
+  const [turnstileToken, setTurnstileToken] = useState('');
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const closeFormButtonRef = useRef(null);
@@ -158,11 +160,14 @@ function Announcements() {
       const announcement = await api.createMemberAnnouncement({
         name: formData.name.trim(),
         content,
+        website: formData.website,
+        turnstile_token: turnstileToken,
       });
       saveAnnouncementOwnerToken(announcement.id, announcement.owner_token);
-      setPublicAnnouncements(current => [{ ...announcement, canManage: true }, ...current].slice(0, 20));
-      setFormData({ name: '', content: '' });
+      setFormData({ name: '', content: '', website: '' });
+      setTurnstileToken('');
       setIsFormOpen(false);
+      setError(language === 'mn' ? 'Ð¢Ð°Ð½Ñ‹ Ð·Ð°Ñ€Ñ‹Ð³ Ñ…ÑÐ½Ð°Ð»Ñ‚Ð°Ð´ Ð¸Ð»Ð³ÑÑÐ»ÑÑ.' : 'Your announcement was submitted for staff review.');
     } catch (submitError) {
       setFormError(t('announcementSubmitError'));
     } finally {
@@ -273,10 +278,15 @@ function Announcements() {
             <h2 id="announcement-dialog-title">{t('postAnnouncementTitle')}</h2>
             <p className="announcement-dialog-intro">{t('postAnnouncementIntro')}</p>
             <form className="announcement-dialog-form" onSubmit={submitAnnouncement}>
+              <label aria-hidden="true" style={{ position: 'absolute', left: '-10000px' }}>
+                <span>Website</span>
+                <input type="text" value={formData.website} onChange={event => setFormData({ ...formData, website: event.target.value })} tabIndex="-1" autoComplete="off" />
+              </label>
               <label>
                 <span>{t('announcementName')}</span>
                 <input type="text" value={formData.name} onChange={event => setFormData({ ...formData, name: event.target.value })} maxLength="120" autoComplete="name" />
               </label>
+              <TurnstileWidget onToken={setTurnstileToken} />
               <label>
                 <span>{t('announcementContent')}</span>
                 <textarea value={formData.content} onChange={event => setFormData({ ...formData, content: event.target.value })} rows="8" maxLength="5000" required />

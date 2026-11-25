@@ -44,6 +44,7 @@ function AdminDashboard() {
   const [overviewLoading, setOverviewLoading] = useState(true);
   const [overviewError, setOverviewError] = useState('');
   const [requests, setRequests] = useState([]);
+  const [communityAnnouncements, setCommunityAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState(null);
@@ -64,7 +65,12 @@ function AdminDashboard() {
     setLoading(true);
     setError('');
     try {
-      setRequests(await api.getAdminPrayerRequests());
+      const [prayers, announcements] = await Promise.all([
+        api.getAdminPrayerRequests(),
+        api.getAdminAnnouncements(),
+      ]);
+      setRequests(prayers);
+      setCommunityAnnouncements(announcements);
     } catch (requestError) {
       setError(t('adminPrayerLoadError'));
     } finally {
@@ -90,15 +96,17 @@ function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    if (user?.is_admin) {
+    if (user?.is_admin || user?.is_staff) {
       loadRequests();
+    }
+    if (user?.is_admin) {
       loadRoleData();
     }
     else setLoading(false);
     api.getHomeAnnouncement()
       .then(setAnnouncement)
       .catch(() => setAnnouncementMessage('Unable to load the current announcement.'));
-  }, [loadRequests, loadRoleData, user?.is_admin]);
+  }, [loadRequests, loadRoleData, user?.is_admin, user?.is_staff]);
 
   useEffect(() => {
     let cancelled = false;
@@ -249,16 +257,45 @@ function AdminDashboard() {
     }
   };
 
+  const updateCommunityAnnouncement = async (id, status) => {
+    setBusyId(`announcement-${id}`);
+    setError('');
+    try {
+      const updated = await api.updateAdminAnnouncementStatus(id, status);
+      setCommunityAnnouncements(current => current.map(item => item.id === id ? updated : item));
+    } catch (reviewError) {
+      setError(reviewError.message || 'Unable to review the announcement.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const deleteCommunityAnnouncement = async id => {
+    if (!window.confirm('Delete this community announcement?')) return;
+    setBusyId(`announcement-${id}`);
+    setError('');
+    try {
+      await api.deleteAdminAnnouncement(id);
+      setCommunityAnnouncements(current => current.filter(item => item.id !== id));
+    } catch (deleteError) {
+      setError(deleteError.message || 'Unable to delete the announcement.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const formatDate = value => value ? new Date(value).toLocaleString(
     language === 'mn' ? 'mn-MN' : 'en-US',
     { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }
   ) : '';
 
   const pendingPrayerCount = requests.filter(item => item.status === 'new').length;
+  const pendingAnnouncementCount = communityAnnouncements.filter(item => item.status === 'pending').length;
+  const pendingReviewCount = pendingPrayerCount + pendingAnnouncementCount;
   const navigationItems = [
     { id: 'overview', label: 'Overview', icon: Home },
     { id: 'announcement', label: 'Announcement', icon: Megaphone },
-    ...(user?.is_admin ? [{ id: 'prayer', label: 'Prayer requests', icon: Bell }] : []),
+    { id: 'prayer', label: 'Public submissions', icon: Bell },
     ...(user?.is_admin ? [{ id: 'staff', label: 'Staff access', icon: Users }] : []),
   ];
 
@@ -291,7 +328,7 @@ function AdminDashboard() {
                   >
                     <Icon size={18} />
                     <span>{item.label}</span>
-                    {item.id === 'prayer' && pendingPrayerCount > 0 && <em>{pendingPrayerCount}</em>}
+                    {item.id === 'prayer' && pendingReviewCount > 0 && <em>{pendingReviewCount}</em>}
                   </button>
                 );
               })}
@@ -471,8 +508,8 @@ function AdminDashboard() {
               )}
             </div>
           </section>}
-          {user?.is_admin && activeSection === 'prayer' && <section className="admin-prayer-section" aria-labelledby="prayer-admin-title">
-          <h2 id="prayer-admin-title" className="admin-subheading">Prayer requests</h2>
+          {activeSection === 'prayer' && <section className="admin-prayer-section" aria-labelledby="prayer-admin-title">
+          <h2 id="prayer-admin-title" className="admin-subheading">Public submissions</h2>
           {error && <p className="admin-alert" role="alert">{error}</p>}
           {loading ? (
             <p className="admin-state">{t('adminPrayerLoading')}</p>
@@ -517,6 +554,36 @@ function AdminDashboard() {
                     >
                       {t('deletePrayerRequest')}
                     </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+          <h2 className="admin-subheading">Community announcements</h2>
+          {loading ? (
+            <p className="admin-state">Loading announcements...</p>
+          ) : communityAnnouncements.length === 0 ? (
+            <p className="admin-state">No community announcements.</p>
+          ) : (
+            <div className="admin-prayer-list">
+              {communityAnnouncements.map(item => (
+                <article className="admin-prayer-card" key={`announcement-${item.id}`}>
+                  <div className="admin-prayer-meta">
+                    <time dateTime={item.submitted_at || undefined}>{formatDate(item.submitted_at)}</time>
+                    <span className={`admin-consent${item.status === 'approved' ? ' admin-consent--yes' : ''}`}>{item.status}</span>
+                  </div>
+                  <h2>{item.name}</h2>
+                  <p>{item.content}</p>
+                  <div className="admin-prayer-actions">
+                    <label>
+                      <span>Review status</span>
+                      <select value={item.status} disabled={busyId === `announcement-${item.id}`} onChange={event => updateCommunityAnnouncement(item.id, event.target.value)}>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                      </select>
+                    </label>
+                    <button type="button" className="admin-delete" disabled={busyId === `announcement-${item.id}`} onClick={() => deleteCommunityAnnouncement(item.id)}>Delete announcement</button>
                   </div>
                 </article>
               ))}

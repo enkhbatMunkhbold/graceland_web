@@ -8,6 +8,7 @@ from config import (
     YOUTUBE_CHANNEL_ID,
     GOOGLE_CALENDAR_API_KEY,
     GOOGLE_CALENDAR_ID,
+    TURNSTILE_SECRET_KEY,
 )
 from flask import session, request, send_file, send_from_directory
 from flask_restful import Resource
@@ -74,6 +75,57 @@ HOME_ANNOUNCEMENT_DEFAULT = {
     'posterUrl': '',
     'alt': '',
 }
+
+
+def _visitor_ip_hash():
+    # Cloudflare sets this header itself; otherwise use the direct peer address.
+    address = request.headers.get('CF-Connecting-IP') or request.remote_addr or 'unknown'
+    return hmac.new(
+        app.secret_key.encode('utf-8'),
+        address.strip().encode('utf-8'),
+        hashlib.sha256,
+    ).hexdigest()
+
+
+def _verify_public_submission(data, kind):
+    if str(data.get('website', '') or '').strip():
+        return {'error': 'Unable to submit this form'}, 400
+
+    if TURNSTILE_SECRET_KEY:
+        token = str(data.get('turnstile_token', '') or '').strip()
+        if not token:
+            return {'error': 'Please complete the security check'}, 400
+        verification_data = urlencode({
+            'secret': TURNSTILE_SECRET_KEY,
+            'response': token,
+            'remoteip': request.headers.get('CF-Connecting-IP') or request.remote_addr or '',
+        }).encode('utf-8')
+        try:
+            verification_request = Request(
+                'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+                data=verification_data,
+                method='POST',
+            )
+            with urlopen(verification_request, timeout=5) as response:
+                verified = json.loads(response.read().decode('utf-8')).get('success', False)
+        except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):
+            return {'error': 'The security check is temporarily unavailable'}, 503
+        if not verified:
+            return {'error': 'The security check was unsuccessful. Please try again'}, 400
+
+    cutoff = datetime.utcnow() - timedelta(
+        seconds=app.config['PUBLIC_SUBMISSION_WINDOW_SECONDS']
+    )
+    ip_hash = _visitor_ip_hash()
+    recent_count = models.PublicSubmissionAttempt.query.filter(
+        models.PublicSubmissionAttempt.kind == kind,
+        models.PublicSubmissionAttempt.ip_hash == ip_hash,
+        models.PublicSubmissionAttempt.created_at >= cutoff,
+    ).count()
+    if recent_count >= app.config['PUBLIC_SUBMISSION_LIMIT']:
+        return {'error': 'Too many submissions. Please try again later'}, 429
+    db.session.add(models.PublicSubmissionAttempt(kind=kind, ip_hash=ip_hash))
+    return None
 
 
 def _home_announcement_value():
@@ -1707,38 +1759,28 @@ class PrayerRequests(Resource):
         if not isinstance(publication_consent, bool):
             return {'error': 'Publication consent must be true or false'}, 400
 
+        protection_error = _verify_public_submission(data, 'prayer')
+        if protection_error:
+            db.session.rollback()
+            return protection_error
+
         prayer_request = models.PrayerRequest(
             user_id=None,
             name=name,
             request_text=request_text,
             is_public=publication_consent,
-            status='approved_public' if publication_consent else 'private',
+            status='new' if publication_consent else 'private',
         )
 
         try:
             db.session.add(prayer_request)
             db.session.flush()
-            if publication_consent:
-                older_public_requests = (
-                    models.PrayerRequest.query
-                    .filter(
-                        models.PrayerRequest.status == 'approved_public',
-                        models.PrayerRequest.is_public.is_(True),
-                    )
-                    .order_by(
-                        models.PrayerRequest.date_submitted.desc(),
-                        models.PrayerRequest.id.desc(),
-                    )
-                    .offset(20)
-                    .all()
-                )
-                for older_request in older_public_requests:
-                    db.session.delete(older_request)
             db.session.commit()
             return {
                 'id': prayer_request.id,
                 'owner_token': _prayer_owner_token(prayer_request.id),
-                'message': 'Prayer request submitted successfully',
+                'status': prayer_request.status,
+                'message': 'Prayer request submitted for staff review',
             }, 201
         except Exception:
             db.session.rollback()
@@ -1823,8 +1865,8 @@ api.add_resource(PrayerWall, '/prayer-wall')
 
 class AdminPrayerRequests(Resource):
     def get(self):
-        if not _require_admin():
-            return {'error': 'Admin access required'}, 403
+        if not _require_admin_or_staff():
+            return {'error': 'Staff access required'}, 403
 
         try:
             prayer_requests = (
@@ -1848,8 +1890,8 @@ api.add_resource(AdminPrayerRequests, '/admin/prayer-requests')
 
 class AdminPrayerRequestByID(Resource):
     def patch(self, prayer_request_id):
-        if not _require_admin():
-            return {'error': 'Admin access required'}, 403
+        if not _require_admin_or_staff():
+            return {'error': 'Staff access required'}, 403
 
         try:
             prayer_request = db.session.get(
@@ -1875,8 +1917,8 @@ class AdminPrayerRequestByID(Resource):
             return {'error': 'Unable to update prayer request'}, 500
 
     def delete(self, prayer_request_id):
-        if not _require_admin():
-            return {'error': 'Admin access required'}, 403
+        if not _require_admin_or_staff():
+            return {'error': 'Staff access required'}, 403
 
         try:
             prayer_request = db.session.get(
@@ -2092,10 +2134,13 @@ class MemberAnnouncements(Resource):
         now = datetime.utcnow()
         announcements = (
             models.Announcement.query
-            .filter(or_(
-                models.Announcement.expire_date.is_(None),
-                models.Announcement.expire_date > now,
-            ))
+            .filter(
+                models.Announcement.status == 'approved',
+                or_(
+                    models.Announcement.expire_date.is_(None),
+                    models.Announcement.expire_date > now,
+                ),
+            )
             .order_by(
                 models.Announcement.publish_date.desc(),
                 models.Announcement.id.desc(),
@@ -2124,26 +2169,21 @@ class MemberAnnouncements(Resource):
         if len(content) > 5000:
             return {'error': 'Announcement must be 5,000 characters or fewer'}, 400
 
+        protection_error = _verify_public_submission(data, 'announcement')
+        if protection_error:
+            db.session.rollback()
+            return protection_error
+
         announcement = models.Announcement(
             title=name,
             content=content,
             author_id=None,
             publish_date=datetime.utcnow(),
+            status='pending',
         )
         try:
             db.session.add(announcement)
             db.session.flush()
-            older_announcements = (
-                models.Announcement.query
-                .order_by(
-                    models.Announcement.publish_date.desc(),
-                    models.Announcement.id.desc(),
-                )
-                .offset(20)
-                .all()
-            )
-            for older_announcement in older_announcements:
-                db.session.delete(older_announcement)
             db.session.commit()
             return {
                 'id': announcement.id,
@@ -2152,6 +2192,8 @@ class MemberAnnouncements(Resource):
                 'publish_date': announcement.publish_date.isoformat(),
                 'author_name': name,
                 'owner_token': _announcement_owner_token(announcement.id),
+                'status': announcement.status,
+                'message': 'Announcement submitted for staff review',
             }, 201
         except Exception as error:
             db.session.rollback()
@@ -2260,10 +2302,65 @@ class HomeAnnouncementUpload(Resource):
         return {'url': url, 'filename': file.filename}, 201
 
 
+def _admin_announcement_data(item):
+    return {
+        'id': item.id,
+        'name': item.title or 'Anonymous',
+        'content': item.content or '',
+        'status': item.status,
+        'submitted_at': item.publish_date.isoformat() if item.publish_date else None,
+        'reviewed_at': item.reviewed_at.isoformat() if item.reviewed_at else None,
+    }
+
+
+class AdminMemberAnnouncements(Resource):
+    def get(self):
+        if not _require_admin_or_staff():
+            return {'error': 'Staff access required'}, 403
+        items = (
+            models.Announcement.query
+            .filter(models.Announcement.author_id.is_(None))
+            .order_by(models.Announcement.publish_date.desc(), models.Announcement.id.desc())
+            .limit(100)
+            .all()
+        )
+        return [_admin_announcement_data(item) for item in items], 200
+
+
+class AdminMemberAnnouncementByID(Resource):
+    def patch(self, announcement_id):
+        actor = _require_admin_or_staff()
+        if not actor:
+            return {'error': 'Staff access required'}, 403
+        item = models.Announcement.query.filter_by(id=announcement_id, author_id=None).first()
+        if not item:
+            return {'error': 'Announcement not found'}, 404
+        status = str((request.get_json(silent=True) or {}).get('status', '')).strip()
+        if status not in {'pending', 'approved', 'rejected'}:
+            return {'error': 'Invalid announcement status'}, 400
+        item.status = status
+        item.reviewed_at = datetime.utcnow() if status != 'pending' else None
+        item.reviewed_by_id = actor.id if status != 'pending' else None
+        db.session.commit()
+        return _admin_announcement_data(item), 200
+
+    def delete(self, announcement_id):
+        if not _require_admin_or_staff():
+            return {'error': 'Staff access required'}, 403
+        item = models.Announcement.query.filter_by(id=announcement_id, author_id=None).first()
+        if not item:
+            return {'error': 'Announcement not found'}, 404
+        db.session.delete(item)
+        db.session.commit()
+        return {'message': 'Announcement deleted'}, 200
+
+
 api.add_resource(MemberAnnouncements, '/announcements')
 api.add_resource(MemberAnnouncementByID, '/announcements/<int:announcement_id>')
 api.add_resource(HomeAnnouncement, '/home-announcement')
 api.add_resource(HomeAnnouncementUpload, '/home-announcement/upload')
+api.add_resource(AdminMemberAnnouncements, '/admin/announcements')
+api.add_resource(AdminMemberAnnouncementByID, '/admin/announcements/<int:announcement_id>')
 
 
 @app.route('/announcement-media/<int:media_id>')

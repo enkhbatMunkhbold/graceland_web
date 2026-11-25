@@ -25,6 +25,7 @@ GOOGLE_CALENDAR_TIMEZONE = os.environ.get('GOOGLE_CALENDAR_TIMEZONE', 'America/L
 GOOGLE_CALENDAR_SYNC_INTERVAL_SECONDS = int(os.environ.get('GOOGLE_CALENDAR_SYNC_INTERVAL_SECONDS', '3600'))
 GOOGLE_CALENDAR_HISTORY_DAYS = int(os.environ.get('GOOGLE_CALENDAR_HISTORY_DAYS', '3650'))
 GOOGLE_CALENDAR_FUTURE_DAYS = int(os.environ.get('GOOGLE_CALENDAR_FUTURE_DAYS', '730'))
+TURNSTILE_SECRET_KEY = os.environ.get('TURNSTILE_SECRET_KEY', '').strip()
 # Comma-separated usernames treated as admins (in addition to users.is_admin)
 ADMIN_USERNAMES = os.environ.get('ADMIN_USERNAMES', '').strip()
 app.secret_key = os.environ.get('SECRET_KEY', 'local-development-only-change-me')
@@ -42,6 +43,8 @@ app.config['SESSION_COOKIE_SECURE'] = is_production
 app.config['SESSION_COOKIE_SAMESITE'] = 'None' if is_production else 'Lax'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = 60 * 60 * 24 * 7
+app.config['PUBLIC_SUBMISSION_LIMIT'] = int(os.environ.get('PUBLIC_SUBMISSION_LIMIT', '5'))
+app.config['PUBLIC_SUBMISSION_WINDOW_SECONDS'] = int(os.environ.get('PUBLIC_SUBMISSION_WINDOW_SECONDS', '3600'))
 app.json.compact = False
 
 metadata = MetaData(naming_convention={

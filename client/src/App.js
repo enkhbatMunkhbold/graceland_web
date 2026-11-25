@@ -43,10 +43,6 @@ function ScrollToTop() {
 function AppContent() {
   const { user, isLoading } = useContext(UserContext)
 
-  if(isLoading) {
-    return <div>Loading...</div>
-  }
-
   return (
     <Router>
       <ScrollToTop />
@@ -100,6 +96,10 @@ function AppContent() {
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/SignUp" element={<SignUp />} />
+            <Route
+              path="/admin"
+              element={isLoading ? <div>Loading...</div> : <Navigate to="/home" replace />}
+            />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>
         )}       

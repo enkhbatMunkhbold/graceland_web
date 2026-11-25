@@ -87,6 +87,15 @@ class PasswordResetCode(db.Model):
 
   user = db.relationship('User')
 
+
+class PublicSubmissionAttempt(db.Model):
+  __tablename__ = 'public_submission_attempts'
+
+  id = db.Column(db.Integer, primary_key=True)
+  kind = db.Column(db.String(30), nullable=False, index=True)
+  ip_hash = db.Column(db.String(64), nullable=False, index=True)
+  created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+
 # ============================================
 # MINISTRIES
 # ============================================
@@ -412,8 +421,12 @@ class Announcement(db.Model):
   author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
   publish_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
   expire_date = db.Column(db.DateTime)
+  status = db.Column(db.String(20), nullable=False, default='pending', index=True)
+  reviewed_at = db.Column(db.DateTime)
+  reviewed_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
   
-  author = db.relationship('User')
+  author = db.relationship('User', foreign_keys=[author_id])
+  reviewed_by = db.relationship('User', foreign_keys=[reviewed_by_id])
 
   def __repr__(self):
     return f'<Announcement {self.title}>'

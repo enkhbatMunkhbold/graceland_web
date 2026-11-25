@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { HeartHandshake } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../services/api';
+import TurnstileWidget from './TurnstileWidget';
 import '../styling/prayer.css';
 
 const PRAYER_OWNER_TOKENS_KEY = 'gracelandPrayerOwnerTokens';
@@ -33,7 +34,9 @@ function Prayer() {
     name: '',
     requestText: '',
     keepPrivate: false,
+    website: '',
   });
+  const [turnstileToken, setTurnstileToken] = useState('');
   const [wallRequests, setWallRequests] = useState([]);
   const [wallLoading, setWallLoading] = useState(true);
   const [wallError, setWallError] = useState('');
@@ -97,16 +100,17 @@ function Prayer() {
         name,
         request_text: requestText,
         publication_consent: !formData.keepPrivate,
+        website: formData.website,
+        turnstile_token: turnstileToken,
       });
       savePrayerOwnerToken(createdPrayer?.id, createdPrayer?.owner_token);
-      if (!formData.keepPrivate) {
-        await loadPrayerWall();
-      }
       setFormData({
         name: '',
         requestText: '',
         keepPrivate: false,
+        website: '',
       });
+      setTurnstileToken('');
       setSubmitMessage(t(
         formData.keepPrivate
           ? 'prayerRequestPrivateSuccess'
@@ -176,6 +180,16 @@ function Prayer() {
             <h2>{t('sharePrayerRequest')}</h2>
             <p>{t('prayerFormIntro')}</p>
             <form onSubmit={handleSubmit} className="prayer-form">
+              <label aria-hidden="true" style={{ position: 'absolute', left: '-10000px' }}>
+                <span>Website</span>
+                <input
+                  type="text"
+                  value={formData.website}
+                  onChange={event => setFormData({ ...formData, website: event.target.value })}
+                  tabIndex="-1"
+                  autoComplete="off"
+                />
+              </label>
               <label>
                 <span>{t('prayerName')}</span>
                 <input
@@ -215,6 +229,7 @@ function Prayer() {
                 <span>{t('prayerPublicationConsent')}</span>
               </label>
               <p className="prayer-privacy-note">{t('prayerConsentExplanation')}</p>
+              <TurnstileWidget onToken={setTurnstileToken} />
               <button type="submit" disabled={submitting}>
                 {submitting ? t('prayerSubmitting') : t('submitPrayerRequest')}
               </button>

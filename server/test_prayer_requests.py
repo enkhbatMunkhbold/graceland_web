@@ -7,7 +7,7 @@ from sqlalchemy import create_engine, text
 
 from app import app
 from config import db
-from models import PrayerRequest, User
+from models import PrayerRequest, PublicSubmissionAttempt, User
 from migrations.versions import (
     a5b6c7d8e9f0_add_prayer_request_name_and_safe_defaults as prayer_migration,
 )
@@ -33,6 +33,7 @@ class PrayerRequestAPITest(unittest.TestCase):
         cls.app_context.pop()
 
     def setUp(self):
+        db.session.query(PublicSubmissionAttempt).delete()
         db.session.query(PrayerRequest).delete()
         db.session.query(User).delete()
         db.session.commit()
@@ -74,12 +75,11 @@ class PrayerRequestAPITest(unittest.TestCase):
         self.assertEqual(named.status_code, 201)
         saved_named = PrayerRequest.query.filter_by(name='Grace').one()
         self.assertTrue(saved_named.is_public)
-        self.assertEqual(saved_named.status, 'approved_public')
+        self.assertEqual(saved_named.status, 'new')
 
         wall = self.client.get('/prayer-wall')
         self.assertEqual(wall.status_code, 200)
-        self.assertEqual(len(wall.get_json()), 1)
-        self.assertEqual(wall.get_json()[0]['name'], 'Grace')
+        self.assertEqual(len(wall.get_json()), 0)
 
         empty = self.client.post('/prayer-requests', json={
             'request_text': '   ',

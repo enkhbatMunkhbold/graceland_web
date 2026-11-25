@@ -68,6 +68,35 @@ export const api = {
     return response.json();
   },
 
+  getAdminAnnouncements: async () => {
+    const response = await fetch(`${API_BASE_URL}/admin/announcements`, { credentials: 'include' });
+    if (!response.ok) throw new Error('Failed to load announcements for review');
+    return response.json();
+  },
+
+  updateAdminAnnouncementStatus: async (id, status) => {
+    const response = await fetch(`${API_BASE_URL}/admin/announcements/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ status }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to review announcement');
+    }
+    return response.json();
+  },
+
+  deleteAdminAnnouncement: async id => {
+    const response = await fetch(`${API_BASE_URL}/admin/announcements/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (!response.ok) throw new Error('Failed to delete announcement');
+    return response.json();
+  },
+
   updateHomeAnnouncement: async data => {
     const response = await fetch(`${API_BASE_URL}/home-announcement`, {
       method: 'PUT',
