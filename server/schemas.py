@@ -472,6 +472,38 @@ class MinistryPageContentSchema(ma.SQLAlchemyAutoSchema):
 
     def load_blocks(self, value):
         import json
+
+        def layout_metadata(block):
+            metadata = {}
+            layout = block.get('layout')
+            if layout is not None:
+                if not isinstance(layout, dict):
+                    raise ValidationError('Block layout must be an object')
+                try:
+                    normalized_layout = {
+                        'x': int(layout.get('x', 0)),
+                        'y': int(layout.get('y', 0)),
+                        'w': int(layout.get('w', 12)),
+                        'h': int(layout.get('h', 3)),
+                    }
+                except (TypeError, ValueError):
+                    raise ValidationError('Block layout values must be integers')
+                if not (
+                    0 <= normalized_layout['x'] <= 11
+                    and 0 <= normalized_layout['y'] <= 10000
+                    and 1 <= normalized_layout['w'] <= 12
+                    and 1 <= normalized_layout['h'] <= 100
+                    and normalized_layout['x'] + normalized_layout['w'] <= 12
+                ):
+                    raise ValidationError('Block layout is outside the page grid')
+                metadata['layout'] = normalized_layout
+
+            z_index = block.get('z')
+            if z_index is not None:
+                if not isinstance(z_index, int) or isinstance(z_index, bool) or not -20 <= z_index <= 20:
+                    raise ValidationError('Block layer must be an integer from -20 to 20')
+                metadata['z'] = z_index
+            return metadata
         if value is None:
             return '[]'
         if isinstance(value, str):
@@ -503,6 +535,7 @@ class MinistryPageContentSchema(ma.SQLAlchemyAutoSchema):
                     'id': block_id[:100],
                     'type': 'text',
                     'content': content[:10000],
+                    **layout_metadata(block),
                 })
             elif block_type == 'image':
                 url = block.get('url', '')
@@ -514,7 +547,21 @@ class MinistryPageContentSchema(ma.SQLAlchemyAutoSchema):
                     'type': 'image',
                     'url': url[:2000],
                     'caption': caption[:500] if isinstance(caption, str) else '',
+                    **layout_metadata(block),
                 }
+                crop = block.get('crop')
+                if crop is not None:
+                    if not isinstance(crop, dict):
+                        raise ValidationError('Image crop must be an object')
+                    try:
+                        crop_x = float(crop.get('x', 50))
+                        crop_y = float(crop.get('y', 50))
+                        crop_zoom = float(crop.get('zoom', 1))
+                    except (TypeError, ValueError):
+                        raise ValidationError('Image crop values must be numbers')
+                    if not (0 <= crop_x <= 100 and 0 <= crop_y <= 100 and 1 <= crop_zoom <= 3):
+                        raise ValidationError('Image crop values are outside the allowed range')
+                    image_block['crop'] = {'x': crop_x, 'y': crop_y, 'zoom': crop_zoom}
                 size = block.get('size')
                 if size == 'small':
                     image_block['size'] = 'small'
@@ -527,6 +574,7 @@ class MinistryPageContentSchema(ma.SQLAlchemyAutoSchema):
                     'id': block_id[:100],
                     'type': 'video',
                     'url': url[:2000],
+                    **layout_metadata(block),
                 })
             elif block_type == 'file':
                 title = block.get('title', '')
@@ -538,6 +586,7 @@ class MinistryPageContentSchema(ma.SQLAlchemyAutoSchema):
                     'type': 'file',
                     'title': title[:255] if isinstance(title, str) else '',
                     'url': url[:2000],
+                    **layout_metadata(block),
                 })
             elif block_type == 'embed':
                 title = block.get('title', '')
@@ -549,6 +598,7 @@ class MinistryPageContentSchema(ma.SQLAlchemyAutoSchema):
                     'type': 'embed',
                     'title': title[:255] if isinstance(title, str) else '',
                     'url': url[:2000],
+                    **layout_metadata(block),
                 })
 
         return json.dumps(validated)

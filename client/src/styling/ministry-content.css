@@ -234,6 +234,119 @@
   background: rgba(0, 0, 0, 0.25);
 }
 
+.ministry-content-layout-help {
+  margin: 0 0 1rem;
+  color: #475569;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.ministry-content-layout-grid {
+  min-height: 12rem;
+  border-radius: 0.5rem;
+  background-color: #eef2f7;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.16) 1px, transparent 1px);
+  background-size: calc(100% / 12) 66px;
+}
+
+.ministry-content-grid-item {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #94a3b8;
+  border-radius: 0.6rem;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+}
+
+.ministry-content-grid-item > .ministry-content-edit-block {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: 0;
+  border-radius: 0;
+}
+
+.ministry-content-grid-item--text {
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.ministry-content-grid-item--text > .ministry-content-edit-block {
+  background: transparent;
+}
+
+.ministry-content-grid-item--text textarea {
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.ministry-content-grid-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.ministry-content-grid-toolbar span {
+  flex: 1;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.ministry-content-grid-toolbar button {
+  border: 1px solid #cbd5e1;
+  border-radius: 0.3rem;
+  background: #ffffff;
+  color: #334155;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.25rem 0.4rem;
+}
+
+.ministry-content-grid-toolbar .ministry-content-drag-handle {
+  cursor: grab;
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #ffffff;
+}
+
+.ministry-content-grid-toolbar .ministry-content-drag-handle:active {
+  cursor: grabbing;
+}
+
+.ministry-content-grid-item > .react-resizable-handle {
+  width: 20px;
+  height: 20px;
+}
+
+.ministry-content-grid-item > .react-resizable-handle-n,
+.ministry-content-grid-item > .react-resizable-handle-s {
+  left: 50%;
+  width: 2.5rem;
+  margin-left: -1.25rem;
+}
+
+.ministry-content-grid-item > .react-resizable-handle-e,
+.ministry-content-grid-item > .react-resizable-handle-w {
+  top: 50%;
+  height: 2.5rem;
+  margin-top: -1.25rem;
+}
+
+.ministry-content-grid-item > .react-resizable-handle::after {
+  width: 8px;
+  height: 8px;
+  border-color: #1d4ed8;
+}
+
 .ministry-content-edit-label {
   font-size: 0.85rem;
   font-weight: 600;
@@ -258,10 +371,38 @@
 }
 
 .ministry-content-preview {
-  max-width: 100%;
-  max-height: 220px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  transform-origin: center;
+}
+
+.ministry-content-preview-crop {
+  width: 100%;
+  min-height: 8rem;
+  height: 12rem;
+  overflow: hidden;
   border-radius: 0.4rem;
+  background: #e2e8f0;
+}
+
+.ministry-content-crop-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.ministry-content-crop-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.ministry-content-crop-controls input[type='range'] {
+  padding: 0;
 }
 
 .ministry-content-remove {
@@ -297,6 +438,37 @@
   gap: 0.75rem;
   align-items: flex-start;
   text-align: left;
+}
+
+.ministry-content-public-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-rows: 54px;
+  gap: 12px;
+  align-items: stretch;
+  position: relative;
+}
+
+.ministry-content-public-grid-item {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ministry-content-public-grid-item > * {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+}
+
+.ministry-content-public-grid-item .ministry-content-text {
+  overflow: auto;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.16);
+  box-sizing: border-box;
 }
 
 .ministry-content-display > :not(.ministry-content-figure--small) {
@@ -337,6 +509,34 @@
   width: 100%;
   max-height: 480px;
   object-fit: cover;
+}
+
+.ministry-content-image-crop {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ministry-content-image-crop img {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: cover;
+  transform-origin: center;
+}
+
+.ministry-content-public-grid-item .ministry-content-figure {
+  display: flex;
+  flex-direction: column;
+}
+
+.ministry-content-public-grid-item .ministry-content-figure figcaption {
+  flex: 0 0 auto;
+}
+
+.ministry-content-public-grid-item .ministry-content-figure .ministry-content-image-crop {
+  flex: 1;
 }
 
 .ministry-content-figure--small {
@@ -470,5 +670,25 @@
 @media (min-width: 768px) {
   .ministry-content-text {
     font-size: 1.125rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .ministry-content-crop-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .ministry-content-public-grid {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ministry-content-public-grid-item {
+    min-height: 12rem;
+  }
+
+  .ministry-content-public-grid-item:has(.ministry-content-text),
+  .ministry-content-public-grid-item:has(.ministry-content-file) {
+    min-height: auto;
   }
 }

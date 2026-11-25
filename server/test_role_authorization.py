@@ -130,8 +130,22 @@ class RoleAuthorizationAPITest(unittest.TestCase):
 
     def test_staff_can_manage_ministry_page_content_but_public_users_cannot(self):
         blocks = [
-            {'id': 'welcome', 'type': 'text', 'content': 'Welcome to the ministry.'},
-            {'id': 'photo', 'type': 'image', 'url': '/uploads/ministry/men/photo.jpg', 'caption': ''},
+            {
+                'id': 'welcome',
+                'type': 'text',
+                'content': 'Welcome to the ministry.',
+                'layout': {'x': 0, 'y': 0, 'w': 6, 'h': 3},
+                'z': 1,
+            },
+            {
+                'id': 'photo',
+                'type': 'image',
+                'url': '/uploads/ministry/men/photo.jpg',
+                'caption': '',
+                'layout': {'x': 6, 'y': 0, 'w': 6, 'h': 5},
+                'crop': {'x': 35.0, 'y': 60.0, 'zoom': 1.4},
+                'z': 0,
+            },
         ]
 
         denied = self.client.put('/ministry-pages/men', json={'blocks': blocks})

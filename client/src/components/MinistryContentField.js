@@ -1,5 +1,6 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { FileText, FolderOpen, Presentation, Upload } from 'lucide-react';
+import GridLayout, { WidthProvider } from 'react-grid-layout';
 import { useLanguage } from '../context/LanguageContext';
 import UserContext from '../context/UserContext';
 import { api } from '../services/api';
@@ -7,6 +8,42 @@ import { createBlockFromUpload, isAllowedUploadFile } from '../utils/ministryFil
 import { getDocumentEmbedUrl, isFolderUrl, isPresentationUrl } from '../utils/documentEmbed';
 import { getVideoEmbedUrl, isDirectVideoUrl } from '../utils/videoEmbed';
 import '../styling/ministry-content.css';
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
+
+const MinistryGridLayout = WidthProvider(GridLayout);
+const GRID_COLUMNS = 12;
+const GRID_ROW_HEIGHT = 54;
+
+function defaultBlockLayout(type, blocks, size) {
+  const y = blocks.reduce((bottom, block) => {
+    const layout = block.layout;
+    return layout ? Math.max(bottom, layout.y + layout.h) : bottom;
+  }, 0);
+  const dimensions = {
+    text: { w: 6, h: 3 },
+    image: size === 'small' ? { w: 3, h: 3 } : { w: 6, h: 5 },
+    video: { w: 6, h: 5 },
+    file: { w: 6, h: 2 },
+    embed: { w: 8, h: 7 },
+  }[type] || { w: 6, h: 3 };
+  return { x: 0, y, ...dimensions };
+}
+
+function normalizeBlockLayouts(blocks) {
+  const normalized = [];
+  blocks.forEach((block) => {
+    normalized.push({
+      ...block,
+      layout: block.layout || defaultBlockLayout(block.type, normalized, block.size),
+      z: Number.isInteger(block.z) ? block.z : 0,
+      ...(block.type === 'image' && !block.crop
+        ? { crop: { x: 50, y: 50, zoom: 1 } }
+        : {}),
+    });
+  });
+  return normalized;
+}
 
 function createBlockId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -82,7 +119,7 @@ function MinistryContentField({ slug, variant = 'default' }) {
     setError('');
     try {
       const data = await api.getMinistryPageContent(slug);
-      const nextBlocks = Array.isArray(data.blocks) ? data.blocks : [];
+      const nextBlocks = normalizeBlockLayouts(Array.isArray(data.blocks) ? data.blocks : []);
       setBlocks(nextBlocks);
       setSavedBlocks(nextBlocks);
     } catch {
@@ -97,11 +134,13 @@ function MinistryContentField({ slug, variant = 'default' }) {
   }, [loadContent]);
 
   const addBlock = (type) => {
-    const base = { id: createBlockId(), type };
+    const base = { id: createBlockId(), type, layout: defaultBlockLayout(type, blocks), z: 0 };
     if (type === 'text') {
       setBlocks((prev) => [...prev, { ...base, content: '' }]);
     } else if (type === 'file' || type === 'embed') {
       setBlocks((prev) => [...prev, { ...base, title: '', url: '' }]);
+    } else if (type === 'image') {
+      setBlocks((prev) => [...prev, { ...base, url: '', caption: '', crop: { x: 50, y: 50, zoom: 1 } }]);
     } else {
       setBlocks((prev) => [...prev, { ...base, url: '' }]);
     }
@@ -115,6 +154,28 @@ function MinistryContentField({ slug, variant = 'default' }) {
 
   const removeBlock = (id) => {
     setBlocks((prev) => prev.filter((block) => block.id !== id));
+    setIsEditing(true);
+  };
+
+  const updateLayout = (layout) => {
+    const byId = new Map(layout.map((item) => [item.i, item]));
+    setBlocks((prev) => prev.map((block) => {
+      const item = byId.get(block.id);
+      if (!item) return block;
+      return {
+        ...block,
+        layout: { x: item.x, y: item.y, w: item.w, h: item.h },
+      };
+    }));
+    setIsEditing(true);
+  };
+
+  const changeLayer = (id, direction) => {
+    setBlocks((prev) => prev.map((block) => (
+      block.id === id
+        ? { ...block, z: Math.max(-20, Math.min(20, (block.z || 0) + direction)) }
+        : block
+    )));
     setIsEditing(true);
   };
 
@@ -157,9 +218,21 @@ function MinistryContentField({ slug, variant = 'default' }) {
       const uploadedBlocks = [];
       for (const file of files) {
         const result = await api.uploadMinistryFile(slug, file);
-        uploadedBlocks.push(createBlockFromUpload(file, result.url));
+        const uploaded = createBlockFromUpload(file, result.url);
+        uploadedBlocks.push(uploaded);
       }
-      setBlocks((prev) => [...prev, ...uploadedBlocks]);
+      setBlocks((prev) => {
+        const next = [...prev];
+        uploadedBlocks.forEach((uploaded) => {
+          next.push({
+            ...uploaded,
+            layout: defaultBlockLayout(uploaded.type, next, uploaded.size),
+            z: 0,
+            ...(uploaded.type === 'image' ? { crop: { x: 50, y: 50, zoom: 1 } } : {}),
+          });
+        });
+        return next;
+      });
       setIsEditing(true);
     } catch {
       setError(t('ministryContentUploadError'));
@@ -213,14 +286,20 @@ function MinistryContentField({ slug, variant = 'default' }) {
     }
 
     if (block.type === 'image') {
-      const isSmall = block.size === 'small';
+      const crop = block.crop || { x: 50, y: 50, zoom: 1 };
       return (
-        <figure
-          key={block.id}
-          className={`ministry-content-figure${isSmall ? ' ministry-content-figure--small' : ''}`}
-        >
-          <img src={block.url} alt={block.caption || t('ministryContentImageAlt')} />
-          {block.caption && !isSmall ? <figcaption>{block.caption}</figcaption> : null}
+        <figure key={block.id} className="ministry-content-figure">
+          <div className="ministry-content-image-crop">
+            <img
+              src={block.url}
+              alt={block.caption || t('ministryContentImageAlt')}
+              style={{
+                objectPosition: `${crop.x}% ${crop.y}%`,
+                transform: `scale(${crop.zoom})`,
+              }}
+            />
+          </div>
+          {block.caption ? <figcaption>{block.caption}</figcaption> : null}
         </figure>
       );
     }
@@ -274,19 +353,7 @@ function MinistryContentField({ slug, variant = 'default' }) {
     }
 
     if (block.type === 'image') {
-      const isSmall = block.size === 'small';
-
-      if (isSmall) {
-        return (
-          <div key={block.id} className="ministry-content-edit-block ministry-content-edit-block--thumb">
-            <img className="ministry-content-thumb" src={block.url} alt={block.caption || ''} />
-            {block.caption ? <span className="ministry-content-thumb-label">{block.caption}</span> : null}
-            <button type="button" className="ministry-content-remove" onClick={() => removeBlock(block.id)}>
-              {t('ministryContentRemove')}
-            </button>
-          </div>
-        );
-      }
+      const crop = block.crop || { x: 50, y: 50, zoom: 1 };
 
       return (
         <div key={block.id} className="ministry-content-edit-block">
@@ -305,8 +372,32 @@ function MinistryContentField({ slug, variant = 'default' }) {
             placeholder={t('ministryContentImageCaptionPlaceholder')}
           />
           {block.url ? (
-            <img className="ministry-content-preview" src={block.url} alt="" />
+            <div className="ministry-content-preview-crop">
+              <img
+                className="ministry-content-preview"
+                src={block.url}
+                alt=""
+                style={{
+                  objectPosition: `${crop.x}% ${crop.y}%`,
+                  transform: `scale(${crop.zoom})`,
+                }}
+              />
+            </div>
           ) : null}
+          <div className="ministry-content-crop-controls">
+            <label>
+              <span>Crop left / right</span>
+              <input type="range" min="0" max="100" value={crop.x} onChange={(e) => updateBlock(block.id, { crop: { ...crop, x: Number(e.target.value) } })} />
+            </label>
+            <label>
+              <span>Crop up / down</span>
+              <input type="range" min="0" max="100" value={crop.y} onChange={(e) => updateBlock(block.id, { crop: { ...crop, y: Number(e.target.value) } })} />
+            </label>
+            <label>
+              <span>Crop zoom</span>
+              <input type="range" min="1" max="3" step="0.05" value={crop.zoom} onChange={(e) => updateBlock(block.id, { crop: { ...crop, zoom: Number(e.target.value) } })} />
+            </label>
+          </div>
           <button type="button" className="ministry-content-remove" onClick={() => removeBlock(block.id)}>
             {t('ministryContentRemove')}
           </button>
@@ -382,6 +473,48 @@ function MinistryContentField({ slug, variant = 'default' }) {
     }
 
     return null;
+  };
+
+  const gridLayout = blocks.map((block) => ({
+    i: block.id,
+    ...(block.layout || defaultBlockLayout(block.type, blocks, block.size)),
+    minW: 1,
+    minH: 1,
+  }));
+
+  const renderEditableGridBlock = (block) => (
+    <div key={block.id} className={`ministry-content-grid-item ministry-content-grid-item--${block.type}`} style={{ zIndex: block.z || 0 }}>
+      <div className="ministry-content-grid-toolbar">
+        <button type="button" className="ministry-content-drag-handle" aria-label="Move content block">
+          Move
+        </button>
+        <span>{block.type}</span>
+        <button type="button" onClick={() => changeLayer(block.id, -1)} aria-label="Send content backward">
+          Back
+        </button>
+        <button type="button" onClick={() => changeLayer(block.id, 1)} aria-label="Bring content forward">
+          Front
+        </button>
+      </div>
+      {renderEditBlock(block)}
+    </div>
+  );
+
+  const renderPublicGridBlock = (block) => {
+    const layout = block.layout || defaultBlockLayout(block.type, blocks, block.size);
+    return (
+      <div
+        key={block.id}
+        className="ministry-content-public-grid-item"
+        style={{
+          gridColumn: `${layout.x + 1} / span ${layout.w}`,
+          gridRow: `${layout.y + 1} / span ${layout.h}`,
+          zIndex: block.z || 0,
+        }}
+      >
+        {renderBlock(block)}
+      </div>
+    );
   };
 
   const fieldClassName = [
@@ -465,13 +598,32 @@ function MinistryContentField({ slug, variant = 'default' }) {
           </div>
 
           {(isEditing || blocks.length > 0) && (
-            <div className={`ministry-content-edit-list${isCanvas ? ' ministry-content-edit-list--canvas' : ''}`}>
-              {blocks.length === 0 ? (
-                <p className="ministry-content-empty">{t(isCanvas ? 'ministryContentEmptyPlainAdmin' : 'ministryContentEmptyAdmin')}</p>
-              ) : (
-                blocks.map(renderEditBlock)
-              )}
-            </div>
+            blocks.length === 0 ? (
+              <p className="ministry-content-empty">{t(isCanvas ? 'ministryContentEmptyPlainAdmin' : 'ministryContentEmptyAdmin')}</p>
+            ) : (
+              <>
+                <p className="ministry-content-layout-help">
+                  Move blocks by their handles. Drag any edge or corner to resize. Blocks may overlap; use Back and Front to control which one is on top.
+                </p>
+                <MinistryGridLayout
+                  className="ministry-content-layout-grid"
+                  layout={gridLayout}
+                  cols={GRID_COLUMNS}
+                  rowHeight={GRID_ROW_HEIGHT}
+                  margin={[12, 12]}
+                  containerPadding={[0, 0]}
+                  compactType={null}
+                  preventCollision={false}
+                  allowOverlap
+                  resizeHandles={['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne']}
+                  draggableHandle=".ministry-content-drag-handle"
+                  onDragStop={updateLayout}
+                  onResizeStop={updateLayout}
+                >
+                  {blocks.map(renderEditableGridBlock)}
+                </MinistryGridLayout>
+              </>
+            )
           )}
 
           {(isEditing || hasUnsavedChanges) && (
@@ -490,7 +642,9 @@ function MinistryContentField({ slug, variant = 'default' }) {
       {error ? <p className="ministry-content-error">{error}</p> : null}
 
       {blocks.length > 0 && !canManageContent && (
-        <div className="ministry-content-display">{blocks.map(renderBlock)}</div>
+        <div className="ministry-content-display ministry-content-public-grid">
+          {blocks.map(renderPublicGridBlock)}
+        </div>
       )}
 
       {blocks.length === 0 && isCanvas && (
