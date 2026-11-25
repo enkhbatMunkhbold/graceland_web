@@ -8,6 +8,7 @@ import AdminDashboard from './AdminDashboard';
 jest.mock('../services/api', () => ({
   api: {
     getAdminPrayerRequests: jest.fn(),
+    getAdminAnnouncements: jest.fn(),
     getRoleUsers: jest.fn(),
     getRoleAudit: jest.fn(),
     getHomeAnnouncement: jest.fn(),
@@ -21,6 +22,7 @@ describe('AdminDashboard operations workspace', () => {
     api.getAdminPrayerRequests.mockResolvedValue([
       { id: 1, status: 'new', request_text: 'Please pray', publication_consent: false },
     ]);
+    api.getAdminAnnouncements.mockResolvedValue([]);
     api.getRoleUsers.mockResolvedValue([
       { id: 1, username: 'admin', email: 'admin@example.com', is_admin: true },
     ]);
@@ -50,8 +52,8 @@ describe('AdminDashboard operations workspace', () => {
     fireEvent.click(screen.getByRole('button', { name: /Announcement/ }));
     expect(screen.getByRole('heading', { name: 'Official church announcement' })).not.toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: /Prayer requests/ }));
-    expect(screen.getByRole('heading', { name: 'Prayer requests' })).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Public submissions/ }));
+    expect(screen.getByRole('heading', { name: 'Public submissions' })).not.toBeNull();
     expect(await screen.findByText('Please pray')).not.toBeNull();
   });
 });

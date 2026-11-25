@@ -64,7 +64,7 @@ function FileLinkIcon({ url }) {
 function MinistryContentField({ slug, variant = 'default' }) {
   const { t } = useLanguage();
   const { user } = useContext(UserContext);
-  const isAdmin = Boolean(user?.is_admin);
+  const canManageContent = Boolean(user?.is_admin || user?.is_staff);
   const isCanvas = variant === 'canvas' || variant === 'plain';
 
   const [blocks, setBlocks] = useState([]);
@@ -143,7 +143,7 @@ function MinistryContentField({ slug, variant = 'default' }) {
   const hasUnsavedChanges = JSON.stringify(blocks) !== JSON.stringify(savedBlocks);
 
   const handleFiles = async (fileList) => {
-    if (!isAdmin) return;
+    if (!canManageContent) return;
 
     const files = Array.from(fileList).filter(isAllowedUploadFile);
     if (files.length === 0) {
@@ -169,14 +169,14 @@ function MinistryContentField({ slug, variant = 'default' }) {
   };
 
   const handleDragEnter = (event) => {
-    if (!isAdmin || uploading) return;
+    if (!canManageContent || uploading) return;
     event.preventDefault();
     event.stopPropagation();
     setIsDragOver(true);
   };
 
   const handleDragLeave = (event) => {
-    if (!isAdmin || uploading) return;
+    if (!canManageContent || uploading) return;
     event.preventDefault();
     event.stopPropagation();
     if (!event.currentTarget.contains(event.relatedTarget)) {
@@ -185,13 +185,13 @@ function MinistryContentField({ slug, variant = 'default' }) {
   };
 
   const handleDragOver = (event) => {
-    if (!isAdmin || uploading) return;
+    if (!canManageContent || uploading) return;
     event.preventDefault();
     event.stopPropagation();
   };
 
   const handleDrop = (event) => {
-    if (!isAdmin || uploading) return;
+    if (!canManageContent || uploading) return;
     event.preventDefault();
     event.stopPropagation();
     setIsDragOver(false);
@@ -387,7 +387,7 @@ function MinistryContentField({ slug, variant = 'default' }) {
   const fieldClassName = [
     'ministry-content-field',
     isCanvas ? 'ministry-content-field--canvas' : '',
-    isAdmin && isCanvas ? 'ministry-content-field--droppable' : '',
+    canManageContent && isCanvas ? 'ministry-content-field--droppable' : '',
     isDragOver ? 'ministry-content-field--drag-over' : '',
     uploading ? 'ministry-content-field--uploading' : '',
   ].filter(Boolean).join(' ');
@@ -418,7 +418,7 @@ function MinistryContentField({ slug, variant = 'default' }) {
         onChange={handleBrowseFiles}
       />
 
-      {isAdmin && isCanvas && (
+      {canManageContent && isCanvas && (
         <div className="ministry-content-drop-hint">
           <Upload size={18} aria-hidden="true" />
           <span>{t('ministryContentDropHint')}</span>
@@ -433,7 +433,7 @@ function MinistryContentField({ slug, variant = 'default' }) {
         </div>
       )}
 
-      {isDragOver && isAdmin && (
+      {isDragOver && canManageContent && (
         <div className="ministry-content-drop-overlay" aria-hidden="true">
           <Upload size={32} />
           <span>{t('ministryContentDropActive')}</span>
@@ -444,7 +444,7 @@ function MinistryContentField({ slug, variant = 'default' }) {
         <p className="ministry-content-uploading">{t('ministryContentUploading')}</p>
       )}
 
-      {isAdmin && (
+      {canManageContent && (
         <div className={adminClassName}>
           <div className="ministry-content-admin-toolbar">
             <button type="button" onClick={() => addBlock('text')}>
@@ -489,7 +489,7 @@ function MinistryContentField({ slug, variant = 'default' }) {
 
       {error ? <p className="ministry-content-error">{error}</p> : null}
 
-      {blocks.length > 0 && !isAdmin && (
+      {blocks.length > 0 && !canManageContent && (
         <div className="ministry-content-display">{blocks.map(renderBlock)}</div>
       )}
 
@@ -497,7 +497,7 @@ function MinistryContentField({ slug, variant = 'default' }) {
         <p className="ministry-content-empty ministry-content-empty--canvas">{t('ministryContentCanvasEmpty')}</p>
       )}
 
-      {blocks.length === 0 && !isCanvas && !isAdmin && (
+      {blocks.length === 0 && !isCanvas && !canManageContent && (
         <p className="ministry-content-empty">{t('ministryContentEmpty')}</p>
       )}
     </div>

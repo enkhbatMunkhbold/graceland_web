@@ -489,10 +489,10 @@ function AdminDashboard() {
                         </div>
                         <div className="admin-role-toggles">
                           <label>
-                            <input type="checkbox" checked={item.is_admin} disabled={item.is_protected || item.id === user?.id || (item.is_admin && user?.username !== 'Boojoo') || roleBusyId === `user-${item.id}`} onChange={event => changeUserRole(item, 'is_admin', event.target.checked)} />
+                            <input type="checkbox" checked={item.is_admin} disabled={item.is_protected || item.id === user?.id || roleBusyId === `user-${item.id}`} onChange={event => changeUserRole(item, 'is_admin', event.target.checked)} />
                             <span>{t('administratorRole')}</span>
                           </label>
-                          {!item.is_protected && !item.is_admin && item.id !== user?.id && (
+                          {!item.is_protected && item.id !== user?.id && (
                             <button className="admin-user-delete" type="button" disabled={roleBusyId === `user-${item.id}`} onClick={() => deleteRoleUser(item)}>{t('deleteUser')}</button>
                           )}
                         </div>

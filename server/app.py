@@ -467,9 +467,6 @@ class UserByID(Resource):
             return {'error': 'The protected Boojoo account cannot be deleted'}, 403
         if user.id == actor.id:
             return {'error': 'You cannot delete your own account'}, 403
-        if user_is_admin(user):
-            return {'error': 'Remove administrator access before deleting this account'}, 409
-
         try:
             for table in db.metadata.sorted_tables:
                 if table.name == models.User.__tablename__:
@@ -626,8 +623,6 @@ class AdminUserRoles(Resource):
         if 'is_admin' in data:
             if not isinstance(data['is_admin'], bool):
                 return {'error': 'is_admin must be true or false'}, 400
-            if data['is_admin'] is False and not user_is_protected_superuser(actor):
-                return {'error': 'Only Boojoo can remove administrator access'}, 403
             if target.is_admin != data['is_admin']:
                 target.is_admin = data['is_admin']
                 target.is_staff = True
@@ -1959,8 +1954,8 @@ class MinistryPageContentBySlug(Resource):
         if slug not in MINISTRY_PAGE_SLUGS:
             return {'error': 'Ministry page not found'}, 404
 
-        if not _require_admin():
-            return {'error': 'Admin access required'}, 403
+        if not _require_admin_or_staff():
+            return {'error': 'Staff access required'}, 403
 
         data = request.get_json(silent=True) or {}
         data['slug'] = slug
@@ -1993,8 +1988,8 @@ class MinistryPageUpload(Resource):
         if slug not in MINISTRY_PAGE_SLUGS:
             return {'error': 'Ministry page not found'}, 404
 
-        if not _require_admin():
-            return {'error': 'Admin access required'}, 403
+        if not _require_admin_or_staff():
+            return {'error': 'Staff access required'}, 403
 
         file = request.files.get('file')
         if not file or not file.filename:

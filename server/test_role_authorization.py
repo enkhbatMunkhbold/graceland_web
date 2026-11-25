@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 
 from app import app
 from config import db
-from models import AnnouncementMedia, PasswordResetCode, RoleAuditLog, SignupInvite, StaffRoleRequest, User
+from models import AnnouncementMedia, MinistryPageContent, PasswordResetCode, RoleAuditLog, SignupInvite, StaffRoleRequest, User
 
 
 class RoleAuthorizationAPITest(unittest.TestCase):
@@ -30,6 +30,7 @@ class RoleAuthorizationAPITest(unittest.TestCase):
 
     def setUp(self):
         db.session.query(AnnouncementMedia).delete()
+        db.session.query(MinistryPageContent).delete()
         db.session.query(RoleAuditLog).delete()
         db.session.query(StaffRoleRequest).delete()
         db.session.query(PasswordResetCode).delete()
@@ -75,7 +76,7 @@ class RoleAuthorizationAPITest(unittest.TestCase):
         )
         self.assertEqual(staff_change.status_code, 400)
 
-    def test_boojoo_is_immutable_and_admin_accounts_must_be_demoted_before_deletion(self):
+    def test_admin_can_demote_or_delete_other_admins_while_boojoo_is_immutable(self):
         boojoo = self.create_user('Boojoo')
         admin = self.create_user('admin', is_admin=True)
         member = self.create_user('member')
@@ -88,16 +89,6 @@ class RoleAuthorizationAPITest(unittest.TestCase):
         self.assertEqual(granted.status_code, 200)
         self.assertTrue(granted.get_json()['is_admin'])
 
-        delete_admin = self.client.delete(f'/users/{member.id}')
-        self.assertEqual(delete_admin.status_code, 409)
-
-        denied_demotion = self.client.patch(
-            f'/admin/users/{member.id}/roles',
-            json={'is_admin': False},
-        )
-        self.assertEqual(denied_demotion.status_code, 403)
-
-        self.login_as(boojoo)
         demoted = self.client.patch(
             f'/admin/users/{member.id}/roles',
             json={'is_admin': False},
@@ -105,6 +96,15 @@ class RoleAuthorizationAPITest(unittest.TestCase):
         self.assertEqual(demoted.status_code, 200)
         self.assertFalse(demoted.get_json()['is_admin'])
         self.assertTrue(demoted.get_json()['is_staff'])
+
+        promoted_again = self.client.patch(
+            f'/admin/users/{member.id}/roles',
+            json={'is_admin': True},
+        )
+        self.assertEqual(promoted_again.status_code, 200)
+        delete_admin = self.client.delete(f'/users/{member.id}')
+        self.assertEqual(delete_admin.status_code, 200)
+        self.assertIsNone(db.session.get(User, member.id))
 
         protected_roles = self.client.patch(
             f'/admin/users/{boojoo.id}/roles',
@@ -127,6 +127,40 @@ class RoleAuthorizationAPITest(unittest.TestCase):
         self.assertEqual(self.client.delete('/logout').status_code, 200)
         self.assertEqual(self.client.get('/check_session').status_code, 401)
         self.assertEqual(self.client.delete('/logout').status_code, 200)
+
+    def test_staff_can_manage_ministry_page_content_but_public_users_cannot(self):
+        blocks = [
+            {'id': 'welcome', 'type': 'text', 'content': 'Welcome to the ministry.'},
+            {'id': 'photo', 'type': 'image', 'url': '/uploads/ministry/men/photo.jpg', 'caption': ''},
+        ]
+
+        denied = self.client.put('/ministry-pages/men', json={'blocks': blocks})
+        self.assertEqual(denied.status_code, 403)
+
+        staff = self.create_user('ministry-staff', is_staff=True)
+        self.login_as(staff)
+        saved = self.client.put('/ministry-pages/men', json={'blocks': blocks})
+        self.assertEqual(saved.status_code, 200)
+        self.assertEqual(saved.get_json()['blocks'], blocks)
+
+        public = app.test_client().get('/ministry-pages/men')
+        self.assertEqual(public.status_code, 200)
+        self.assertEqual(public.get_json()['blocks'], blocks)
+
+    @patch('app.save_ministry_upload', return_value='stored.jpg')
+    def test_staff_can_browse_and_upload_ministry_files(self, save_upload):
+        staff = self.create_user('upload-staff', is_staff=True)
+        self.login_as(staff)
+
+        uploaded = self.client.post(
+            '/ministry-pages/women/upload',
+            data={'file': (BytesIO(b'fake-image-content'), 'photo.jpg')},
+            content_type='multipart/form-data',
+        )
+
+        self.assertEqual(uploaded.status_code, 201)
+        self.assertTrue(uploaded.get_json()['url'].endswith('/uploads/ministry/women/stored.jpg'))
+        save_upload.assert_called_once()
 
     def test_official_announcement_upload_survives_as_database_media(self):
         admin = self.create_user('admin', is_admin=True, is_staff=True)
