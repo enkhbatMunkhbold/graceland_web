@@ -8,6 +8,7 @@ import childrenImage from '../assets/Children.jpg';
 import youthImage from '../assets/Interhigh.jpg';
 import youngAdultsImage from '../assets/Young Adults.jpg';
 import preacherImage from '../assets/preacher.jpg';
+import heroImage from '../assets/Worship God.jpg';
 import '../styling/home.css';
 
 const GIVING_URL = 'https://gracelandbible.breezechms.com/give/online';
@@ -151,6 +152,7 @@ function Home() {
   return (
     <main className="home-page">
       <section className="home-hero" aria-labelledby="home-hero-title">
+        <img className="home-hero-image" src={heroImage} alt="" fetchPriority="high" />
         <video
           ref={heroVideoRef}
           className={`home-hero-video${isHeroVideoReady ? ' home-hero-video--ready' : ''}`}
@@ -160,6 +162,7 @@ function Home() {
           playsInline
           disablePictureInPicture
           preload="auto"
+          poster={heroImage}
           onLoadedMetadata={event => {
             event.currentTarget.playbackRate = 0.5;
             if (!prefersReducedMotion) playHeroVideo();
