@@ -17,6 +17,7 @@ sqlalchemy = "*"
 marshmallow-sqlalchemy = "*"
 python-dotenv = "*"
 psycopg2-binary = "*"
+pillow = "==10.4.0"
 
 [dev-packages]
 

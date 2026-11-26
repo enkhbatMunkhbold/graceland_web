@@ -10,6 +10,34 @@ import { api } from '../services/api';
 import '../styling/ministry-content.css';
 
 const EMPTY_DOCUMENT = { type: 'doc', content: [{ type: 'paragraph' }] };
+const MAX_IMAGE_DIMENSION = 360;
+const IMAGE_COMPRESSION_QUALITY = 0.72;
+
+async function prepareImageForUpload(file) {
+  if (!file || file.type === 'image/gif') return file;
+
+  const bitmap = await createImageBitmap(file);
+  if (Math.max(bitmap.width, bitmap.height) <= MAX_IMAGE_DIMENSION && file.size <= 250 * 1024) {
+    bitmap.close?.();
+    return file;
+  }
+  const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(bitmap.width, bitmap.height));
+  const width = Math.max(1, Math.round(bitmap.width * scale));
+  const height = Math.max(1, Math.round(bitmap.height * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  canvas.getContext('2d').drawImage(bitmap, 0, 0, width, height);
+  bitmap.close?.();
+
+  const outputType = file.type === 'image/png' ? 'image/webp' : 'image/jpeg';
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, outputType, IMAGE_COMPRESSION_QUALITY));
+  if (!blob || blob.size >= file.size) return file;
+
+  const baseName = file.name.replace(/\.[^.]+$/, '') || 'ministry-image';
+  const extension = outputType === 'image/webp' ? 'webp' : 'jpg';
+  return new File([blob], `${baseName}.${extension}`, { type: outputType, lastModified: file.lastModified });
+}
 
 const ResizableImage = Image.extend({
   addAttributes() {
@@ -275,6 +303,8 @@ function MinistryContentField({ slug }) {
   const canManageContent = Boolean(user?.is_admin || user?.is_staff);
   const [documentContent, setDocumentContent] = useState(EMPTY_DOCUMENT);
   const [savedContent, setSavedContent] = useState(EMPTY_DOCUMENT);
+  const currentContentRef = useRef(EMPTY_DOCUMENT);
+  const [hasChanges, setHasChanges] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -286,8 +316,10 @@ function MinistryContentField({ slug }) {
     try {
       const data = await api.getMinistryPageContent(slug);
       const nextContent = legacyBlocksToDocument(data.blocks);
+      currentContentRef.current = nextContent;
       setDocumentContent(nextContent);
       setSavedContent(nextContent);
+      setHasChanges(false);
     } catch {
       setError(t('ministryContentLoadError'));
     } finally {
@@ -303,14 +335,23 @@ function MinistryContentField({ slug }) {
     setUploading(true);
     setError('');
     try {
-      for (const file of images) {
-        const result = await api.uploadMinistryFile(slug, file);
+      const uploads = await Promise.all(images.map(async (file) => {
+        let uploadFile = file;
+        try {
+          uploadFile = await prepareImageForUpload(file);
+        } catch {
+          // Older browsers may not support image decoding; upload the original.
+        }
+        const result = await api.uploadMinistryFile(slug, uploadFile);
+        return { result, file };
+      }));
+      uploads.forEach(({ result, file }) => {
         editor.chain().focus().setImage({
           src: result.url,
           alt: file.name,
           title: file.name,
         }).run();
-      }
+      });
     } catch {
       setError(t('ministryContentUploadError'));
     } finally {
@@ -318,15 +359,22 @@ function MinistryContentField({ slug }) {
     }
   }, [slug, t]);
 
+  const handleDocumentChange = useCallback((nextContent) => {
+    currentContentRef.current = nextContent;
+    setHasChanges(true);
+  }, []);
+
   const handleSave = async () => {
     setSaving(true);
     setError('');
     try {
-      const blocks = [{ id: 'document', type: 'document', content: documentContent }];
+      const blocks = [{ id: 'document', type: 'document', content: currentContentRef.current }];
       const data = await api.updateMinistryPageContent(slug, { blocks });
       const nextContent = legacyBlocksToDocument(data.blocks);
+      currentContentRef.current = nextContent;
       setDocumentContent(nextContent);
       setSavedContent(nextContent);
+      setHasChanges(false);
     } catch {
       setError(t('ministryContentSaveError'));
     } finally {
@@ -335,8 +383,6 @@ function MinistryContentField({ slug }) {
   };
 
   if (loading) return <p className="ministry-content-status">{t('ministryContentLoading')}</p>;
-
-  const hasChanges = JSON.stringify(documentContent) !== JSON.stringify(savedContent);
 
   return (
     <div className="ministry-content-field ministry-content-field--canvas">
@@ -350,7 +396,11 @@ function MinistryContentField({ slug }) {
             <button type="button" className="ministry-content-save" onClick={handleSave} disabled={saving || uploading || !hasChanges}>
               {saving ? t('ministryContentSaving') : t('ministryContentSave')}
             </button>
-            <button type="button" className="ministry-content-cancel" onClick={() => setDocumentContent(savedContent)} disabled={saving || !hasChanges}>
+            <button type="button" className="ministry-content-cancel" onClick={() => {
+              currentContentRef.current = savedContent;
+              setDocumentContent(JSON.parse(JSON.stringify(savedContent)));
+              setHasChanges(false);
+            }} disabled={saving || !hasChanges}>
               {t('ministryContentCancel')}
             </button>
           </div>
@@ -362,7 +412,7 @@ function MinistryContentField({ slug }) {
         key={`${slug}-${canManageContent ? 'edit' : 'read'}`}
         content={documentContent}
         editable={canManageContent}
-        onChange={setDocumentContent}
+        onChange={handleDocumentChange}
         onUpload={uploadImages}
         uploadBusy={uploading}
       />

@@ -13,6 +13,7 @@ from config import (
 from flask import session, request, send_file, send_from_directory
 from flask_restful import Resource
 from flask_migrate import Migrate
+from werkzeug.utils import safe_join
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_
 from marshmallow.exceptions import ValidationError
@@ -30,7 +31,7 @@ from io import BytesIO
 import models  # Import models to register them with SQLAlchemy
 import schemas
 from auth_utils import user_is_admin, user_is_staff, user_is_protected_superuser
-from ministry_upload import ministry_upload_allowed, save_ministry_upload
+from ministry_upload import ministry_upload_allowed, optimize_ministry_image, save_ministry_upload
 from google_calendar_sync import start_hourly_sync, sync_google_calendar
 from email_delivery import send_password_reset_code
 
@@ -2388,6 +2389,10 @@ def serve_ministry_upload(slug, filename):
     if not os.path.isdir(directory):
         return {'error': 'Not found'}, 404
 
+    # Normalize older uploads once on first access; optimized files remain cached on disk.
+    image_path = safe_join(directory, filename)
+    if image_path:
+        optimize_ministry_image(image_path)
     return send_from_directory(directory, filename)
 
 
