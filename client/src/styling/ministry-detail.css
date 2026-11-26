@@ -27,6 +27,15 @@
 .ministry-imported-content th, .ministry-imported-content td { padding: .6rem; border-bottom: 1px solid rgba(32,49,40,.22); text-align: left; }
 .ministry-document-download { display: inline-flex; align-items: center; gap: .5rem; margin-top: 1.5rem; font-weight: 700; }
 .ministry-document-download svg { width: 1.1rem; height: 1.1rem; }
+.ministry-publish-panel { display: grid; gap: .9rem; margin: 0 0 2rem; border: 1px solid rgba(32,49,40,.18); border-radius: 10px; padding: 1rem; background: rgba(255,255,255,.72); color: var(--ministry-ink); box-shadow: 0 8px 24px rgba(32,49,40,.08); }
+.ministry-publish-panel>div { display: flex; align-items: center; gap: .75rem; }
+.ministry-publish-panel>div>svg { flex: 0 0 auto; width: 1.6rem; height: 1.6rem; color: var(--ministry-link); }
+.ministry-publish-panel span { display: grid; gap: .15rem; }
+.ministry-publish-panel small { color: #5e6c64; }
+.ministry-publish-panel input { width: 100%; font: inherit; }
+.ministry-publish-panel button { width: fit-content; min-height: 42px; border: 0; border-radius: 6px; padding: .65rem 1rem; background: var(--ministry-link); color: #fff; font-weight: 750; cursor: pointer; }
+.ministry-publish-panel button:disabled { cursor: not-allowed; opacity: .55; }
+.ministry-publish-panel p { margin: 0; color: var(--ministry-link); font-weight: 700; }
 
 .ministry-detail-container {
   max-width: 900px;
