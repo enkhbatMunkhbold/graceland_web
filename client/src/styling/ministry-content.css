@@ -246,11 +246,11 @@
 
 .ministry-document-page img,
 .ministry-document-page .ministry-document-image {
-  display: block;
+  display: inline-block;
   max-width: 100%;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
+  margin: 0.75rem 0.75rem 0.75rem 0;
   border-radius: 0.45rem;
+  vertical-align: top;
 }
 
 .ministry-document-page img:not([height]) {
@@ -262,18 +262,18 @@
 }
 
 .ministry-document-page img[data-align='left'] {
-  margin-right: auto;
+  margin-right: 0.75rem;
   margin-left: 0;
 }
 
 .ministry-document-page img[data-align='center'] {
-  margin-right: auto;
-  margin-left: auto;
+  margin-right: 0.75rem;
+  margin-left: 0;
 }
 
 .ministry-document-page img[data-align='right'] {
-  margin-right: 0;
-  margin-left: auto;
+  margin-right: 0.75rem;
+  margin-left: 0;
 }
 
 .ministry-document-page .ProseMirror-selectednode,

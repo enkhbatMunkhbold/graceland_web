@@ -9,7 +9,7 @@ from ministry_upload import optimize_ministry_image
 
 
 class MinistryImageOptimizationTest(unittest.TestCase):
-    def test_existing_large_image_is_reduced_to_360_pixels(self):
+    def test_existing_large_image_is_reduced_to_320_pixels(self):
         with tempfile.TemporaryDirectory() as directory:
             path = os.path.join(directory, 'existing.jpg')
             Image.new('RGB', (1600, 900), color=(45, 110, 175)).save(path, quality=95)
@@ -18,7 +18,7 @@ class MinistryImageOptimizationTest(unittest.TestCase):
             self.assertTrue(optimize_ministry_image(path))
 
             with Image.open(path) as optimized:
-                self.assertEqual(optimized.size, (360, 203))
+                self.assertEqual(optimized.size, (320, 180))
             self.assertLess(os.path.getsize(path), original_size)
 
     def test_animated_gif_is_left_unchanged(self):

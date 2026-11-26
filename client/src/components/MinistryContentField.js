@@ -10,7 +10,7 @@ import { api } from '../services/api';
 import '../styling/ministry-content.css';
 
 const EMPTY_DOCUMENT = { type: 'doc', content: [{ type: 'paragraph' }] };
-const MAX_IMAGE_DIMENSION = 360;
+const MAX_IMAGE_DIMENSION = 320;
 const IMAGE_COMPRESSION_QUALITY = 0.72;
 
 async function prepareImageForUpload(file) {

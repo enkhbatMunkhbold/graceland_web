@@ -4,7 +4,7 @@ import uuid
 from PIL import Image, ImageOps
 
 
-MAX_MINISTRY_IMAGE_DIMENSION = 360
+MAX_MINISTRY_IMAGE_DIMENSION = 320
 MINISTRY_IMAGE_QUALITY = 72
 MINISTRY_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 
