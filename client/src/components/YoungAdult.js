@@ -1,5 +1,6 @@
 import { useLanguage } from '../context/LanguageContext';
 import youngAdultsImage from '../assets/Young Adults.jpg';
+import ImportedMinistryContent from './ImportedMinistryContent';
 import '../styling/ministry-detail.css';
 
 function YoungAdult() {
@@ -11,12 +12,13 @@ function YoungAdult() {
         <div className="section-header">
           <h2 className="section-title">{t('youngAdultsMinistryTitle')}</h2>
         </div>
-        <div className="ministry-detail-media">
+        <ImportedMinistryContent slug="young-adult"><div className="ministry-detail-media">
           <img src={youngAdultsImage} alt={t('youngAdultsMinistryTitle')} />
         </div>
         <div className="ministry-detail-content">
           <p>{t('youngAdultsMinistryPara1')}</p>
         </div>
+        </ImportedMinistryContent>
       </div>
     </section>
   );

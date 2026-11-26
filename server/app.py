@@ -32,6 +32,11 @@ import models  # Import models to register them with SQLAlchemy
 import schemas
 from auth_utils import user_is_admin, user_is_staff, user_is_protected_superuser
 from ministry_upload import ministry_upload_allowed, optimize_ministry_image, save_ministry_upload
+from ministry_document_import import (
+    MinistryDocumentError,
+    import_ministry_document,
+    ministry_document_allowed,
+)
 from google_calendar_sync import start_hourly_sync, sync_google_calendar
 from email_delivery import send_password_reset_code
 
@@ -2008,6 +2013,43 @@ class MinistryPageUpload(Resource):
 
 
 api.add_resource(MinistryPageUpload, '/ministry-pages/<string:slug>/upload')
+
+
+class MinistryPageDocumentImport(Resource):
+    def post(self, slug):
+        if slug not in MINISTRY_PAGE_SLUGS:
+            return {'error': 'Ministry page not found'}, 404
+
+        if not _require_admin_or_staff():
+            return {'error': 'Staff access required'}, 403
+
+        file = request.files.get('file')
+        if not file or not file.filename:
+            return {'error': 'Choose a Word or PDF document'}, 400
+        if not ministry_document_allowed(file.filename):
+            return {'error': 'Only .docx and .pdf files are supported'}, 400
+
+        try:
+            imported = import_ministry_document(app, slug, file)
+            page = models.MinistryPageContent.query.filter_by(slug=slug).first()
+            if not page:
+                page = models.MinistryPageContent(slug=slug)
+                db.session.add(page)
+            page.blocks = json.dumps([imported])
+            db.session.commit()
+            return schemas.ministry_page_content_schema.dump(page), 201
+        except MinistryDocumentError as error:
+            db.session.rollback()
+            return {'error': str(error)}, 400
+        except Exception:
+            db.session.rollback()
+            return {'error': 'The document could not be converted'}, 500
+
+
+api.add_resource(
+    MinistryPageDocumentImport,
+    '/ministry-pages/<string:slug>/import-document',
+)
 
 
 class SiteTextOverrides(Resource):

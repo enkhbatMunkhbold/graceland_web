@@ -5,6 +5,7 @@ import {
   CalendarDays,
   ChevronRight,
   ClipboardList,
+  FileUp,
   Home,
   Megaphone,
   Settings,
@@ -60,6 +61,11 @@ function AdminDashboard() {
   const [signupInvite, setSignupInvite] = useState('');
   const [inviteBusy, setInviteBusy] = useState(false);
   const [inviteMessage, setInviteMessage] = useState('');
+  const [ministrySlug, setMinistrySlug] = useState('children');
+  const [ministryDocument, setMinistryDocument] = useState(null);
+  const [ministryImportBusy, setMinistryImportBusy] = useState(false);
+  const [ministryImportMessage, setMinistryImportMessage] = useState('');
+  const [ministryImportWarnings, setMinistryImportWarnings] = useState([]);
 
   const loadRequests = useCallback(async () => {
     setLoading(true);
@@ -284,6 +290,29 @@ function AdminDashboard() {
     }
   };
 
+  const importMinistryDocument = async event => {
+    event.preventDefault();
+    if (!ministryDocument) {
+      setMinistryImportMessage('Choose a Word or PDF document first.');
+      return;
+    }
+    setMinistryImportBusy(true);
+    setMinistryImportMessage('');
+    setMinistryImportWarnings([]);
+    try {
+      const result = await api.importMinistryDocument(ministrySlug, ministryDocument);
+      const imported = result.blocks?.find(block => block.type === 'imported-document');
+      setMinistryImportWarnings(imported?.warnings || []);
+      setMinistryDocument(null);
+      event.currentTarget.reset();
+      setMinistryImportMessage('Document converted and published successfully.');
+    } catch (importError) {
+      setMinistryImportMessage(importError.message || 'Unable to import this document.');
+    } finally {
+      setMinistryImportBusy(false);
+    }
+  };
+
   const formatDate = value => value ? new Date(value).toLocaleString(
     language === 'mn' ? 'mn-MN' : 'en-US',
     { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }
@@ -295,6 +324,7 @@ function AdminDashboard() {
   const navigationItems = [
     { id: 'overview', label: 'Overview', icon: Home },
     { id: 'announcement', label: 'Announcement', icon: Megaphone },
+    { id: 'ministries', label: 'Ministry pages', icon: FileUp },
     { id: 'prayer', label: 'Public submissions', icon: Bell },
     ...(user?.is_admin ? [{ id: 'staff', label: 'Staff access', icon: Users }] : []),
   ];
@@ -451,6 +481,51 @@ function AdminDashboard() {
                 </div>
               </form>
             ) : <p className="admin-state">Loading announcement...</p>}
+          </section>}
+          {activeSection === 'ministries' && <section className="admin-announcement-editor" aria-labelledby="ministry-import-title">
+            <div className="admin-section-heading">
+              <p>Ministry pages</p>
+              <h2 id="ministry-import-title">Publish from Word or PDF</h2>
+              <span>The document is converted once. Visitors see native webpage text and images, while the original remains downloadable.</span>
+            </div>
+            <form className="admin-announcement-form" onSubmit={importMinistryDocument}>
+              <div className="admin-form-grid">
+                <label>
+                  <span>Ministry page</span>
+                  <select value={ministrySlug} onChange={event => setMinistrySlug(event.target.value)}>
+                    <option value="children">Children</option>
+                    <option value="youth">Youth / InterHigh</option>
+                    <option value="young-adult">Young Adults</option>
+                    <option value="men">Men</option>
+                    <option value="women">Women</option>
+                    <option value="marriage">Worship</option>
+                  </select>
+                </label>
+                <label className="admin-field-wide admin-announcement-dropzone">
+                  <span>Word or PDF document</span>
+                  <strong>Choose a .docx or .pdf file (maximum 20 MB)</strong>
+                  <input
+                    type="file"
+                    accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"
+                    onChange={event => {
+                      setMinistryDocument(event.target.files?.[0] || null);
+                      setMinistryImportMessage('');
+                    }}
+                  />
+                  {ministryDocument && <small>{ministryDocument.name}</small>}
+                </label>
+              </div>
+              <div className="admin-announcement-footer">
+                <button type="submit" disabled={ministryImportBusy}>
+                  {ministryImportBusy ? 'Converting document...' : 'Convert and publish'}
+                </button>
+                {ministryImportMessage && <p role="status">{ministryImportMessage}</p>}
+              </div>
+              {ministryImportWarnings.length > 0 && <div className="admin-import-warnings">
+                <strong>Conversion notes</strong>
+                <ul>{ministryImportWarnings.map((warning, index) => <li key={`${index}-${warning}`}>{warning}</li>)}</ul>
+              </div>}
+            </form>
           </section>}
           {user?.is_admin && activeSection === 'staff' && <section className="admin-role-section" aria-labelledby="role-management-title">
             <div className="admin-section-heading">

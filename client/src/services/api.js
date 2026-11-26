@@ -371,6 +371,21 @@ export const api = {
     return response.json();
   },
 
+  importMinistryDocument: async (slug, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch(`${API_BASE_URL}/ministry-pages/${slug}/import-document`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to import ministry document');
+    }
+    return response.json();
+  },
+
   // Groups
   getGroups: async () => {
     const response = await fetch(`${API_BASE_URL}/groups`);

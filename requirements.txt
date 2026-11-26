@@ -7,8 +7,11 @@ Flask-RESTful
 Flask-SQLAlchemy
 Flask-Serializer
 gunicorn
+mammoth==1.8.0
 marshmallow
 marshmallow-sqlalchemy
+pypdf==4.3.1
 psycopg2-binary
 python-dotenv
 SQLAlchemy
+bleach==6.1.0

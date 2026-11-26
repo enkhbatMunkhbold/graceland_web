@@ -176,6 +176,37 @@ class RoleAuthorizationAPITest(unittest.TestCase):
         self.assertTrue(uploaded.get_json()['url'].endswith('/uploads/ministry/women/stored.jpg'))
         save_upload.assert_called_once()
 
+    @patch('app.import_ministry_document')
+    def test_staff_can_import_a_ministry_document_but_public_users_cannot(self, convert):
+        convert.return_value = {
+            'type': 'imported-document',
+            'html': '<p>Converted ministry content</p>',
+            'originalName': 'update.docx',
+            'originalUrl': '/uploads/ministry/women/original.docx',
+            'sourceType': 'docx',
+            'warnings': [],
+        }
+        denied = self.client.post(
+            '/ministry-pages/women/import-document',
+            data={'file': (BytesIO(b'document'), 'update.docx')},
+            content_type='multipart/form-data',
+        )
+        self.assertEqual(denied.status_code, 403)
+
+        staff = self.create_user('document-import-staff', is_staff=True)
+        self.login_as(staff)
+        imported = self.client.post(
+            '/ministry-pages/women/import-document',
+            data={'file': (BytesIO(b'document'), 'update.docx')},
+            content_type='multipart/form-data',
+        )
+        self.assertEqual(imported.status_code, 201)
+        self.assertEqual(imported.get_json()['blocks'][0]['type'], 'imported-document')
+
+        public = app.test_client().get('/ministry-pages/women')
+        self.assertEqual(public.status_code, 200)
+        self.assertEqual(public.get_json()['blocks'][0]['html'], '<p>Converted ministry content</p>')
+
     def test_staff_can_save_safe_rich_ministry_documents(self):
         staff = self.create_user('document-staff', is_staff=True)
         self.login_as(staff)
