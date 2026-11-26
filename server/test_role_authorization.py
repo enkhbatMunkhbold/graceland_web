@@ -176,6 +176,72 @@ class RoleAuthorizationAPITest(unittest.TestCase):
         self.assertTrue(uploaded.get_json()['url'].endswith('/uploads/ministry/women/stored.jpg'))
         save_upload.assert_called_once()
 
+    def test_staff_can_save_safe_rich_ministry_documents(self):
+        staff = self.create_user('document-staff', is_staff=True)
+        self.login_as(staff)
+        document = {
+            'type': 'doc',
+            'content': [
+                {
+                    'type': 'heading',
+                    'attrs': {'level': 2, 'textAlign': 'center'},
+                    'content': [{'type': 'text', 'text': 'Men\'s Ministry'}],
+                },
+                {
+                    'type': 'paragraph',
+                    'content': [{
+                        'type': 'text',
+                        'text': 'Learn more',
+                        'marks': [{'type': 'link', 'attrs': {'href': 'https://example.test/info'}}],
+                    }],
+                },
+                {
+                    'type': 'image',
+                    'attrs': {
+                        'src': 'https://example.test/photo.jpg',
+                        'alt': 'Ministry gathering',
+                        'title': 'Ministry gathering',
+                        'width': 480,
+                        'height': 320,
+                        'align': 'center',
+                    },
+                },
+            ],
+        }
+
+        saved = self.client.put('/ministry-pages/men', json={
+            'blocks': [{'id': 'document', 'type': 'document', 'content': document}],
+        })
+
+        self.assertEqual(saved.status_code, 200)
+        saved_document = saved.get_json()['blocks'][0]['content']
+        self.assertEqual(saved_document['type'], 'doc')
+        self.assertEqual(saved_document['content'][0], document['content'][0])
+        self.assertEqual(
+            saved_document['content'][1]['content'][0]['marks'][0]['attrs']['href'],
+            'https://example.test/info',
+        )
+        self.assertEqual(saved_document['content'][2]['attrs']['src'], 'https://example.test/photo.jpg')
+
+        unsafe = self.client.put('/ministry-pages/men', json={
+            'blocks': [{
+                'id': 'document',
+                'type': 'document',
+                'content': {
+                    'type': 'doc',
+                    'content': [{
+                        'type': 'paragraph',
+                        'content': [{
+                            'type': 'text',
+                            'text': 'Unsafe',
+                            'marks': [{'type': 'link', 'attrs': {'href': 'javascript:alert(1)'}}],
+                        }],
+                    }],
+                },
+            }],
+        })
+        self.assertEqual(unsafe.status_code, 400)
+
     def test_official_announcement_upload_survives_as_database_media(self):
         admin = self.create_user('admin', is_admin=True, is_staff=True)
         self.login_as(admin)

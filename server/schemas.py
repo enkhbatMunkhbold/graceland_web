@@ -504,6 +504,100 @@ class MinistryPageContentSchema(ma.SQLAlchemyAutoSchema):
                     raise ValidationError('Block layer must be an integer from -20 to 20')
                 metadata['z'] = z_index
             return metadata
+
+        def safe_document_url(url, *, image=False):
+            from urllib.parse import urlparse
+            if not isinstance(url, str) or not url.strip() or len(url) > 2000:
+                raise ValidationError('Document URL is invalid')
+            value = url.strip()
+            parsed = urlparse(value)
+            allowed_schemes = {'http', 'https'} if image else {'http', 'https', 'mailto', 'tel'}
+            if parsed.scheme and parsed.scheme.lower() not in allowed_schemes:
+                raise ValidationError('Document URL type is not allowed')
+            if not parsed.scheme and not value.startswith(('/', '#')):
+                raise ValidationError('Document URL must be absolute or site-relative')
+            return value
+
+        def validate_document_node(node, depth=0):
+            allowed_nodes = {
+                'doc', 'paragraph', 'text', 'heading', 'bulletList', 'orderedList',
+                'listItem', 'blockquote', 'codeBlock', 'hardBreak', 'horizontalRule', 'image',
+            }
+            allowed_marks = {'bold', 'italic', 'strike', 'code', 'link'}
+            if depth > 20 or not isinstance(node, dict) or node.get('type') not in allowed_nodes:
+                raise ValidationError('Document contains unsupported content')
+
+            node_type = node['type']
+            cleaned = {'type': node_type}
+            if node_type == 'text':
+                text = node.get('text', '')
+                if not isinstance(text, str):
+                    raise ValidationError('Document text must be a string')
+                cleaned['text'] = text[:10000]
+
+            attrs = node.get('attrs')
+            if attrs is not None:
+                if not isinstance(attrs, dict):
+                    raise ValidationError('Document attributes must be an object')
+                cleaned_attrs = {}
+                if node_type == 'heading':
+                    level = attrs.get('level', 1)
+                    if level in (1, 2, 3):
+                        cleaned_attrs['level'] = level
+                if node_type in ('paragraph', 'heading'):
+                    alignment = attrs.get('textAlign')
+                    if alignment in ('left', 'center', 'right', 'justify'):
+                        cleaned_attrs['textAlign'] = alignment
+                if node_type == 'orderedList':
+                    start = attrs.get('start', 1)
+                    if isinstance(start, int) and 1 <= start <= 10000:
+                        cleaned_attrs['start'] = start
+                if node_type == 'codeBlock':
+                    language = attrs.get('language')
+                    if isinstance(language, str):
+                        cleaned_attrs['language'] = language[:50]
+                if node_type == 'image':
+                    cleaned_attrs['src'] = safe_document_url(attrs.get('src'), image=True)
+                    for key in ('alt', 'title'):
+                        value = attrs.get(key)
+                        cleaned_attrs[key] = value[:500] if isinstance(value, str) else ''
+                    for key in ('width', 'height'):
+                        value = attrs.get(key)
+                        if value is None:
+                            cleaned_attrs[key] = None
+                        elif isinstance(value, (int, float)) and not isinstance(value, bool) and 40 <= value <= 2000:
+                            cleaned_attrs[key] = round(float(value), 2)
+                    cleaned_attrs['align'] = attrs.get('align') if attrs.get('align') in ('left', 'center', 'right') else 'center'
+                if cleaned_attrs:
+                    cleaned['attrs'] = cleaned_attrs
+
+            marks = node.get('marks')
+            if marks is not None:
+                if not isinstance(marks, list):
+                    raise ValidationError('Document marks must be a list')
+                cleaned_marks = []
+                for mark in marks[:20]:
+                    if not isinstance(mark, dict) or mark.get('type') not in allowed_marks:
+                        raise ValidationError('Document contains an unsupported text style')
+                    cleaned_mark = {'type': mark['type']}
+                    if mark['type'] == 'link':
+                        mark_attrs = mark.get('attrs') or {}
+                        cleaned_mark['attrs'] = {
+                            'href': safe_document_url(mark_attrs.get('href')),
+                            'target': '_blank',
+                            'rel': 'noopener noreferrer nofollow',
+                            'class': None,
+                        }
+                    cleaned_marks.append(cleaned_mark)
+                if cleaned_marks:
+                    cleaned['marks'] = cleaned_marks
+
+            children = node.get('content')
+            if children is not None:
+                if not isinstance(children, list) or len(children) > 1000:
+                    raise ValidationError('Document contains too many items')
+                cleaned['content'] = [validate_document_node(child, depth + 1) for child in children]
+            return cleaned
         if value is None:
             return '[]'
         if isinstance(value, str):
@@ -520,14 +614,25 @@ class MinistryPageContentSchema(ma.SQLAlchemyAutoSchema):
                 raise ValidationError('Each block must be an object')
 
             block_type = block.get('type')
-            if block_type not in ('text', 'image', 'video', 'file', 'embed'):
-                raise ValidationError('Block type must be text, image, video, file, or embed')
+            if block_type not in ('text', 'image', 'video', 'file', 'embed', 'document'):
+                raise ValidationError('Block type must be text, image, video, file, embed, or document')
 
             block_id = block.get('id')
             if not block_id or not isinstance(block_id, str):
                 raise ValidationError('Each block requires an id')
 
-            if block_type == 'text':
+            if block_type == 'document':
+                content = block.get('content')
+                if not isinstance(content, dict) or content.get('type') != 'doc':
+                    raise ValidationError('Document block requires a document root')
+                if len(json.dumps(content)) > 250000:
+                    raise ValidationError('Document is too large')
+                validated.append({
+                    'id': block_id[:100],
+                    'type': 'document',
+                    'content': validate_document_node(content),
+                })
+            elif block_type == 'text':
                 content = block.get('content', '')
                 if not isinstance(content, str):
                     raise ValidationError('Text block content must be a string')
