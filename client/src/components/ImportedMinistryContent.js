@@ -4,7 +4,7 @@ import { api } from '../services/api';
 
 const contentCache = new Map();
 
-function ImportedMinistryContent({ slug, children }) {
+function ImportedMinistryContent({ slug }) {
   const [document, setDocument] = useState(() => contentCache.get(slug) || null);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ function ImportedMinistryContent({ slug, children }) {
     return () => { active = false; };
   }, [slug]);
 
-  if (!document) return children;
+  if (!document) return null;
 
   return (
     <div className="ministry-imported-document">

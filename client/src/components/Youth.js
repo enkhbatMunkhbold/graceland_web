@@ -1,5 +1,4 @@
 import { useLanguage } from '../context/LanguageContext';
-import interhighImage from '../assets/Interhigh.jpg';
 import ImportedMinistryContent from './ImportedMinistryContent';
 import '../styling/ministry-detail.css';
 
@@ -12,13 +11,7 @@ function Youth() {
         <div className="section-header">
           <h2 className="section-title">{t('youthMinistryTitle')}</h2>
         </div>
-        <ImportedMinistryContent slug="youth"><div className="ministry-detail-media">
-          <img src={interhighImage} alt={t('youthMinistryTitle')} />
-        </div>
-        <div className="ministry-detail-content">
-          <p>{t('youthMinistryPara1')}</p>
-        </div>
-        </ImportedMinistryContent>
+        <ImportedMinistryContent slug="youth" />
       </div>
     </section>
   );

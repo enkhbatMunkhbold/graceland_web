@@ -1,5 +1,4 @@
 import { useLanguage } from '../context/LanguageContext';
-import womenImage from '../assets/Women.jpg';
 import ImportedMinistryContent from './ImportedMinistryContent';
 import '../styling/ministry-detail.css';
 
@@ -12,13 +11,7 @@ function Women() {
         <div className="section-header">
           <h2 className="section-title">{t('womenMinistryTitle')}</h2>
         </div>
-        <ImportedMinistryContent slug="women"><div className="ministry-detail-media">
-          <img src={womenImage} alt={t('womenMinistryTitle')} />
-        </div>
-        <div className="ministry-detail-content">
-          <p>{t('womenMinistryPara1')}</p>
-        </div>
-        </ImportedMinistryContent>
+        <ImportedMinistryContent slug="women" />
       </div>
     </section>
   );
