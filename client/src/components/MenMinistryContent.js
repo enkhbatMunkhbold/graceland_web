@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 
 const content = {
@@ -37,18 +38,21 @@ function MenMinistryContent() {
       {paragraphs.map((paragraph, index) => {
         const image = images.find(item => item.paragraph === index);
         return (
-          <p className={image ? 'ministry-static-image-row' : undefined} key={paragraph}>
+          <Fragment key={paragraph}>
             {image && (
               <img
-                className="ministry-image-wrap-left"
+                className="ministry-static-image"
                 src={image.src}
                 alt={alt}
                 loading="lazy"
                 decoding="async"
               />
             )}
+            {!image && <span className="ministry-static-image-space" aria-hidden="true" />}
+            <p>
             {paragraph}
-          </p>
+            </p>
+          </Fragment>
         );
       })}
     </div>
