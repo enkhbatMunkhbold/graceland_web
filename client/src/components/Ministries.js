@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Pause, Play } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import { api } from '../services/api';
 import '../styling/ministries.css';
 
 import childrenImage from '../assets/Children.jpg';
@@ -79,9 +78,6 @@ function MinistriesHero({ title, playLabel, pauseLabel }) {
 }
 
 function Ministries() {
-  const [ministries, setMinistries] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const { t } = useLanguage();
 
   const scrollToTop = () => {
@@ -130,55 +126,6 @@ function Ministries() {
     staticImage: worshipImage,
   }), [t]);
 
-  useEffect(() => {
-    api.getMinistries()
-      .then(data => {
-        const rest = data
-          .filter(m => {
-            const n = m.name || '';
-            return n !== "Children's Ministry" && n !== "Youth Ministry (InterHigh)" && !n.toLowerCase().includes('interhigh');
-          })
-          .slice(0, 5);
-        setMinistries(rest);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error fetching ministries:', err);
-        setError(err.message);
-        setLoading(false);
-      });
-  }, []);
-
-  if (loading) {
-    return (
-      <main className="ministries-page">
-        <MinistriesHero title={t('ourMinistries')} playLabel={t('playImageCarousel')} pauseLabel={t('pauseImageCarousel')} />
-        <section className="ministries-content">
-          <div className="ministries-intro">
-            <p>{t('ministriesIntro1')}</p>
-            <p>{t('ministriesIntro2')}</p>
-          </div>
-          <div className="ministries-loading">Loading...</div>
-        </section>
-      </main>
-    );
-  }
-
-  if (error) {
-    return (
-      <main className="ministries-page">
-        <MinistriesHero title={t('ourMinistries')} playLabel={t('playImageCarousel')} pauseLabel={t('pauseImageCarousel')} />
-        <section className="ministries-content">
-          <div className="ministries-intro">
-            <p>{t('ministriesIntro1')}</p>
-            <p>{t('ministriesIntro2')}</p>
-          </div>
-          <div className="ministries-error">Error: {error}</div>
-        </section>
-      </main>
-    );
-  }
-
   return (
     <main className="ministries-page">
       <MinistriesHero title={t('ourMinistries')} playLabel={t('playImageCarousel')} pauseLabel={t('pauseImageCarousel')} />
@@ -189,10 +136,7 @@ function Ministries() {
           <p>{t('ministriesIntro2')}</p>
         </div>
 
-        {ministries.length === 0 && !childrenMinistry ? (
-          <p className="ministries-none">{t('noMinistries')}</p>
-        ) : (
-          <div className="ministries-list">
+        <div className="ministries-list">
             <article
               key={childrenMinistry.id}
               className="ministry-block ministry-block--image-left"
@@ -296,37 +240,7 @@ function Ministries() {
                 </Link>
               </div>
             </article>
-            {ministries.map((ministry, index) => (
-              <article
-                key={ministry.id}
-                className={`ministry-block ministry-block--${index % 2 === 0 ? 'image-right' : 'image-left'}`}
-              >
-                <div className="ministry-block-media">
-                  {ministry.image_url ? (
-                    <img src={ministry.image_url} alt={ministry.name} className="ministry-block-img" />
-                  ) : (
-                    <div className="ministry-block-placeholder" aria-hidden="true" />
-                  )}
-                </div>
-                <div className="ministry-block-body">
-                  <h2 className="ministry-block-title">{ministry.name}</h2>
-                  {ministry.description && (
-                    <div className="ministry-block-description">
-                      {ministry.description.includes('\n')
-                        ? ministry.description.split('\n').map((para, i) => (
-                            <p key={i}>{para}</p>
-                          ))
-                        : <p>{ministry.description}</p>}
-                    </div>
-                  )}
-                  <a href="#contact" className="ministry-block-cta">
-                    {t('learnMore').toUpperCase()}
-                  </a>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
+        </div>
       </section>
     </main>
   );
