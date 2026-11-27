@@ -22,9 +22,9 @@ const content = {
 };
 
 const images = [
-  { after: 0, src: '/images/ministries/men/navajo-partnership.jpg' },
-  { after: 2, src: '/images/ministries/men/navajo-visit.jpg' },
-  { after: 4, src: '/images/ministries/men/mens-ministry-gathering.jpg' },
+  { paragraph: 1, src: '/images/ministries/men/navajo-partnership.jpg' },
+  { paragraph: 3, src: '/images/ministries/men/navajo-visit.jpg' },
+  { paragraph: 5, src: '/images/ministries/men/mens-ministry-gathering.jpg' },
 ];
 
 function MenMinistryContent() {
@@ -35,9 +35,9 @@ function MenMinistryContent() {
   return (
     <div className="ministry-imported-content ministry-static-content">
       {paragraphs.map((paragraph, index) => {
-        const image = images.find(item => item.after === index);
+        const image = images.find(item => item.paragraph === index);
         return (
-          <p key={paragraph}>
+          <p className={image ? 'ministry-static-image-row' : undefined} key={paragraph}>
             {image && (
               <img
                 className="ministry-image-wrap-left"

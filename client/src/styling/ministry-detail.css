@@ -19,10 +19,12 @@
 
 .ministry-imported-document { width: 100%; text-align: left; }
 .ministry-imported-content { display: flow-root; color: var(--ministry-ink); font-size: 1rem; line-height: 1.7; overflow-wrap: anywhere; }
+.ministry-static-content { text-align: left; }
+.ministry-static-content .ministry-static-image-row { display: flow-root; }
 .ministry-imported-content h1, .ministry-imported-content h2, .ministry-imported-content h3, .ministry-imported-content h4 { margin: 1.75rem 0 .75rem; color: var(--ministry-ink); line-height: 1.2; }
 .ministry-imported-content p, .ministry-imported-content ul, .ministry-imported-content ol, .ministry-imported-content blockquote, .ministry-imported-content table { margin: 0 0 1rem; }
 .ministry-imported-content img { display: block; width: auto; max-width: 100%; height: auto; margin: 1.5rem auto; }
-.ministry-imported-content img.ministry-image-wrap-left { float: left; max-width: min(42%, 320px); margin: .35rem 1.5rem 1rem 0; }
+.ministry-imported-content img.ministry-image-wrap-left { float: left; width: 320px; max-width: 42%; margin: 0 1.5rem 1rem 0; }
 .ministry-imported-content img.ministry-image-wrap-right { float: right; max-width: min(42%, 320px); margin: .35rem 0 1rem 1.5rem; }
 .ministry-imported-content a, .ministry-document-download { color: var(--ministry-link); text-decoration: underline; text-underline-offset: 3px; }
 .ministry-imported-content table { width: 100%; border-collapse: collapse; }
