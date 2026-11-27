@@ -50,7 +50,7 @@ function AdminDashboard() {
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState(null);
   const [announcement, setAnnouncement] = useState(null);
-  const [announcementFile, setAnnouncementFile] = useState(null);
+  const [announcementFiles, setAnnouncementFiles] = useState([]);
   const [announcementBusy, setAnnouncementBusy] = useState(false);
   const [announcementMessage, setAnnouncementMessage] = useState('');
   const [roleUsers, setRoleUsers] = useState([]);
@@ -199,15 +199,14 @@ function AdminDashboard() {
     setAnnouncementMessage('');
   };
 
-  const chooseAnnouncementFile = file => {
-    if (!file) return;
-    const type = file.type.startsWith('video/') ? 'video' : file.type.startsWith('image/') ? 'image' : null;
-    if (!type) {
+  const chooseAnnouncementFiles = files => {
+    const selected = Array.from(files || []);
+    if (!selected.length) return;
+    if (selected.some(file => !file.type.startsWith('image/') && !file.type.startsWith('video/'))) {
       setAnnouncementMessage('Please choose an image or video file.');
       return;
     }
-    setAnnouncementFile(file);
-    setAnnouncement(current => ({ ...current, type }));
+    setAnnouncementFiles(current => [...current, ...selected].slice(0, 20));
     setAnnouncementMessage('');
   };
 
@@ -217,17 +216,23 @@ function AdminDashboard() {
     setAnnouncementBusy(true);
     setAnnouncementMessage('');
     try {
-      let next = { ...announcement, title: '', body: '' };
-      if (announcementFile) {
-        const uploaded = await api.uploadHomeAnnouncementFile(announcementFile);
-        next.mediaUrl = uploaded.url;
-      }
+      const existingItems = announcement.items || (announcement.mediaUrl ? [announcement] : []);
+      const uploadedItems = await Promise.all(announcementFiles.map(async file => {
+        const uploaded = await api.uploadHomeAnnouncementFile(file);
+        return {
+          type: file.type.startsWith('video/') ? 'video' : 'image',
+          mediaUrl: uploaded.url,
+          posterUrl: '',
+          alt: file.name,
+        };
+      }));
+      const next = { ...announcement, title: '', body: '', items: [...existingItems, ...uploadedItems] };
       const saved = await api.updateHomeAnnouncement(next);
       setAnnouncement(saved);
-      setAnnouncementFile(null);
+      setAnnouncementFiles([]);
       const fileInput = form.querySelector('input[type="file"]');
       if (fileInput) fileInput.value = '';
-      setAnnouncementMessage('Announcement published successfully.');
+      setAnnouncementMessage('Announcement posters published successfully.');
       navigate('/home');
     } catch (announcementError) {
       setAnnouncementMessage(announcementError.message || 'Unable to publish the announcement.');
@@ -454,26 +459,32 @@ function AdminDashboard() {
                     onDragOver={event => event.preventDefault()}
                     onDrop={event => {
                       event.preventDefault();
-                      chooseAnnouncementFile(event.dataTransfer.files?.[0]);
+                    chooseAnnouncementFiles(event.dataTransfer.files);
                     }}
                   >
-                    <span>Image or video (optional)</span>
-                    <strong>Drag and drop a file here, or click to choose one</strong>
-                    <input type="file" accept="image/*,video/*" onChange={event => chooseAnnouncementFile(event.target.files?.[0])} />
-                    {(announcementFile || announcement.mediaUrl) && (
-                      <small>{announcementFile ? announcementFile.name : 'The current uploaded file will be kept.'}</small>
-                    )}
+                    <span>Announcement posters (up to 20)</span>
+                    <strong>Drag and drop posters here, or click to choose multiple files</strong>
+                    <input type="file" accept="image/*,video/*" multiple onChange={event => chooseAnnouncementFiles(event.target.files)} />
+                    {announcementFiles.length > 0 && <small>{announcementFiles.length} new poster{announcementFiles.length === 1 ? '' : 's'} selected.</small>}
                   </label>
-                  {(announcementFile || announcement.mediaUrl) && (
-                    <button
-                      className="admin-clear-media admin-field-wide"
-                      type="button"
-                      onClick={() => {
-                        setAnnouncementFile(null);
-                        setAnnouncement(current => ({ ...current, type: 'image', mediaUrl: '', posterUrl: '', alt: '' }));
-                      }}
-                    >Remove image or video</button>
-                  )}
+                  {((announcement.items?.length || announcement.mediaUrl) || announcementFiles.length > 0) && <div className="admin-field-wide admin-announcement-poster-list">
+                    {(announcement.items || (announcement.mediaUrl ? [announcement] : [])).map((item, index) => (
+                      <div key={`${item.mediaUrl}-${index}`}>
+                        <span>Published poster {index + 1}</span>
+                        <button type="button" onClick={() => setAnnouncement(current => ({
+                          ...current,
+                          items: (current.items || (current.mediaUrl ? [current] : [])).filter((_, itemIndex) => itemIndex !== index),
+                          mediaUrl: '',
+                        }))}>Remove</button>
+                      </div>
+                    ))}
+                    {announcementFiles.map((file, index) => (
+                      <div key={`${file.name}-${file.lastModified}-${index}`}>
+                        <span>{file.name}</span>
+                        <button type="button" onClick={() => setAnnouncementFiles(current => current.filter((_, fileIndex) => fileIndex !== index))}>Remove</button>
+                      </div>
+                    ))}
+                  </div>}
                 </div>
                 <div className="admin-announcement-footer">
                   <button type="submit" disabled={announcementBusy}>{announcementBusy ? 'Publishing...' : 'Publish announcement'}</button>

@@ -79,6 +79,7 @@ def _require_admin_or_staff():
 HOME_ANNOUNCEMENT_KEY = 'home_announcement'
 HOME_ANNOUNCEMENT_DEFAULT = {
     'enabled': False,
+    'items': [],
     'type': 'image',
     'title': '',
     'body': '',
@@ -161,24 +162,55 @@ def _home_announcement_value():
 def _validate_home_announcement(data):
     if not isinstance(data, dict):
         raise ValueError('Announcement data is required')
-    announcement_type = str(data.get('type', 'image')).strip().lower()
-    if announcement_type not in ('image', 'video'):
-        raise ValueError('Official announcements must be an image or video')
-
     def text_value(key, limit):
         return str(data.get(key, '') or '').strip()[:limit]
 
+    raw_items = data.get('items')
+    if raw_items is None:
+        raw_items = []
+    if not raw_items and data.get('mediaUrl'):
+        raw_items.append({
+            'type': data.get('type', 'image'),
+            'mediaUrl': data.get('mediaUrl'),
+            'posterUrl': data.get('posterUrl'),
+            'alt': data.get('alt'),
+        })
+    if not isinstance(raw_items, list):
+        raise ValueError('Announcement posters must be a list')
+    if len(raw_items) > 20:
+        raise ValueError('A maximum of 20 announcement posters is allowed')
+
+    items = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            raise ValueError('Each announcement poster must be an object')
+        item_type = str(item.get('type', 'image')).strip().lower()
+        if item_type not in ('image', 'video'):
+            raise ValueError('Official announcements must be an image or video')
+        media_url = str(item.get('mediaUrl', '') or '').strip()[:2000]
+        if not media_url:
+            raise ValueError(f'{item_type.capitalize()} announcements require a media file or URL')
+        items.append({
+            'type': item_type,
+            'mediaUrl': media_url,
+            'posterUrl': str(item.get('posterUrl', '') or '').strip()[:2000],
+            'alt': str(item.get('alt', '') or '').strip()[:500],
+        })
+
+    first = items[0] if items else {'type': 'image', 'mediaUrl': '', 'posterUrl': '', 'alt': ''}
+
     result = {
         'enabled': bool(data.get('enabled', True)),
-        'type': announcement_type,
+        'items': items,
+        'type': first['type'],
         'title': '',
         'body': '',
-        'mediaUrl': text_value('mediaUrl', 2000),
-        'posterUrl': text_value('posterUrl', 2000),
-        'alt': text_value('alt', 500),
+        'mediaUrl': first['mediaUrl'],
+        'posterUrl': first['posterUrl'],
+        'alt': first['alt'],
     }
-    if result['enabled'] and not result['mediaUrl']:
-        raise ValueError(f'{announcement_type.capitalize()} announcements require a media file or URL')
+    if result['enabled'] and not result['items']:
+        raise ValueError('Enabled announcements require at least one poster')
     return result
 
 class CheckSession(Resource):

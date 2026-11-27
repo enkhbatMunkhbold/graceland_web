@@ -291,6 +291,23 @@ class RoleAuthorizationAPITest(unittest.TestCase):
         self.assertEqual(fetched.status_code, 200)
         self.assertEqual(fetched.data, b'fake-image-content')
 
+    def test_staff_can_publish_multiple_official_announcement_posters(self):
+        staff = self.create_user('poster-staff', is_staff=True)
+        self.login_as(staff)
+        payload = {
+            'enabled': True,
+            'items': [
+                {'type': 'image', 'mediaUrl': '/announcement-media/1', 'alt': 'First'},
+                {'type': 'image', 'mediaUrl': '/announcement-media/2', 'alt': 'Second'},
+            ],
+        }
+
+        saved = self.client.put('/home-announcement', json=payload)
+
+        self.assertEqual(saved.status_code, 200)
+        self.assertEqual(len(saved.get_json()['items']), 2)
+        self.assertEqual(saved.get_json()['items'][1]['mediaUrl'], '/announcement-media/2')
+
     def test_signup_requires_a_single_use_admin_invitation_and_creates_staff(self):
         no_invite = self.client.post('/sign_up', json={
             'username': 'uninvited',

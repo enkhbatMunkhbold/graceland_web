@@ -38,6 +38,7 @@ function TextWithLinks({ children }) {
 function Announcements() {
   const { t, language } = useLanguage();
   const [churchAnnouncement, setChurchAnnouncement] = useState(null);
+  const [churchPosterIndex, setChurchPosterIndex] = useState(0);
   const [publicAnnouncements, setPublicAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -87,6 +88,20 @@ function Announcements() {
       document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
   }, [t]);
+
+  const churchPosters = churchAnnouncement?.items || (
+    churchAnnouncement?.mediaUrl ? [churchAnnouncement] : []
+  );
+  const activeChurchPoster = churchPosters[churchPosterIndex] || churchPosters[0];
+
+  useEffect(() => {
+    setChurchPosterIndex(0);
+    if (!churchAnnouncement?.enabled || churchPosters.length < 2) return undefined;
+    const interval = window.setInterval(() => {
+      setChurchPosterIndex(current => (current + 1) % churchPosters.length);
+    }, 2000);
+    return () => window.clearInterval(interval);
+  }, [churchAnnouncement?.enabled, churchPosters.length]);
 
   useEffect(() => {
     if (!isFormOpen) return undefined;
@@ -195,18 +210,31 @@ function Announcements() {
                 <h2 id="church-announcements-title">{t('churchAnnouncements')}</h2>
               </div>
             </div>
-            {loading ? <p className="announcements-state">{t('announcementsLoading')}</p> : churchAnnouncement?.enabled ? (
+            {loading ? <p className="announcements-state">{t('announcementsLoading')}</p> : churchAnnouncement?.enabled && activeChurchPoster ? (
               <article className="church-announcement-card">
-                {churchAnnouncement.type === 'image' && churchAnnouncement.mediaUrl && (
-                  <img src={churchAnnouncement.mediaUrl} alt={churchAnnouncement.alt || ''} />
+                {activeChurchPoster.type === 'image' && activeChurchPoster.mediaUrl && (
+                  <img src={activeChurchPoster.mediaUrl} alt={activeChurchPoster.alt || ''} />
                 )}
-                {churchAnnouncement.type === 'video' && churchAnnouncement.mediaUrl && (
-                  <video src={churchAnnouncement.mediaUrl} poster={churchAnnouncement.posterUrl || undefined} controls playsInline preload="metadata" />
+                {activeChurchPoster.type === 'video' && activeChurchPoster.mediaUrl && (
+                  <video src={activeChurchPoster.mediaUrl} poster={activeChurchPoster.posterUrl || undefined} controls playsInline preload="metadata" />
                 )}
                 {(churchAnnouncement.title || churchAnnouncement.body) && (
                   <div className="church-announcement-copy">
                     {churchAnnouncement.title && <h3>{churchAnnouncement.title}</h3>}
                     {churchAnnouncement.body && <div><TextWithLinks>{churchAnnouncement.body}</TextWithLinks></div>}
+                  </div>
+                )}
+                {churchPosters.length > 1 && (
+                  <div className="church-announcement-dots" aria-label={`${churchPosterIndex + 1} of ${churchPosters.length}`}>
+                    {churchPosters.map((poster, index) => (
+                      <button
+                        type="button"
+                        className={index === churchPosterIndex ? 'is-active' : ''}
+                        aria-label={`Show announcement poster ${index + 1}`}
+                        onClick={() => setChurchPosterIndex(index)}
+                        key={`${poster.mediaUrl}-${index}`}
+                      />
+                    ))}
                   </div>
                 )}
               </article>
