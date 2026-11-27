@@ -1,5 +1,4 @@
 import { useLanguage } from '../context/LanguageContext';
-import ImportedMinistryContent from './ImportedMinistryContent';
 import '../styling/ministry-detail.css';
 
 function YoungAdult() {
@@ -11,7 +10,6 @@ function YoungAdult() {
         <div className="section-header">
           <h2 className="section-title">{t('youngAdultsMinistryTitle')}</h2>
         </div>
-        <ImportedMinistryContent slug="young-adult" />
       </div>
     </section>
   );
