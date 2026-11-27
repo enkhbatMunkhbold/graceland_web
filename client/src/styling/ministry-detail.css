@@ -19,11 +19,11 @@
 
 .ministry-imported-document { width: 100%; text-align: left; }
 .ministry-imported-content { display: flow-root; color: var(--ministry-ink); font-size: 1rem; line-height: 1.7; overflow-wrap: anywhere; }
-.ministry-static-content { display: grid; grid-template-columns: minmax(220px, 320px) minmax(0, 1fr); column-gap: 2rem; row-gap: 1.5rem; align-items: start; text-align: left !important; }
-.ministry-static-content p { grid-column: 2; margin: 0 !important; text-align: left !important; }
-.ministry-static-content .ministry-static-image,
-.ministry-static-content .ministry-static-image-space { grid-column: 1; }
-.ministry-static-content .ministry-static-image { display: block; width: 100%; max-width: 320px; height: auto; margin: 0; }
+.ministry-static-content { display: grid; grid-template-columns: minmax(220px, 320px) minmax(0, 1fr); column-gap: 2rem; align-items: start; text-align: left !important; }
+.ministry-static-copy { grid-column: 2; }
+.ministry-static-copy p { margin: 0 0 1rem !important; text-align: left !important; }
+.ministry-static-images { grid-column: 1; display: flex; flex-direction: column; gap: 2rem; padding-top: 5.5rem; }
+.ministry-static-images .ministry-static-image { display: block; width: 100%; max-width: 320px; height: auto; margin: 0; }
 .ministry-imported-content h1, .ministry-imported-content h2, .ministry-imported-content h3, .ministry-imported-content h4 { margin: 1.75rem 0 .75rem; color: var(--ministry-ink); line-height: 1.2; }
 .ministry-imported-content p, .ministry-imported-content ul, .ministry-imported-content ol, .ministry-imported-content blockquote, .ministry-imported-content table { margin: 0 0 1rem; }
 .ministry-imported-content img { display: block; width: auto; max-width: 100%; height: auto; margin: 1.5rem auto; }
@@ -46,9 +46,8 @@
 
 @media (max-width: 600px) {
   .ministry-static-content { display: block; }
-  .ministry-static-content p { margin-bottom: 1rem !important; }
-  .ministry-static-content .ministry-static-image { width: auto; max-width: 100%; margin: 1rem 0; }
-  .ministry-static-content .ministry-static-image-space { display: none; }
+  .ministry-static-images { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; padding-top: 0; margin-bottom: 1.5rem; }
+  .ministry-static-images .ministry-static-image { width: 100%; max-width: 100%; }
   .ministry-imported-content img.ministry-image-wrap-left,
   .ministry-imported-content img.ministry-image-wrap-right {
     float: none;

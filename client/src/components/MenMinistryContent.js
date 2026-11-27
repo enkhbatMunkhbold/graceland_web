@@ -1,4 +1,3 @@
-import { Fragment } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 
 const content = {
@@ -23,9 +22,9 @@ const content = {
 };
 
 const images = [
-  { paragraph: 1, src: '/images/ministries/men/navajo-partnership.jpg' },
-  { paragraph: 3, src: '/images/ministries/men/navajo-visit.jpg' },
-  { paragraph: 5, src: '/images/ministries/men/mens-ministry-gathering.jpg' },
+  '/images/ministries/men/navajo-partnership.jpg',
+  '/images/ministries/men/navajo-visit.jpg',
+  '/images/ministries/men/mens-ministry-gathering.jpg',
 ];
 
 function MenMinistryContent() {
@@ -35,26 +34,21 @@ function MenMinistryContent() {
 
   return (
     <div className="ministry-imported-content ministry-static-content">
-      {paragraphs.map((paragraph, index) => {
-        const image = images.find(item => item.paragraph === index);
-        return (
-          <Fragment key={paragraph}>
-            {image && (
-              <img
-                className="ministry-static-image"
-                src={image.src}
-                alt={alt}
-                loading="lazy"
-                decoding="async"
-              />
-            )}
-            {!image && <span className="ministry-static-image-space" aria-hidden="true" />}
-            <p>
-            {paragraph}
-            </p>
-          </Fragment>
-        );
-      })}
+      <div className="ministry-static-images">
+        {images.map(src => (
+          <img
+            className="ministry-static-image"
+            src={src}
+            alt={alt}
+            loading="lazy"
+            decoding="async"
+            key={src}
+          />
+        ))}
+      </div>
+      <div className="ministry-static-copy">
+        {paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}
+      </div>
     </div>
   );
 }
