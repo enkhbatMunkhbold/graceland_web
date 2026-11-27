@@ -20,8 +20,8 @@
 .ministry-imported-document { width: 100%; text-align: left; }
 .ministry-imported-content { display: flow-root; color: var(--ministry-ink); font-size: 1rem; line-height: 1.7; overflow-wrap: anywhere; }
 .ministry-static-content { display: grid; grid-template-columns: minmax(220px, 320px) minmax(0, 1fr); column-gap: 2rem; align-items: start; text-align: left !important; }
-.ministry-static-copy { grid-column: 2; }
-.ministry-static-copy p { margin: 0 0 1rem !important; text-align: left !important; }
+.ministry-static-copy { grid-column: 2; display: flex; flex-direction: column; gap: 0; }
+.ministry-static-copy p { margin: 0 !important; padding: 0 !important; text-align: left !important; }
 .ministry-static-images { grid-column: 1; display: flex; flex-direction: column; gap: 2rem; padding-top: 5.5rem; }
 .ministry-static-images .ministry-static-image { display: block; width: 100%; max-width: 320px; height: auto; margin: 0; }
 .ministry-imported-content h1, .ministry-imported-content h2, .ministry-imported-content h3, .ministry-imported-content h4 { margin: 1.75rem 0 .75rem; color: var(--ministry-ink); line-height: 1.2; }
