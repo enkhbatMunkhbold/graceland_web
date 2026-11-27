@@ -2,6 +2,7 @@ import html
 import os
 import re
 import uuid
+import zipfile
 
 import bleach
 import mammoth
@@ -18,7 +19,7 @@ ALLOWED_TAGS = {
 }
 ALLOWED_ATTRIBUTES = {
     'a': ['href', 'title'],
-    'img': ['src', 'alt', 'title', 'width', 'height', 'loading', 'decoding'],
+    'img': ['src', 'alt', 'title', 'width', 'height', 'loading', 'decoding', 'class'],
     'ol': ['start'],
 }
 IMAGE_EXTENSIONS = {
@@ -80,17 +81,59 @@ def _sanitize_imported_html(value):
     ).linkify(cleaned)
 
 
+def _docx_image_layouts(path):
+    """Return Word drawing layouts in document order for Mammoth's image callbacks."""
+    try:
+        with zipfile.ZipFile(path) as package:
+            document_xml = package.read('word/document.xml').decode('utf-8')
+    except (KeyError, OSError, UnicodeDecodeError, zipfile.BadZipFile):
+        return []
+
+    layouts = []
+    drawings = re.finditer(
+        r'<wp:(anchor|inline)\b[\s\S]*?</wp:\1>',
+        document_xml,
+    )
+    for drawing in drawings:
+        if drawing.group(1) != 'anchor':
+            layouts.append('inline')
+            continue
+        alignment = re.search(
+            r'<wp:positionH\b[^>]*>[\s\S]*?<wp:align>(left|right|center|inside|outside)</wp:align>',
+            drawing.group(0),
+        )
+        side = alignment.group(1) if alignment else 'left'
+        if side in {'right', 'outside'}:
+            layouts.append('wrap-right')
+        elif side in {'left', 'inside'}:
+            layouts.append('wrap-left')
+        else:
+            layouts.append('inline')
+    return layouts
+
+
 def _convert_docx(app, slug, path, save_asset=None):
+    image_layouts = _docx_image_layouts(path)
+    image_index = 0
+
     def convert_image(image):
+        nonlocal image_index
         content_type = (image.content_type or '').lower()
         extension = IMAGE_EXTENSIONS.get(content_type)
         if not extension:
             return {'src': ''}
+        layout = image_layouts[image_index] if image_index < len(image_layouts) else 'inline'
+        image_index += 1
+        attributes = {}
+        if layout in {'wrap-left', 'wrap-right'}:
+            attributes['class'] = 'ministry-image-{}'.format(layout)
         with image.open() as image_file:
             data = image_file.read()
             if save_asset:
-                return {'src': save_asset(data, content_type, 'image.{}'.format(extension))}
-            return {'src': _save_bytes(app, slug, data, extension)}
+                attributes['src'] = save_asset(data, content_type, 'image.{}'.format(extension))
+            else:
+                attributes['src'] = _save_bytes(app, slug, data, extension)
+            return attributes
 
     with open(path, 'rb') as source:
         result = mammoth.convert_to_html(

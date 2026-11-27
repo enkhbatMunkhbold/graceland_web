@@ -9,6 +9,7 @@ from werkzeug.datastructures import FileStorage
 
 from ministry_document_import import (
     MinistryDocumentError,
+    _docx_image_layouts,
     _sanitize_imported_html,
     import_ministry_document,
     ministry_document_allowed,
@@ -94,6 +95,21 @@ class MinistryDocumentImportTest(unittest.TestCase):
         self.assertIn('<p>Safe</p>', cleaned)
         self.assertNotIn('onclick', cleaned)
         self.assertNotIn('<script', cleaned)
+
+    def test_docx_floating_image_alignment_is_preserved(self):
+        path = self.directory.name + '/floating.docx'
+        document = '''<w:document xmlns:w="word" xmlns:wp="drawing">
+          <wp:anchor><wp:positionH relativeFrom="margin"><wp:align>left</wp:align></wp:positionH></wp:anchor>
+          <wp:inline></wp:inline>
+          <wp:anchor><wp:positionH relativeFrom="margin"><wp:align>right</wp:align></wp:positionH></wp:anchor>
+        </w:document>'''
+        with zipfile.ZipFile(path, 'w') as package:
+            package.writestr('word/document.xml', document)
+
+        self.assertEqual(
+            _docx_image_layouts(path),
+            ['wrap-left', 'inline', 'wrap-right'],
+        )
 
     def test_image_only_pdf_explains_that_ocr_is_required(self):
         pdf = io.BytesIO()
