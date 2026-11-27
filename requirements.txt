@@ -10,6 +10,7 @@ gunicorn
 mammoth==1.8.0
 marshmallow
 marshmallow-sqlalchemy
+Pillow==10.4.0
 pypdf==4.3.1
 psycopg2-binary
 python-dotenv
