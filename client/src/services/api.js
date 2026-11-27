@@ -1,6 +1,11 @@
 const API_BASE_URL = (
   process.env.REACT_APP_API_BASE_URL || 'http://localhost:5555'
 ).replace(/\/+$/, '');
+
+export const apiAssetUrl = value => {
+  if (!value || !value.startsWith('/')) return value;
+  return `${API_BASE_URL}${value}`;
+};
 let latestYouTubeVideosCache = null;
 let latestYouTubeVideosCachedAt = 0;
 let latestYouTubeVideosRequest = null;

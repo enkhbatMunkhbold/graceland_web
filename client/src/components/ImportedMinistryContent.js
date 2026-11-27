@@ -1,9 +1,14 @@
 import { useContext, useEffect, useRef, useState } from 'react';
 import { Download, FileUp } from 'lucide-react';
-import { api } from '../services/api';
+import { api, apiAssetUrl } from '../services/api';
 import UserContext from '../context/UserContext';
 
 const contentCache = new Map();
+
+const resolveDocumentAssetUrls = value => String(value || '').replace(
+  /(src=")((?:\/uploads\/)[^"]+)/g,
+  (match, prefix, url) => `${prefix}${apiAssetUrl(url)}`,
+);
 
 function ImportedMinistryContent({ slug }) {
   const { user } = useContext(UserContext);
@@ -87,10 +92,10 @@ function ImportedMinistryContent({ slug }) {
       )}
       {document && <div
         className="ministry-imported-content"
-        dangerouslySetInnerHTML={{ __html: document.html }}
+        dangerouslySetInnerHTML={{ __html: resolveDocumentAssetUrls(document.html) }}
       />}
       {document?.originalUrl && (
-        <a className="ministry-document-download" href={document.originalUrl} download>
+        <a className="ministry-document-download" href={apiAssetUrl(document.originalUrl)} download>
           <Download aria-hidden="true" />
           Download original {document.sourceType?.toUpperCase() || 'document'}
         </a>
