@@ -412,6 +412,17 @@ class MinistryPageContent(db.Model):
     return f'<MinistryPageContent {self.slug}>'
 
 
+class MinistryDocumentAsset(db.Model):
+  __tablename__ = 'ministry_document_assets'
+
+  id = db.Column(db.Integer, primary_key=True)
+  slug = db.Column(db.String(50), nullable=False, index=True)
+  filename = db.Column(db.String(255), nullable=False)
+  content_type = db.Column(db.String(100), nullable=False)
+  data = db.Column(db.LargeBinary, nullable=False)
+  created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+
+
 class Announcement(db.Model):
   __tablename__ = 'announcements'
   

@@ -65,6 +65,28 @@ class MinistryDocumentImportTest(unittest.TestCase):
         self.assertEqual(result['originalName'], 'Ministry update.docx')
         self.assertTrue(result['originalUrl'].startswith('/uploads/ministry/children/'))
 
+    def test_database_asset_callback_receives_original_document(self):
+        stored = []
+
+        def save_asset(data, content_type, filename):
+            stored.append((data, content_type, filename))
+            return '/ministry-assets/{}'.format(len(stored))
+
+        file_storage = FileStorage(
+            stream=simple_docx('Persistent content'),
+            filename='Persistent update.docx',
+        )
+        result = import_ministry_document(
+            self.app,
+            'men',
+            file_storage,
+            save_asset=save_asset,
+        )
+
+        self.assertEqual(result['originalUrl'], '/ministry-assets/1')
+        self.assertEqual(stored[0][1], 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        self.assertEqual(stored[0][2], 'Persistent update.docx')
+
     def test_imported_html_strips_scripts_and_event_handlers(self):
         cleaned = _sanitize_imported_html(
             '<p onclick="bad()">Safe</p><script>alert(1)</script>'

@@ -80,14 +80,17 @@ def _sanitize_imported_html(value):
     ).linkify(cleaned)
 
 
-def _convert_docx(app, slug, path):
+def _convert_docx(app, slug, path, save_asset=None):
     def convert_image(image):
         content_type = (image.content_type or '').lower()
         extension = IMAGE_EXTENSIONS.get(content_type)
         if not extension:
             return {'src': ''}
         with image.open() as image_file:
-            return {'src': _save_bytes(app, slug, image_file.read(), extension)}
+            data = image_file.read()
+            if save_asset:
+                return {'src': save_asset(data, content_type, 'image.{}'.format(extension))}
+            return {'src': _save_bytes(app, slug, data, extension)}
 
     with open(path, 'rb') as source:
         result = mammoth.convert_to_html(
@@ -108,7 +111,7 @@ def _pdf_text_html(text):
     return ''.join(output)
 
 
-def _convert_pdf(app, slug, path):
+def _convert_pdf(app, slug, path, save_asset=None):
     try:
         reader = PdfReader(path)
         if reader.is_encrypted and not reader.decrypt(''):
@@ -139,7 +142,14 @@ def _convert_pdf(app, slug, path):
                     extension = 'jpg'
                 if extension not in {'png', 'jpg', 'gif', 'webp'}:
                     continue
-                url = _save_bytes(app, slug, image.data, extension)
+                if save_asset:
+                    url = save_asset(
+                        image.data,
+                        'image/{}'.format('jpeg' if extension == 'jpg' else extension),
+                        image.name or 'image.{}'.format(extension),
+                    )
+                else:
+                    url = _save_bytes(app, slug, image.data, extension)
                 image_html.append(
                     '<img src="{}" alt="Image from page {}" loading="lazy">'.format(
                         html.escape(url, quote=True), page_number
@@ -163,7 +173,7 @@ def _convert_pdf(app, slug, path):
     return _sanitize_imported_html(''.join(sections)), warnings
 
 
-def import_ministry_document(app, slug, file_storage):
+def import_ministry_document(app, slug, file_storage, save_asset=None):
     if not ministry_document_allowed(file_storage.filename):
         raise MinistryDocumentError('Choose a .docx or .pdf file')
 
@@ -182,9 +192,9 @@ def import_ministry_document(app, slug, file_storage):
 
     try:
         if extension == 'docx':
-            content_html, warnings = _convert_docx(app, slug, stored_path)
+            content_html, warnings = _convert_docx(app, slug, stored_path, save_asset)
         else:
-            content_html, warnings = _convert_pdf(app, slug, stored_path)
+            content_html, warnings = _convert_pdf(app, slug, stored_path, save_asset)
     except Exception:
         if os.path.exists(stored_path):
             os.remove(stored_path)
@@ -194,11 +204,22 @@ def import_ministry_document(app, slug, file_storage):
         os.remove(stored_path)
         raise MinistryDocumentError('No displayable content was found in this document')
 
+    if save_asset:
+        original_url = save_asset(
+            data,
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            if extension == 'docx' else 'application/pdf',
+            original_name,
+        )
+        os.remove(stored_path)
+    else:
+        original_url = _public_url(slug, stored_name)
+
     return {
         'type': 'imported-document',
         'html': content_html,
         'originalName': original_name,
-        'originalUrl': _public_url(slug, stored_name),
+        'originalUrl': original_url,
         'sourceType': extension,
         'warnings': warnings[:20],
     }

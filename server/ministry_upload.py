@@ -1,5 +1,6 @@
 import os
 import uuid
+from io import BytesIO
 
 from PIL import Image, ImageOps
 
@@ -70,3 +71,34 @@ def optimize_ministry_image(path):
         if os.path.exists(temporary_path):
             os.remove(temporary_path)
     return False
+
+
+def optimize_ministry_image_bytes(data, filename):
+    """Return a smaller, resized image payload when safe; otherwise return the original."""
+    extension = os.path.splitext(filename or '')[1].lower().lstrip('.')
+    if extension not in MINISTRY_IMAGE_EXTENSIONS:
+        return data
+    try:
+        with Image.open(BytesIO(data)) as source:
+            if max(source.size) <= MAX_MINISTRY_IMAGE_DIMENSION and len(data) <= 250 * 1024:
+                return data
+            image = ImageOps.exif_transpose(source)
+            image.thumbnail(
+                (MAX_MINISTRY_IMAGE_DIMENSION, MAX_MINISTRY_IMAGE_DIMENSION),
+                Image.Resampling.LANCZOS,
+            )
+            output = BytesIO()
+            save_options = {'optimize': True}
+            if extension in {'jpg', 'jpeg'}:
+                if image.mode not in {'RGB', 'L'}:
+                    image = image.convert('RGB')
+                save_options.update(format='JPEG', quality=MINISTRY_IMAGE_QUALITY, progressive=True)
+            elif extension == 'webp':
+                save_options.update(format='WEBP', quality=MINISTRY_IMAGE_QUALITY, method=6)
+            else:
+                save_options.update(format='PNG', compress_level=9)
+            image.save(output, **save_options)
+            optimized = output.getvalue()
+            return optimized if len(optimized) < len(data) else data
+    except (OSError, ValueError):
+        return data

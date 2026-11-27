@@ -31,7 +31,12 @@ from io import BytesIO
 import models  # Import models to register them with SQLAlchemy
 import schemas
 from auth_utils import user_is_admin, user_is_staff, user_is_protected_superuser
-from ministry_upload import ministry_upload_allowed, optimize_ministry_image, save_ministry_upload
+from ministry_upload import (
+    ministry_upload_allowed,
+    optimize_ministry_image,
+    optimize_ministry_image_bytes,
+    save_ministry_upload,
+)
 from ministry_document_import import (
     MinistryDocumentError,
     import_ministry_document,
@@ -2030,12 +2035,31 @@ class MinistryPageDocumentImport(Resource):
             return {'error': 'Only .docx and .pdf files are supported'}, 400
 
         try:
-            imported = import_ministry_document(app, slug, file)
+            new_asset_ids = []
+
+            def save_asset(data, content_type, filename):
+                data = optimize_ministry_image_bytes(data, filename)
+                asset = models.MinistryDocumentAsset(
+                    slug=slug,
+                    filename=os.path.basename(filename or 'file')[:255],
+                    content_type=(content_type or 'application/octet-stream')[:100],
+                    data=data,
+                )
+                db.session.add(asset)
+                db.session.flush()
+                new_asset_ids.append(asset.id)
+                return '/ministry-assets/{}'.format(asset.id)
+
+            imported = import_ministry_document(app, slug, file, save_asset=save_asset)
             page = models.MinistryPageContent.query.filter_by(slug=slug).first()
             if not page:
                 page = models.MinistryPageContent(slug=slug)
                 db.session.add(page)
             page.blocks = json.dumps([imported])
+            old_assets = models.MinistryDocumentAsset.query.filter_by(slug=slug)
+            if new_asset_ids:
+                old_assets = old_assets.filter(~models.MinistryDocumentAsset.id.in_(new_asset_ids))
+            old_assets.delete(synchronize_session=False)
             db.session.commit()
             return schemas.ministry_page_content_schema.dump(page), 201
         except MinistryDocumentError as error:
@@ -2050,6 +2074,19 @@ api.add_resource(
     MinistryPageDocumentImport,
     '/ministry-pages/<string:slug>/import-document',
 )
+
+
+@app.route('/ministry-assets/<int:asset_id>')
+def serve_ministry_document_asset(asset_id):
+    asset = db.session.get(models.MinistryDocumentAsset, asset_id)
+    if not asset:
+        return {'error': 'Not found'}, 404
+    return send_file(
+        BytesIO(asset.data),
+        mimetype=asset.content_type,
+        download_name=asset.filename,
+        max_age=86400,
+    )
 
 
 class SiteTextOverrides(Resource):

@@ -6,7 +6,7 @@ import UserContext from '../context/UserContext';
 const contentCache = new Map();
 
 const resolveDocumentAssetUrls = value => String(value || '').replace(
-  /(src=")((?:\/uploads\/)[^"]+)/g,
+  /(src=")((?:\/(?:uploads\/|ministry-assets\/))[^"]+)/g,
   (match, prefix, url) => `${prefix}${apiAssetUrl(url)}`,
 );
 
